@@ -6,6 +6,33 @@ Build vertical slices that prove the actual learning experience. Do not author t
 
 Estimated full scope is substantial: roughly 80–120 content/code files and 8,000–12,000 lines across Markdown, TypeScript/Vue, C, Zig, shaders, diagrams, and scripts.
 
+## Build while learning
+
+The course is developed **on the go**, in the same order it is learned.
+
+First build only the minimum dependable foundation: the dashboard, durable progress, local server, source navigation, safe lab runner, and Pi resume/wrap-up workflow. Do not build a large generic platform in anticipation of lessons that do not exist yet.
+
+After that, work one lesson or tightly related topic at a time. Each increment must be a complete learning experience:
+
+```text
+approachable explanation + history + analogy + visual
++ experiment or lab + Ghostty source trail + assessment
+```
+
+The learner should use each lesson immediately. Questions, confusion, and friction discovered during real learning become input to the next course commit. Infrastructure grows only when a concrete lesson requires it, and a topic is not considered built if it has only prose, only UI, or only a lab.
+
+The working loop is:
+
+1. Choose the learner's next concept.
+2. Build the smallest missing capability needed to teach it well.
+3. Complete one end-to-end lesson.
+4. Learn through that lesson with Pi.
+5. Record confusing points and usability friction.
+6. Improve the lesson and foundation.
+7. Commit the finished slice, then move to the next concept.
+
+This keeps course construction aligned with actual understanding and makes the repository useful long before the full curriculum is complete.
+
 ## Milestone 1 — Learning cockpit prototype
 
 Prove the end-to-end loop with only three lessons.
@@ -44,6 +71,8 @@ Prove the end-to-end loop with only three lessons.
 The milestone passes only if this feels seamless.
 
 ## Phase breakdown
+
+P1–P5 establish only the minimum reusable foundation. From P6 onward, phases are learner-facing topic slices and should be implemented, used, refined, and committed one at a time. Do not batch-author later topics before the current lesson has been learned and validated.
 
 - [ ] **P1 — Repository skeleton and pinned source**
   Establish licensing, submodule, manifests, learner schema, source-reference conventions, and basic CI.

@@ -19,6 +19,21 @@ When the user asks “what's next?”, “what's now?”, “resume”, “conti
 
 If the implementation does not exist yet, clearly report that rather than fabricating progress.
 
+## Development behavior
+
+Build the course while the learner progresses through it:
+
+- Establish only the minimum reliable foundation first.
+- Then implement one lesson or tightly related topic at a time.
+- Make every topic a complete vertical slice: explanation, history, analogy, visual, experiment/lab, source trail, and assessment.
+- Have the learner use the slice before expanding later content.
+- Turn real questions and friction into focused material or platform improvements.
+- Add infrastructure only when a concrete lesson needs it; avoid speculative framework work.
+- Do not batch-generate future lessons or mark prose-only material as complete.
+- Commit each validated learning slice before moving forward.
+
+See `docs/IMPLEMENTATION-ROADMAP.md#build-while-learning` for the full loop.
+
 ## Teaching behavior
 
 - Teach like a patient instructor, not an internal engineering report.

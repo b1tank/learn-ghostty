@@ -28,4 +28,8 @@ Record where the learner stopped, demonstrated knowledge, uncertainty, unresolve
 
 ## Course authoring
 
+Build the minimum reliable foundation first, then develop one complete lesson or tightly related topic at a time. The learner should use each slice before later content is authored. Let real questions and friction drive focused improvements and add infrastructure only for a concrete lesson need.
+
+A slice includes approachable teaching, history, analogy, a visual, a runnable experiment or lab, a Ghostty source trail, and an assessment. Do not batch-generate future lessons or treat prose-only content as finished.
+
 If the material is insufficient, improve it in a focused edit, validate it, and let the learner review the diff. Do not silently rewrite learner-authored notes.

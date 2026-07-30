@@ -18,6 +18,9 @@
 - Course completion and demonstrated mastery are separate metrics.
 - The site never embeds a second AI conversation.
 - Native lab execution is allowlisted; the browser cannot submit arbitrary shell commands.
+- Course development is learning-led: build the minimum foundation, then complete, use, and refine one lesson or topic before starting the next.
+- Infrastructure is introduced only for a concrete learner-facing need; speculative platform work and batch-generated future content are avoided.
+- A lesson is a vertical slice and is not complete unless its teaching, visual, runnable, source-reference, and assessment parts work together.
 
 ## Source snapshot used during initial design
 

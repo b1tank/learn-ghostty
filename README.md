@@ -41,6 +41,12 @@ The initial learner is a senior software engineer with a C background and broad 
 
 The material intentionally teaches like a patient instructor rather than writing like an internal engineering report. Technical vocabulary is necessary, but every important term should be motivated, visualized, connected to the larger system, and accompanied by a useful analogy.
 
+## Build while learning
+
+Development follows the learner rather than preceding them. We first create the minimum reliable learning cockpit, then build one complete lesson or topic at a time. The learner immediately uses that slice with Pi; questions and friction improve the material before work moves forward.
+
+A topic is only complete when it combines approachable teaching, historical motivation, analogy, visual explanation, a runnable experiment, Ghostty source references, and an understanding check. Infrastructure is added only when a real lesson needs it.
+
 ## Ambition and honesty
 
 A one- or two-week camp cannot reproduce years of maintainer judgment. It can build a dependable end-to-end mental model, make the codebase navigable, establish practical debugging habits, and prepare the learner to begin credible contributions. Long-term maintainer-level understanding comes from repeated issue investigation, code review, performance work, and subsystem rotation after the camp.
