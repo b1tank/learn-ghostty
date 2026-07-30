@@ -1,0 +1,13 @@
+node_modules/
+.vitepress/cache/
+.vitepress/dist/
+dist/
+zig-cache/
+.zig-cache/
+zig-out/
+*.log
+.DS_Store
+
+# Runtime files
+.course-server.pid
+.course-server.json

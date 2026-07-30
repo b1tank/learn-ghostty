@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "currentLesson": "vt-03-csi-dispatch",
+  "startedAt": "2026-08-01",
+  "lessons": {
+    "vt-01-ground": {
+      "status": "completed",
+      "lab": "passed",
+      "explainBack": "passed",
+      "confidence": 4
+    },
+    "vt-03-csi-dispatch": {
+      "status": "in_progress",
+      "step": "parameter-accumulation",
+      "confidence": 2
+    }
+  },
+  "subsystems": {
+    "pty": 3,
+    "parser": 3,
+    "terminal-state": 1,
+    "renderer": 0,
+    "fonts": 0,
+    "input": 0,
+    "gtk": 0,
+    "macos": 0
+  }
+}
