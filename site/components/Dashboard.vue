@@ -62,11 +62,18 @@ const completed = computed(() => Object.values(course.value?.state.lessons ?? {}
       <article class="panel path-panel">
         <div class="panel-heading"><div><div class="panel-label">THE PATH AHEAD</div><h3>One machine, ten layers</h3></div><a href="/course-map">Full map →</a></div>
         <div class="path-track">
-          <a v-for="(lesson, index) in course.manifest.lessons" :key="lesson.id" :href="lesson.status === 'available' ? lesson.path : undefined" :class="['path-stop', { active: lesson.id === current.id, locked: lesson.status === 'planned' }]">
+          <component
+            :is="lesson.status === 'available' ? 'a' : 'div'"
+            v-for="(lesson, index) in course.manifest.lessons"
+            :key="lesson.id"
+            :href="lesson.status === 'available' ? lesson.path : undefined"
+            :aria-disabled="lesson.status === 'planned' ? 'true' : undefined"
+            :class="['path-stop', { active: lesson.id === current.id, locked: lesson.status === 'planned' }]"
+          >
             <span class="stop-index">{{ String(index).padStart(2, '0') }}</span>
             <span class="stop-dot"></span>
             <span class="stop-copy"><strong>{{ lesson.title }}</strong><small>{{ lesson.status === 'available' ? 'Ready now' : 'Built when you reach it' }}</small></span>
-          </a>
+          </component>
         </div>
       </article>
 
