@@ -6,7 +6,9 @@
 - The browser is the visual learning environment; Pi remains the only AI chat interface.
 - Markdown is the primary lesson authoring format, enhanced with interactive UI components.
 - VitePress and Vue are the preferred documentation/UI foundation.
-- Preserve VitePress's official navigation and light/dark appearance control. The initial `auto` state may follow the OS, but do not maintain a custom System/Light/Dark selector unless a future lesson creates a concrete need.
+- Preserve VitePress's official documentation chrome: navigation, local search, headings and permalink anchors, sidebar, outline, typography, focus treatment, and light/dark appearance control. The initial `auto` state may follow the OS, but do not maintain custom framework UI unless a future lesson creates a concrete need.
+- Scope custom styles to Learn Ghostty components (`.cockpit-*`, `.lesson-*`, `.architecture-*`, `.journey-*`, `.source-*`, or `.lg-*`). Avoid generic selectors such as `.button`, global form focus rules, and unscoped `.vp-doc`/`.VP*` overrides.
+- Let VitePress own its compatible Vite and Vue plugin versions. Keep Vue as a direct dependency for course components, but do not separately install Vite or `@vitejs/plugin-vue` without a demonstrated build requirement.
 - Mermaid handles ordinary diagrams; Canvas, SVG, or WebGL handle richer visualizers.
 - A small Node service handles progress, source navigation, and allowlisted native labs.
 - No cloud service, account, or database is required.

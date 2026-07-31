@@ -186,11 +186,23 @@ Human-style visual verification:
 - perform one complete Lesson 00 journey using pointer and one using keyboard only;
 - test OS theme change while the page remains open.
 
+## Framework-boundary follow-up
+
+A later visual review found two framework regressions that the first audit did not catch: VitePress heading permalink markers were displaced by global heading typography, and the local-search input inherited a broad custom focus outline. The correction established a stricter boundary:
+
+- removed global VitePress heading, code, navigation, sidebar, typography, and form-focus overrides;
+- renamed the generic `.button` styles to namespaced `.lg-button` variants;
+- reduced navigation content instead of overriding VitePress responsive internals;
+- removed redundant direct Vite 8 and plugin-vue 6 dependencies, leaving VitePress to own its compatible Vite 5/plugin-vue 5 toolchain;
+- added audit assertions that reject broad framework selectors and inspect the real heading box and search dialog dimensions/focus treatment.
+
+The interactive course content remains custom; the documentation shell is once again VitePress default behavior.
+
 ## Post-fix verification results
 
 ### Automated browser audit
 
-`npm run audit:ui` drives real Chromium and verifies more than 130 assertions across:
+`npm run audit:ui` drives real Chromium and verifies 142 assertions across:
 
 - Dashboard, Lesson 00, Course map, Source viewer, and 404 page.
 - Light, Dark, System→Light, System→Dark, and live System changes.
