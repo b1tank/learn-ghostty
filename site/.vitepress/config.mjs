@@ -6,11 +6,6 @@ export default defineConfig({
   description: "See the whole terminal. Build every layer.",
   cleanUrls: true,
   lastUpdated: true,
-  appearance: false,
-  head: [
-    ["meta", { name: "theme-color", content: "#f6f8f3" }],
-    ["script", {}, `(function(){var key="learn-ghostty-theme";var value=localStorage.getItem(key)||"system";if(!/^(system|light|dark)$/.test(value))value="system";var dark=value==="dark"||(value==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",dark);document.documentElement.dataset.themePreference=value;document.documentElement.dataset.effectiveTheme=dark?"dark":"light";document.querySelector('meta[name="theme-color"]')?.setAttribute("content",dark?"#07110f":"#f6f8f3")})()`]
-  ],
   themeConfig: {
     logo: { src: "/ghost-mark.svg", alt: "Learn Ghostty" },
     siteTitle: "LEARN / GHOSTTY",
