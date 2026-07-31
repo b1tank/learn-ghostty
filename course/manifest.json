@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "course": {
+    "id": "learn-ghostty",
+    "title": "Learn Ghostty",
+    "sourceCommit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+    "criticalPathDays": 10
+  },
+  "lessons": [
+    {
+      "id": "00-ghostty-overview",
+      "day": 0,
+      "order": 0,
+      "title": "Ghostty: the whole machine",
+      "subtitle": "What you will learn, why it matters, and how to learn it",
+      "path": "/lessons/00-ghostty-overview",
+      "estimatedMinutes": 55,
+      "status": "available",
+      "prerequisites": [],
+      "sourceRefs": [
+        { "path": "README.md", "line": 16, "label": "Ghostty's public promise" },
+        { "path": "src/main_ghostty.zig", "line": 25, "label": "Process entry point" },
+        { "path": "src/App.zig", "line": 1, "label": "Shared application core" },
+        { "path": "src/Surface.zig", "line": 1, "label": "One terminal surface" }
+      ]
+    },
+    {
+      "id": "01-terminal-origins",
+      "day": 1,
+      "order": 1,
+      "title": "From teletype wires to a PTY",
+      "subtitle": "Why a modern terminal still speaks like old hardware",
+      "path": "/lessons/01-terminal-origins",
+      "estimatedMinutes": 90,
+      "status": "planned",
+      "prerequisites": ["00-ghostty-overview"],
+      "sourceRefs": []
+    },
+    {
+      "id": "02-zig-bridge",
+      "day": 2,
+      "order": 2,
+      "title": "Enough Zig to read Ghostty",
+      "subtitle": "Translate your C instincts without learning a language in isolation",
+      "path": "/lessons/02-zig-bridge",
+      "estimatedMinutes": 90,
+      "status": "planned",
+      "prerequisites": ["01-terminal-origins"],
+      "sourceRefs": []
+    },
+    {
+      "id": "03-vt-parser",
+      "day": 3,
+      "order": 3,
+      "title": "How bytes become terminal actions",
+      "subtitle": "Step through the VT parser as if it were a tiny browser parser",
+      "path": "/lessons/03-vt-parser",
+      "estimatedMinutes": 100,
+      "status": "planned",
+      "prerequisites": ["02-zig-bridge"],
+      "sourceRefs": []
+    }
+  ],
+  "labs": {
+    "orientation-source-check": {
+      "description": "Verify the pinned Ghostty source and print its core entry points",
+      "cwd": ".",
+      "run": ["node", "scripts/orientation-check.mjs"],
+      "timeoutSeconds": 10
+    }
+  }
+}

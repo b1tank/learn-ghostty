@@ -1,0 +1,17 @@
+{
+  "name": "learn-ghostty",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev site --host 127.0.0.1 --port 4173",
+    "build": "vitepress build site",
+    "preview": "vitepress preview site --host 127.0.0.1 --port 4173",
+    "check": "node scripts/check-course.mjs"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "latest",
+    "vitepress": "latest",
+    "vue": "latest"
+  }
+}
