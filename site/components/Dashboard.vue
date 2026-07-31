@@ -34,8 +34,8 @@ const resumeUrl = computed(() => current.value ? `${current.value.path}#${course
       <h1>See the whole terminal.<br><em>Build every layer.</em></h1>
       <p class="hero-copy">A visual, source-backed path through Ghostty—from nineteenth-century wires to modern GPU pixels.</p>
       <div class="hero-actions">
-        <a v-if="current" class="button button-primary" :href="resumeUrl">Continue your journey <span>→</span></a>
-        <a class="button button-quiet" href="/course-map">Explore the map</a>
+        <a v-if="current" class="lg-button lg-button--primary" :href="resumeUrl">Continue your journey <span>→</span></a>
+        <a class="lg-button lg-button--quiet" href="/course-map">Explore the map</a>
       </div>
     </section>
 

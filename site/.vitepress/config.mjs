@@ -8,12 +8,10 @@ export default defineConfig({
   lastUpdated: true,
   themeConfig: {
     logo: { src: "/ghost-mark.svg", alt: "Learn Ghostty" },
-    siteTitle: "LEARN / GHOSTTY",
+    siteTitle: "Learn Ghostty",
     nav: [
-      { text: "Cockpit", link: "/" },
       { text: "Start learning", link: "/lessons/00-ghostty-overview" },
-      { text: "Course map", link: "/course-map" },
-      { text: "Design", link: "https://github.com/b1tank/learn-ghostty" }
+      { text: "Course map", link: "/course-map" }
     ],
     sidebar: {
       "/lessons/": [
