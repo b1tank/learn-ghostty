@@ -19,7 +19,11 @@ Pi reads durable course progress, reminds the learner where they stopped, starts
 
 The browser is the **learning cockpit**, Pi is the **teacher**, Ghostty's source is the **textbook**, durable files are the **memory**, and Git is the **history**.
 
-## Start learning now
+## Read online or run the full camp
+
+The public reading mode lives at **https://b1tank.github.io/learn-ghostty/**. Lessons, visualizations, pinned source excerpts, and browser-local progress work there.
+
+For durable progress, local source navigation, native labs, editor integration, and Pi as your teacher, run the complete local camp:
 
 ```console
 git submodule update --init

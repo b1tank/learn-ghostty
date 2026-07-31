@@ -2,6 +2,7 @@ import { defineConfig } from "vitepress";
 import { courseApiPlugin } from "../../server/course-api.mjs";
 
 export default defineConfig({
+  base: process.env.LEARN_GHOSTTY_BASE || "/",
   title: "Learn Ghostty",
   description: "See the whole terminal. Build every layer.",
   cleanUrls: true,

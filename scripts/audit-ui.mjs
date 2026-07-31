@@ -231,8 +231,8 @@ async function auditErrorRecovery(browser) {
     else request.continue();
   });
   await page.goto(base, { waitUntil: "networkidle0" });
-  check(await page.$eval(".service-warning", (element) => element.getAttribute("role") === "alert"), "dashboard error: alert semantics missing");
-  check(await page.$eval(".service-warning button", (element) => element.textContent.includes("Retry")), "dashboard error: retry action missing");
+  check(await page.$eval(".service-warning", (element) => element.getAttribute("role") === "note"), "dashboard fallback: public-mode note semantics missing");
+  check(await page.$eval(".service-warning a", (element) => element.textContent.includes("Clone course")), "dashboard fallback: local-course action missing");
   await page.close();
 }
 

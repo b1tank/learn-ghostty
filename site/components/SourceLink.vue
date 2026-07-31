@@ -1,8 +1,9 @@
 <script setup>
 import { computed, ref } from "vue";
+import { withBase } from "vitepress";
 const props = defineProps({ path: String, line: { type: Number, default: 1 }, end: Number, label: String, note: String });
 const copied = ref(false);
-const viewUrl = computed(() => `/source?path=${encodeURIComponent(props.path)}&line=${props.line}&end=${props.end || props.line}`);
+const viewUrl = computed(() => `${withBase('/source')}?path=${encodeURIComponent(props.path)}&line=${props.line}&end=${props.end || props.line}`);
 async function copy() {
   await navigator.clipboard.writeText(`@ghostty/${props.path}:${props.line}`);
   copied.value = true;
