@@ -13,7 +13,7 @@ import LessonCheckpoint from '../components/LessonCheckpoint.vue'
 import SourceLink from '../components/SourceLink.vue'
 </script>
 
-<div class="lesson-hero">
+<div id="welcome" class="lesson-hero">
   <div class="lesson-hero__index">00</div>
   <div class="lesson-hero__copy">
     <span class="lesson-eyebrow">ORIENTATION · 55 MINUTES</span>
@@ -28,6 +28,8 @@ Do not memorize file names. Leave with a story you can tell: **a program emits b
 :::
 
 <LessonCheckpoint step="welcome" next-step="why-terminal" :completion="5" label="Begin the lesson" event="started the Ghostty overview" />
+
+<span id="why-terminal" class="lesson-anchor"></span>
 
 ## Why study a terminal emulator?
 
@@ -129,6 +131,8 @@ human → native key event → Ghostty input rules → encoded bytes → PTY →
 
 The difficult—and interesting—work lives at the boundaries. What owns this memory? Which thread may touch it? Does this byte mean text or a command? Is this Unicode sequence one cell, two cells, or several glyphs? Is the application asking for the key itself or the text produced by an input method? Ghostty must answer those questions quickly and compatibly.
 
+<span id="architecture" class="lesson-anchor"></span>
+
 ## Explore Ghostty's layers
 
 Click every layer. Read the plain-language description first; source paths are only signposts for later.
@@ -150,6 +154,8 @@ On Linux and FreeBSD, the application runtime uses GTK and the renderer uses Ope
 />
 
 <LessonCheckpoint step="architecture" next-step="learning-path" :completion="46" label="I can trace the seven layers" />
+
+<span id="learning-path" class="lesson-anchor"></span>
 
 ## What you will learn
 
@@ -270,6 +276,9 @@ Ghostty shares a core while choosing native platform experiences: GTK on Linux/F
 ### “I need to understand all 350,000 lines before contributing”
 
 You need a reliable whole-system map and deep understanding of the path touched by a change. Breadth comes through repeated paths, not one heroic read-through.
+
+<span id="explain-back" class="lesson-anchor"></span>
+<span id="pi-explain-back" class="lesson-anchor"></span>
 
 ## Explain it back
 

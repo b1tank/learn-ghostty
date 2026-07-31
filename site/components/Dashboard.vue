@@ -21,6 +21,7 @@ const current = computed(() => {
 });
 const progress = computed(() => course.value?.state.lessons[current.value?.id] ?? {});
 const completed = computed(() => Object.values(course.value?.state.lessons ?? {}).filter((item) => item.status === "completed").length);
+const resumeUrl = computed(() => current.value ? `${current.value.path}#${course.value?.state.currentStep || "welcome"}` : "/");
 </script>
 
 <template>
@@ -30,7 +31,7 @@ const completed = computed(() => Object.values(course.value?.state.lessons ?? {}
       <h1>See the whole terminal.<br><em>Build every layer.</em></h1>
       <p class="hero-copy">A visual, source-backed path through Ghostty—from nineteenth-century wires to modern GPU pixels.</p>
       <div class="hero-actions">
-        <a v-if="current" class="button button-primary" :href="current.path">Continue your journey <span>→</span></a>
+        <a v-if="current" class="button button-primary" :href="resumeUrl">Continue your journey <span>→</span></a>
         <a class="button button-quiet" href="/course-map">Explore the map</a>
       </div>
     </section>
@@ -45,7 +46,7 @@ const completed = computed(() => Object.values(course.value?.state.lessons ?? {}
           <h2>{{ current.title }}</h2>
           <p>{{ current.subtitle }}</p>
           <div class="lesson-meta"><span>◷ {{ current.estimatedMinutes }} min</span><span>◆ Visual + source tour</span></div>
-          <a class="text-link" :href="current.path">Resume at “{{ course.state.currentStep }}” →</a>
+          <a class="text-link" :href="resumeUrl">Resume at “{{ course.state.currentStep }}” →</a>
         </div>
         <ProgressRing :value="progress.completion" label="complete" />
       </article>

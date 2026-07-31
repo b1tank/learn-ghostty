@@ -113,6 +113,7 @@ function installCourseApi(middlewares) {
             const current = state.lessons[input.lessonId] ?? {
               status: "not_started", completion: 0, mastery: 0, confidence: 0, completedSteps: [],
             };
+            const stepAlreadyComplete = input.step ? current.completedSteps.includes(input.step) : false;
             const completedSteps = input.step
               ? [...new Set([...current.completedSteps, input.step])]
               : current.completedSteps;
@@ -130,7 +131,9 @@ function installCourseApi(middlewares) {
             state.startedAt ??= now;
             state.updatedAt = now;
             state.lessons[input.lessonId] = nextLesson;
-            state.activity = [{ at: now, lessonId: input.lessonId, event: input.event ?? `completed ${input.step ?? "progress"}` }, ...state.activity].slice(0, 20);
+            if (!stepAlreadyComplete) {
+              state.activity = [{ at: now, lessonId: input.lessonId, event: input.event ?? `completed ${input.step ?? "progress"}` }, ...state.activity].slice(0, 20);
+            }
             await writeState(state);
             return send(res, 200, { ok: true, state });
           }

@@ -67,7 +67,7 @@ def cmd_status(args):
         "currentLesson": current,
         "currentStep": state["currentStep"],
         "progress": state["lessons"].get(current["id"], {}),
-        "server": {"running": server_up(), "url": f"{URL}{current['path']}"},
+        "server": {"running": server_up(), "url": f"{URL}{current['path']}#{state['currentStep']}"},
         "lastActivity": state.get("activity", [])[:3],
     }
     if args.json:
@@ -78,7 +78,7 @@ def cmd_status(args):
         print(f"Next step:      {state['currentStep']}")
         print(f"Completion:     {progress.get('completion', 0)}%")
         print(f"Mastery:        {progress.get('mastery', 0)}%")
-        print(f"Dashboard:      {URL}{current['path']}")
+        print(f"Dashboard:      {URL}{current['path']}#{state['currentStep']}")
         print(f"Server:         {'running' if value['server']['running'] else 'stopped'}")
     return 0
 
@@ -110,7 +110,7 @@ def cmd_open(args):
         if code:
             return code
     state, current = lesson()
-    target = URL if args.dashboard else f"{URL}{current['path']}"
+    target = URL if args.dashboard else f"{URL}{current['path']}#{state['currentStep']}"
     webbrowser.open(target)
     print(target)
     return 0

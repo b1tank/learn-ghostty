@@ -159,7 +159,8 @@ body { letter-spacing: -.01em; }
 .map-placeholder span { padding: 7px 10px; border: 1px solid color-mix(in srgb, var(--lime) 22%, transparent); border-radius: 5px; color: var(--lime); font: 11px var(--vp-font-family-mono); }
 .map-placeholder b { color: var(--vp-c-text-3); }
 
-.lesson-hero { position: relative; display: grid; grid-template-columns: 140px 1fr; gap: 30px; margin: 8px 0 62px; padding: 42px 0 40px; border-bottom: 1px solid var(--vp-c-divider); }
+.lesson-anchor { display: block; height: 0; scroll-margin-top: calc(var(--vp-nav-height) + 18px); visibility: hidden; }
+.lesson-hero { position: relative; display: grid; grid-template-columns: 140px 1fr; gap: 30px; scroll-margin-top: calc(var(--vp-nav-height) + 22px); margin: 8px 0 62px; padding: 42px 0 40px; border-bottom: 1px solid var(--vp-c-divider); }
 .lesson-hero__index { color: color-mix(in srgb, var(--lime) 14%, transparent); font: 500 105px/.8 var(--vp-font-family-mono); letter-spacing: -.08em; }
 .lesson-eyebrow { color: var(--lime); font: 600 10px var(--vp-font-family-mono); letter-spacing: .14em; }
 .lesson-hero h1 { margin: 16px 0 20px; font-size: clamp(48px, 7vw, 76px); line-height: .94; letter-spacing: -.06em; }
@@ -186,6 +187,7 @@ body { letter-spacing: -.01em; }
 .lesson-checkpoint > div { display: flex; flex-direction: column; gap: 4px; }
 .lesson-checkpoint span { color: var(--lime); font: 9px var(--vp-font-family-mono); letter-spacing: .12em; }
 .lesson-checkpoint strong { font-size: 13px; }
+.lesson-checkpoint small { max-width: 560px; color: var(--amber); font-size: 11px; line-height: 1.45; }
 .lesson-checkpoint button, .journey-top button, .lab-title button { min-height: 42px; padding: 9px 12px; border: 0; border-radius: 6px; color: var(--on-accent); background: var(--accent-fill); font: 600 10px var(--vp-font-family-mono); cursor: pointer; }
 .lesson-checkpoint button:disabled, .journey-top button:disabled, .lab-title button:disabled { opacity: .65; cursor: default; }
 .byte-journey { margin: 30px 0; overflow: hidden; border: 1px solid var(--vp-c-divider); border-radius: 14px; background: var(--lg-panel-soft); }
