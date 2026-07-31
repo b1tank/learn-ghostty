@@ -52,11 +52,8 @@ function run(command, args, cwd, timeoutSeconds) {
   });
 }
 
-export function courseApiPlugin() {
-  return {
-    name: "learn-ghostty-course-api",
-    configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
+function installCourseApi(middlewares) {
+  middlewares.use(async (req, res, next) => {
         if (!req.url?.startsWith("/api/")) return next();
         try {
           const url = new URL(req.url, "http://127.0.0.1");
@@ -112,7 +109,17 @@ export function courseApiPlugin() {
         } catch (error) {
           return send(res, 500, { error: error.message });
         }
-      });
+  });
+}
+
+export function courseApiPlugin() {
+  return {
+    name: "learn-ghostty-course-api",
+    configureServer(server) {
+      installCourseApi(server.middlewares);
+    },
+    configurePreviewServer(server) {
+      installCourseApi(server.middlewares);
     },
   };
 }
