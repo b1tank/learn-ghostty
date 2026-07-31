@@ -33,7 +33,7 @@ export default defineConfig({
         }
       ]
     },
-    socialLinks: [{ icon: "github", link: "https://github.com/ghostty-org/ghostty" }],
+    socialLinks: [{ icon: "github", link: "https://github.com/b1tank/learn-ghostty" }],
     search: { provider: "local" },
     outline: { level: [2, 3], label: "ON THIS PAGE" },
     docFooter: { prev: "Previous layer", next: "Next layer" },
