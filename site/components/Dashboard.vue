@@ -5,7 +5,8 @@ import ProgressRing from "./ProgressRing.vue";
 const course = ref(null);
 const error = ref("");
 
-onMounted(async () => {
+async function loadCourse() {
+  error.value = "";
   try {
     const response = await fetch("/api/course");
     if (!response.ok) throw new Error("course service unavailable");
@@ -13,7 +14,9 @@ onMounted(async () => {
   } catch (cause) {
     error.value = cause.message;
   }
-});
+}
+
+onMounted(loadCourse);
 
 const current = computed(() => {
   if (!course.value) return null;
@@ -36,7 +39,10 @@ const resumeUrl = computed(() => current.value ? `${current.value.path}#${course
       </div>
     </section>
 
-    <div v-if="error" class="service-warning">Start the cockpit with <code>./camp serve</code> to connect durable progress.</div>
+    <div v-if="error" class="service-warning" role="alert">
+      <span>Start the cockpit with <code>./camp serve</code> to connect durable progress.</span>
+      <button type="button" @click="loadCourse">Retry connection</button>
+    </div>
 
     <section v-if="course && current" class="dashboard-grid">
       <article class="panel current-panel">

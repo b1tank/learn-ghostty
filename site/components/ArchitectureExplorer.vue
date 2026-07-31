@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 
 const layers = [
   { id: "program", short: "PROGRAM", title: "Terminal application", plain: "The program with something to say: your shell, editor, compiler, or TUI.", data: "Reads input bytes and writes output bytes", browser: "Closest to a web application", source: "The program is outside Ghostty" },
@@ -12,19 +12,34 @@ const layers = [
 ];
 const selected = ref("state");
 const active = computed(() => layers.find((item) => item.id === selected.value));
+function move(index, delta) {
+  const next = (index + delta + layers.length) % layers.length;
+  selected.value = layers[next].id;
+  nextTick(() => document.querySelector(`#architecture-tab-${layers[next].id}`)?.focus());
+}
 </script>
 
 <template>
   <div class="architecture-explorer">
-    <div class="architecture-rail" role="list" aria-label="Terminal output layers">
+    <div class="architecture-rail" role="tablist" aria-label="Terminal output layers">
       <template v-for="(layer, index) in layers" :key="layer.id">
-        <button :class="['architecture-node', { active: selected === layer.id }]" @click="selected = layer.id">
+        <button
+          :id="`architecture-tab-${layer.id}`"
+          role="tab"
+          :aria-selected="selected === layer.id"
+          aria-controls="architecture-detail"
+          :tabindex="selected === layer.id ? 0 : -1"
+          :class="['architecture-node', { active: selected === layer.id }]"
+          @click="selected = layer.id"
+          @keydown.left.prevent="move(index, -1)"
+          @keydown.right.prevent="move(index, 1)"
+        >
           <span>{{ String(index + 1).padStart(2, '0') }}</span><strong>{{ layer.short }}</strong>
         </button>
         <i v-if="index < layers.length - 1">→</i>
       </template>
     </div>
-    <div class="architecture-detail">
+    <div id="architecture-detail" class="architecture-detail" role="tabpanel" :aria-labelledby="`architecture-tab-${active.id}`" tabindex="0">
       <div class="detail-number">{{ String(layers.indexOf(active) + 1).padStart(2, '0') }}</div>
       <div><div class="detail-kicker">SELECTED LAYER</div><h3>{{ active.title }}</h3><p>{{ active.plain }}</p></div>
       <dl><div><dt>BOUNDARY</dt><dd>{{ active.data }}</dd></div><div><dt>BROWSER LENS</dt><dd>{{ active.browser }}</dd></div><div><dt>GHOSTTY</dt><dd><code>{{ active.source }}</code></dd></div></dl>

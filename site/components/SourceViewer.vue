@@ -13,6 +13,8 @@ const githubUrl = computed(() => {
 });
 
 async function load() {
+  error.value = "";
+  source.value = null;
   const query = new URLSearchParams(window.location.search);
   params.value = {
     path: query.get("path") || "src/main_ghostty.zig",
@@ -59,8 +61,8 @@ onMounted(load);
         <a :href="githubUrl" target="_blank" rel="noreferrer">GitHub ↗</a>
       </div>
     </header>
-    <div v-if="notice" class="source-notice">{{ notice }}</div>
-    <div v-if="error" class="source-error">{{ error }}. Start this page with <code>./camp serve</code>.</div>
+    <div v-if="notice" class="source-notice" role="status" aria-live="polite">{{ notice }}</div>
+    <div v-if="error" class="source-error" role="alert"><span>{{ error }}. Start this page with <code>./camp serve</code>.</span><button type="button" @click="load">Retry</button></div>
     <div v-else-if="source" class="code-window">
       <div class="code-window__bar"><i></i><i></i><i></i><span>READ ONLY · LOCAL CHECKOUT</span></div>
       <pre><code><span v-for="(text, index) in source.lines" :key="index" :class="['source-line', { focused: source.from + index >= source.line && source.from + index <= source.end }]"><b>{{ source.from + index }}</b><span>{{ text || ' ' }}</span></span></code></pre>

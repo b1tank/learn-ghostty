@@ -19,7 +19,7 @@ async function run() {
 <template>
   <div class="lab-runner">
     <div class="lab-title"><div><span>LOCAL CHECK</span><h3>{{ title }}</h3></div><button :disabled="running" @click="run">{{ running ? 'Running…' : 'Run against my checkout' }}</button></div>
-    <pre v-if="result" :class="{ passed: ok }"><code>{{ result }}</code></pre>
+    <pre v-if="result" :class="{ passed: ok, failed: !ok }" role="status" aria-live="polite"><code>{{ result }}</code></pre>
     <p v-else>This runs one allowlisted command against the pinned source. No arbitrary browser shell is exposed.</p>
   </div>
 </template>
