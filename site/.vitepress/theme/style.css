@@ -80,6 +80,16 @@ html { background: var(--vp-c-bg); }
 body { letter-spacing: -.01em; }
 .VPNav { border-bottom: 1px solid var(--vp-c-divider) !important; background: var(--lg-nav) !important; backdrop-filter: blur(18px); }
 .VPNavBarTitle .title { font-family: var(--vp-font-family-mono); font-size: 13px; letter-spacing: .12em; }
+.theme-selector { pointer-events: auto; }
+.theme-selector__options { display: flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--vp-c-divider); border-radius: 9px; background: var(--lg-control); }
+.theme-selector button { display: inline-flex; min-height: 30px; align-items: center; justify-content: center; gap: 4px; padding: 0 8px; border: 0; border-radius: 6px; color: var(--vp-c-text-3); background: transparent; font: 500 9px var(--vp-font-family-mono); cursor: pointer; }
+.theme-selector button:hover { color: var(--vp-c-text-1); background: color-mix(in srgb, var(--vp-c-text-1) 5%, transparent); }
+.theme-selector button.selected { color: var(--on-accent); background: var(--accent-fill); box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 14%, transparent); }
+.theme-selector button span { font-size: 11px; }
+.theme-selector__label { color: var(--vp-c-text-3); font: 600 10px var(--vp-font-family-mono); letter-spacing: .12em; }
+.theme-selector--screen { display: none; padding: 18px 24px; border-top: 1px solid var(--vp-c-divider); }
+.theme-selector--screen .theme-selector__options { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 10px; }
+.theme-selector--screen button { min-height: 42px; }
 .VPSidebar { background: var(--lg-sidebar) !important; }
 .VPSidebarItem.level-0 > .item .text { font-family: var(--vp-font-family-mono); font-size: 11px; letter-spacing: .12em; color: var(--lime); }
 .VPDoc .content-container { max-width: 820px !important; }
@@ -256,6 +266,16 @@ body { letter-spacing: -.01em; }
 .source-card__copy small { color: var(--vp-c-text-2); }
 .source-card__actions { display: flex; align-items: center; gap: 10px; }
 .source-card__actions a { color: var(--lime); font-size: 12px; white-space: nowrap; }
+
+@media (max-width: 1200px) and (min-width: 960px) {
+  .theme-selector--bar button b { display: none; }
+  .theme-selector--bar button { width: 30px; padding: 0; }
+}
+
+@media (max-width: 959px) {
+  .theme-selector--bar { display: none; }
+  .theme-selector--screen { display: block; }
+}
 
 @media (max-width: 820px) {
   .cockpit-shell { padding: 44px 20px 70px; }
