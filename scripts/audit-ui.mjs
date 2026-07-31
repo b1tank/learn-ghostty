@@ -118,6 +118,21 @@ async function auditSystem(browser) {
   await page.close();
 }
 
+async function auditMobileThemeControl(browser) {
+  const page = await createPage(browser, { width: 390, theme: "system", system: "dark" });
+  await page.goto(base, { waitUntil: "networkidle0" });
+  await page.click(".hamburger");
+  const controls = await page.$$eval(".theme-selector--screen button", (elements) => elements.map((element) => ({
+    label: element.getAttribute("aria-label"),
+    height: element.getBoundingClientRect().height
+  })));
+  check(controls.length === 3, "mobile theme: System, Light, and Dark choices are not all present");
+  check(controls.every((control) => control.label && control.height >= 40), "mobile theme: choices are unnamed or undersized");
+  await page.evaluate(() => [...document.querySelectorAll(".theme-selector--screen button")].find((element) => element.title === "Light theme")?.click());
+  check(await page.evaluate(() => document.documentElement.dataset.themePreference === "light" && !document.documentElement.classList.contains("dark")), "mobile theme: Light selection failed");
+  await page.close();
+}
+
 async function auditLayout(browser) {
   const routes = ["/", "/lessons/00-ghostty-overview", "/course-map", "/source?path=src/App.zig&line=1&end=4", "/missing-audit-page"];
   for (const theme of ["light", "dark"]) {
@@ -192,6 +207,7 @@ try {
   await auditTheme(browser, "light");
   await auditTheme(browser, "dark");
   await auditSystem(browser);
+  await auditMobileThemeControl(browser);
   await auditLayout(browser);
   await auditControls(browser);
   await auditErrorRecovery(browser);
