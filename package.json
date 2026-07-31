@@ -7,10 +7,12 @@
     "dev": "vitepress dev site --host 127.0.0.1 --port 4173",
     "build": "vitepress build site",
     "preview": "vitepress preview site --host 127.0.0.1 --port 4173",
-    "check": "node scripts/check-course.mjs"
+    "check": "node scripts/check-course.mjs",
+    "audit:ui": "node scripts/audit-ui.mjs"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "latest",
+    "puppeteer-core": "^25.4.0",
     "vite": "^8.2.0",
     "vitepress": "latest",
     "vue": "latest"

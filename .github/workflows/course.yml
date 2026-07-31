@@ -22,4 +22,5 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: node scripts/test-source-security.mjs
+      - run: npm run audit:ui
       - run: npm run build
