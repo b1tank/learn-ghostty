@@ -4,7 +4,16 @@ This repository is designed to be used with a coding agent as a personal teacher
 
 ## Current phase
 
-The project is currently in design/prototype planning. Read `docs/README.md` and its linked design documents before implementing major functionality.
+The minimum learning cockpit and Lesson 00 are runnable. Read `docs/README.md` for the design and `sprint.plan.md` for the latest implementation record.
+
+The learner's immediate path is:
+
+```console
+./camp doctor
+./camp open
+```
+
+Then begin `site/lessons/00-ghostty-overview.md`. Later lessons are intentionally built only after this slice is learned and refined.
 
 ## Resume requests
 
@@ -17,7 +26,7 @@ When the user asks “what's next?”, “what's now?”, “resume”, “conti
 5. Start the local course server and open the current lesson when supported.
 6. Respond with a concise recap and one recall/prediction question.
 
-If the implementation does not exist yet, clearly report that rather than fabricating progress.
+If the server is stopped, use `./camp serve --background`, then open the URL reported by `./camp status --json`. Never fabricate progress.
 
 ## Development behavior
 
@@ -53,6 +62,18 @@ See `docs/IMPLEMENTATION-ROADMAP.md#build-while-learning` for the full loop.
 ## Source references
 
 When the Ghostty submodule exists, use the pinned checkout as source of truth. Prefer ordered execution trails over unordered file lists. Include local source-view links, editor paths, immutable GitHub links, and relevant tests where the site supports them.
+
+## Lesson 00 explain-back
+
+When the learner reaches `pi-explain-back`, quiz these outcomes without showing model answers first:
+
+1. Distinguish terminal emulator, shell, terminal application, and PTY.
+2. Explain why physical-terminal history still shapes software.
+3. Trace output through program → PTY → parser → state → fonts → GPU → native window.
+4. State where the browser analogy helps and where it fails.
+5. Explain shared Zig core versus native GTK and Swift/SwiftUI runtimes.
+
+After a satisfactory explanation, update Lesson 00 in `learner/state.json` to `status: completed`, `mastery` based on demonstrated answers, and `currentStep: lesson-01-not-built`. Summarize strengths and gaps in `learner/journal.md`. Do not award mastery for clicking the final checkpoint alone.
 
 ## Course changes
 

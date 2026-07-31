@@ -19,6 +19,31 @@ Pi reads durable course progress, reminds the learner where they stopped, starts
 
 The browser is the **learning cockpit**, Pi is the **teacher**, Ghostty's source is the **textbook**, durable files are the **memory**, and Git is the **history**.
 
+## Start learning now
+
+```console
+git submodule update --init
+./camp doctor
+./camp open
+```
+
+`./camp open` installs site dependencies when needed, starts the loopback-only learning cockpit, and opens the current lesson. In another terminal, start Pi from this repository and ask:
+
+```text
+What's next?
+```
+
+Lesson 00, **Ghostty: the whole machine**, is ready. It establishes the complete mental map, explains what the camp will teach and why, includes interactive visuals and a local source check, and ends with a Pi-guided explain-back.
+
+Useful commands:
+
+```console
+./camp status          # durable progress and exact next step
+./camp serve           # run the cockpit in the foreground
+./camp serve --background
+./camp build           # course validation plus production build
+```
+
 ## Design documents
 
 - [Product and experience](docs/PRODUCT.md)
@@ -54,7 +79,9 @@ A one- or two-week camp cannot reproduce years of maintainer judgment. It can bu
 ## Status
 
 - [x] Product vision and detailed design
-- [ ] Learning cockpit prototype
+- [x] Minimum learning cockpit foundation
+- [x] Lesson 00: Ghostty overview
+- [ ] PTY vertical-slice lesson
 - [ ] First three vertical-slice lessons
 - [ ] Full two-week critical path
 - [ ] Advanced electives and maintainer ascent track

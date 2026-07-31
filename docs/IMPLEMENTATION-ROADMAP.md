@@ -74,22 +74,22 @@ The milestone passes only if this feels seamless.
 
 P1–P5 establish only the minimum reusable foundation. From P6 onward, phases are learner-facing topic slices and should be implemented, used, refined, and committed one at a time. Do not batch-author later topics before the current lesson has been learned and validated.
 
-- [ ] **P1 — Repository skeleton and pinned source**
+- [x] **P1 — Repository skeleton and pinned source**
   Establish licensing, submodule, manifests, learner schema, source-reference conventions, and basic CI.
 
-- [ ] **P2 — Course CLI and local service**
+- [x] **P2 — Course CLI and local service**
   Implement doctor/status/serve/open, safe lab execution, state API, bounded output, and health checks.
 
-- [ ] **P3 — Site shell and dashboard**
+- [x] **P3 — Site shell and dashboard**
   Add VitePress/Vue, navigation, timeline, dual progress metrics, question list, and architecture map shell.
 
-- [ ] **P4 — Source navigation**
+- [x] **P4 — Source navigation**
   Add browser viewer, validated editor opening, Pi copy references, pinned GitHub links, and link/symbol checks.
 
-- [ ] **P5 — Agent workflow**
+- [x] **P5 — Agent workflow**
   Finalize `AGENTS.md`, skill, prompts, wrap-up protocol, and optional footer/commands extension.
 
-- [ ] **P6 — Orientation vertical slice**
+- [x] **P6 — Orientation vertical slice**
   Build history-first terminal overview, whole-stack visual, source trail, experiment, and explain-back.
 
 - [ ] **P7 — PTY vertical slice**

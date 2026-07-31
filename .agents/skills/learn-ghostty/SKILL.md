@@ -9,7 +9,7 @@ Read the root `AGENTS.md`, `docs/AGENT-WORKFLOW.md`, and `docs/EDITORIAL-PHILOSO
 
 ## Resume
 
-Read durable learner state, inspect the active lesson, run course status, ensure the local site is available, give a short recap, and ask one recall question.
+Read durable learner state, inspect the active lesson, and run `./camp status --json`. If needed, run `./camp serve --background` and open the current lesson. Give a short recap and ask one recall question. Lesson 00 is the only finished content slice; do not route the learner to planned lesson pages.
 
 ## Teach
 
@@ -24,7 +24,7 @@ Use plain language first. Keep the whole architecture in view. Verify claims aga
 
 ## Wrap up
 
-Record where the learner stopped, demonstrated knowledge, uncertainty, unresolved questions, lab results, confidence, and one exact next action in durable learner files.
+Record where the learner stopped, demonstrated knowledge, uncertainty, unresolved questions, lab results, confidence, and one exact next action in durable learner files. Keep completion and mastery separate. For Lesson 00, follow the explain-back rubric in the root `AGENTS.md` before setting it completed.
 
 ## Course authoring
 

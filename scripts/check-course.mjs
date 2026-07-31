@@ -12,6 +12,14 @@ if (actualCommit !== manifest.course.sourceCommit) {
 }
 
 for (const lesson of manifest.lessons) {
+  if (lesson.status === "available") {
+    const lessonPage = resolve(root, "site", `${lesson.path.replace(/^\//, "")}.md`);
+    try {
+      await access(lessonPage);
+    } catch {
+      errors.push(`${lesson.id}: available lesson page is missing at ${lessonPage}`);
+    }
+  }
   for (const ref of lesson.sourceRefs ?? []) {
     try {
       const path = resolve(root, "ghostty", ref.path);
@@ -33,4 +41,4 @@ if (errors.length) {
 
 console.log(`✓ Ghostty source pin ${actualCommit.slice(0, 12)}`);
 console.log(`✓ ${manifest.lessons.flatMap((item) => item.sourceRefs ?? []).length} source references`);
-console.log(`✓ ${manifest.lessons.length} manifest lessons`);
+console.log(`✓ ${manifest.lessons.length} manifest lessons (${manifest.lessons.filter((item) => item.status === "available").length} available)`);
