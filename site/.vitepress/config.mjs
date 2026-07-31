@@ -27,9 +27,9 @@ export default defineConfig({
           text: "FOUNDATION",
           items: [
             { text: "00 · Ghostty: the whole machine", link: "/lessons/00-ghostty-overview" },
-            { text: "01 · From teletype to PTY", link: "/lessons/01-terminal-origins" },
-            { text: "02 · Enough Zig for Ghostty", link: "/lessons/02-zig-bridge" },
-            { text: "03 · Bytes become actions", link: "/lessons/03-vt-parser" }
+            { text: "01 · From teletype to PTY · NEXT" },
+            { text: "02 · Enough Zig for Ghostty · PLANNED" },
+            { text: "03 · Bytes become actions · PLANNED" }
           ]
         },
         {
