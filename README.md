@@ -42,6 +42,7 @@ Useful commands:
 ./camp serve           # run the cockpit in the foreground
 ./camp serve --background
 ./camp build           # course validation plus production build
+npm run audit:ui       # cross-theme, responsive, accessibility browser audit
 ```
 
 ## Design documents
