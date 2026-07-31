@@ -91,6 +91,36 @@ body { letter-spacing: -.01em; }
 .map-placeholder span { padding: 7px 10px; border: 1px solid rgba(185,255,75,.22); border-radius: 5px; color: var(--lime); font: 11px var(--vp-font-family-mono); }
 .map-placeholder b { color: var(--vp-c-text-3); }
 
+.source-page .VPDoc .content-container { max-width: 1120px !important; }
+.source-workbench { margin-top: 32px; }
+.source-header { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding: 22px 24px; border: 1px solid var(--vp-c-divider); border-bottom: 0; border-radius: 14px 14px 0 0; background: #0c1a16; }
+.source-kicker { color: var(--lime); font: 10px var(--vp-font-family-mono); letter-spacing: .13em; }
+.source-header h2 { margin: 6px 0 2px; padding: 0; border: 0; font: 600 20px var(--vp-font-family-mono); letter-spacing: -.03em; }
+.source-header small { color: var(--vp-c-text-3); font: 10px var(--vp-font-family-mono); }
+.source-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.source-actions button, .source-actions a, .source-card button { padding: 8px 10px; border: 1px solid var(--vp-c-divider); border-radius: 6px; color: var(--vp-c-text-2); background: rgba(255,255,255,.025); font: 10px var(--vp-font-family-mono); cursor: pointer; }
+.source-actions button:hover, .source-actions a:hover, .source-card button:hover { color: var(--lime); border-color: rgba(185,255,75,.45); }
+.source-notice, .source-error { padding: 9px 13px; color: var(--cyan); background: rgba(92,229,213,.08); font: 11px var(--vp-font-family-mono); }
+.source-error { color: var(--amber); background: rgba(255,203,107,.07); }
+.code-window { overflow: hidden; border: 1px solid var(--vp-c-divider); border-radius: 0 0 14px 14px; background: #050c0a; }
+.code-window__bar { display: flex; align-items: center; gap: 6px; height: 37px; padding: 0 14px; border-bottom: 1px solid var(--vp-c-divider); }
+.code-window__bar i { width: 7px; height: 7px; border-radius: 50%; background: #2a4036; }
+.code-window__bar span { margin-left: auto; color: #53675d; font: 9px var(--vp-font-family-mono); letter-spacing: .1em; }
+.code-window pre { overflow: auto; max-height: 680px; margin: 0 !important; padding: 17px 0 !important; background: transparent !important; }
+.source-line { display: grid; grid-template-columns: 58px 1fr; min-width: max-content; line-height: 1.7; color: #bac8c0; }
+.source-line b { padding-right: 15px; color: #40564b; text-align: right; font-weight: 400; user-select: none; }
+.source-line > span { padding-right: 25px; white-space: pre; }
+.source-line.focused { color: #ecf7e7; background: rgba(185,255,75,.09); box-shadow: inset 3px 0 var(--lime); }
+.source-line.focused b { color: var(--lime); }
+.source-card { display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; margin: 13px 0; padding: 16px; border: 1px solid var(--vp-c-divider); border-radius: 10px; background: rgba(16,32,27,.75); }
+.source-card__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 8px; color: var(--lime); background: rgba(185,255,75,.07); font: 11px var(--vp-font-family-mono); }
+.source-card__copy { display: flex; min-width: 0; flex-direction: column; gap: 3px; }
+.source-card__copy strong { font-size: 14px; }
+.source-card__copy code { overflow: hidden; padding: 0; border: 0; color: var(--vp-c-text-3); background: none; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.source-card__copy small { color: var(--vp-c-text-2); }
+.source-card__actions { display: flex; align-items: center; gap: 10px; }
+.source-card__actions a { color: var(--lime); font-size: 12px; white-space: nowrap; }
+
 @media (max-width: 820px) {
   .cockpit-shell { padding: 44px 20px 70px; }
   .cockpit-hero h1 { font-size: 52px; }
@@ -103,4 +133,7 @@ body { letter-spacing: -.01em; }
   .path-track { grid-template-columns: 1fr; gap: 20px; }
   .path-stop::before { left: 44px; top: 18px; bottom: -22px; width: 1px; height: auto; }
   .hero-actions { align-items: stretch; flex-direction: column; }
+  .source-header { align-items: flex-start; flex-direction: column; }
+  .source-card { grid-template-columns: 40px 1fr; }
+  .source-card__actions { grid-column: 1 / -1; }
 }

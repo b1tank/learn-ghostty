@@ -1,8 +1,9 @@
 import { execFile } from "node:child_process";
 import { readFile, rename, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
+const ghosttyRoot = resolve(root, "ghostty");
 const statePath = resolve(root, "learner/state.json");
 const manifestPath = resolve(root, "course/manifest.json");
 const validStatuses = new Set(["not_started", "in_progress", "completed"]);
@@ -34,6 +35,14 @@ async function writeState(next) {
   await rename(temp, statePath);
 }
 
+function safeSourcePath(requested) {
+  if (typeof requested !== "string" || requested.includes("\0")) throw new Error("invalid source path");
+  const absolute = resolve(ghosttyRoot, requested);
+  const rel = relative(ghosttyRoot, absolute);
+  if (rel.startsWith("..") || rel.includes("/../") || rel === "") throw new Error("source path is outside Ghostty");
+  return { absolute, relative: rel };
+}
+
 function run(command, args, cwd, timeoutSeconds) {
   return new Promise((resolveRun) => {
     const child = execFile(command, args, {
@@ -62,6 +71,35 @@ function installCourseApi(middlewares) {
           }
           if (req.method === "GET" && url.pathname === "/api/course") {
             return send(res, 200, { manifest: await json(manifestPath), state: await json(statePath) });
+          }
+          if (req.method === "GET" && url.pathname === "/api/source") {
+            const source = safeSourcePath(url.searchParams.get("path"));
+            const content = await readFile(source.absolute, "utf8");
+            if (content.length > 512 * 1024) return send(res, 413, { error: "source file is too large for the lesson viewer" });
+            const lines = content.split("\n");
+            const requestedLine = Number.parseInt(url.searchParams.get("line") ?? "1", 10);
+            const line = Number.isFinite(requestedLine) ? Math.max(1, Math.min(lines.length, requestedLine)) : 1;
+            const requestedEnd = Number.parseInt(url.searchParams.get("end") ?? `${line}`, 10);
+            const end = Number.isFinite(requestedEnd) ? Math.max(line, Math.min(lines.length, requestedEnd)) : line;
+            const from = Math.max(1, line - 24);
+            const to = Math.min(lines.length, end + 36);
+            return send(res, 200, {
+              path: source.relative,
+              line,
+              end,
+              from,
+              to,
+              totalLines: lines.length,
+              lines: lines.slice(from - 1, to),
+            });
+          }
+          if (req.method === "POST" && url.pathname === "/api/source/open") {
+            const input = await readBody(req);
+            const source = safeSourcePath(input.path);
+            const line = Number.isInteger(input.line) ? Math.max(1, input.line) : 1;
+            const editor = process.env.EDITOR_COMMAND ?? "code";
+            const result = await run(editor, ["--goto", `${source.absolute}:${line}`], root, 5);
+            return send(res, result.ok ? 200 : 500, result.ok ? { ok: true } : { error: result.output || `unable to launch ${editor}` });
           }
           if (req.method === "POST" && url.pathname === "/api/progress") {
             const input = await readBody(req);
