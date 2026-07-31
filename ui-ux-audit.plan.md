@@ -11,7 +11,7 @@ This document began as the pre-fix audit and now records the completed remediati
 All five planned phases are complete:
 
 - [x] Semantic light and dark theme architecture.
-- [x] Explicit System / Light / Dark control with live system following.
+- [x] Official VitePress appearance control restored; initial automatic system following retained.
 - [x] Responsive layout, focus visibility, and practical hit targets.
 - [x] Idempotent checkpoints and exact-section resume.
 - [x] Interaction accessibility, recovery states, offline typography, and repeatable browser audit.
@@ -19,7 +19,7 @@ All five planned phases are complete:
 ## Quality principles
 
 1. **Theme is a product feature, not a CSS afterthought.** Every surface, state, and interaction must be designed in both light and dark palettes.
-2. **System means live system following.** Selecting System must react when the OS preference changes, persist as System, and remain selectable after a manual override.
+2. **Follow VitePress's appearance conventions.** With no manual choice, the site follows the operating-system preference. After that, the official VitePress light/dark switch behaves exactly as upstream rather than introducing a custom three-state control.
 3. **A real person must be able to see, point, tap, tab, understand, recover, and resume.** Screenshot similarity alone is insufficient.
 4. **Semantic tokens over raw colors.** Components describe roles such as surface, text, border, accent, code, success, and warning rather than embedding dark-theme values.
 5. **The audit is executable.** Viewport overflow, theme state, contrast-sensitive tokens, focus visibility, target sizing, page availability, and critical interactions receive automated checks plus visual human-style verification.
@@ -67,11 +67,9 @@ nav background     rgba(7, 17, 15, 0.88)
 
 Root cause: dark colors are assigned unconditionally under `:root`, while many components also embed literal dark backgrounds and light foreground assumptions. There is no light semantic palette.
 
-### P0 — System mode cannot be explicitly restored
+### Superseded request — explicit System selector
 
-VitePress correctly chooses the initial mode from `prefers-color-scheme` when storage is `auto`; this was verified for both emulated system light and system dark. However, the visible control is a two-way light/dark switch. After a manual selection, the UI offers no clear way to return to System.
-
-A static dark `<meta name="theme-color">` also remains wrong for light mode.
+VitePress correctly chooses the initial mode from `prefers-color-scheme` when storage is `auto`; this was verified for both emulated system light and system dark. The initial remediation added a custom three-state selector, but product direction changed after review: Learn Ghostty should preserve VitePress's official two-way appearance control rather than maintain custom navigation UI. The custom selector and theme metadata script were subsequently removed.
 
 ### P0 — Keyboard focus is not reliably visible
 
@@ -131,14 +129,12 @@ The design imports Google Fonts. System fallbacks work if unavailable, but the p
 5. Replace the static browser theme color with a value synchronized to the effective palette.
 6. Add an inline pre-paint initializer so stored/system theme is applied before first render.
 
-### Phase 2 — Explicit System / Light / Dark control
+### Phase 2 — Appearance behavior (revised to upstream defaults)
 
-1. Disable VitePress's two-state appearance switch.
-2. Add a keyboard-accessible three-state appearance control to desktop and mobile navigation slots.
-3. Persist `system`, `light`, or `dark` explicitly.
-4. In System mode, subscribe to `matchMedia('(prefers-color-scheme: dark)')` changes and update live.
-5. Make the control announce both selected preference and effective mode.
-6. Verify mode persists across dashboard, lesson, course-map, source viewer, refresh, and a new tab.
+1. Keep VitePress's official two-state appearance switch on desktop and mobile.
+2. Let VitePress use its standard `auto` initial value to follow the OS until the learner makes a manual choice.
+3. Avoid a custom theme component, custom storage key, or custom navigation slots.
+4. Verify upstream light/dark persistence and initial system-light/system-dark behavior across routes.
 
 ### Phase 3 — Correct high-impact UX defects found by the audit
 
@@ -175,7 +171,6 @@ Automated assertions:
 - no unexpected document overflow;
 - effective theme and stored preference agree;
 - system media changes update only in System mode;
-- theme-color metadata matches effective mode;
 - no unnamed custom controls;
 - focus-visible style has sufficient contrast;
 - custom control target dimensions meet the chosen standard;
@@ -201,7 +196,7 @@ Human-style visual verification:
 - Light, Dark, System→Light, System→Dark, and live System changes.
 - 390, 420, 768, 1024, and 1440 px viewports.
 - Horizontal overflow, semantic theme state, metadata, palette contrast, control names, focus visibility, hit targets, reduced motion, key interactions, native lab success, and recoverable API error UI.
-- Mobile navigation exposes all three theme modes with named, touch-sized controls.
+- Desktop and mobile navigation expose VitePress's official appearance switch.
 
 ### Human-style visual verification
 
@@ -211,14 +206,13 @@ Deskpal-controlled real Chrome verified:
 - Lesson 00 in light mode with sidebar and outline;
 - the source viewer in light mode with an intentionally dark, legible code canvas;
 - Lesson 00 at a mobile-sized display in dark mode;
-- visible selection state for Auto, Light, and Dark;
+- the official VitePress light/dark appearance switch;
 - visual continuity while navigating between routes.
 
 ### Functional evidence
 
-- System mode reacts live to a changed `prefers-color-scheme` value and remains stored as System.
-- Light and Dark persist through route changes.
-- Browser `theme-color` tracks the effective mode.
+- VitePress's initial `auto` preference reacts live to a changed `prefers-color-scheme` value.
+- Manual Light and Dark selections persist through route changes using VitePress's standard storage.
 - A repeated checkpoint no longer duplicates activity.
 - Checkpoint buttons hydrate as saved after refresh.
 - Resume links include the durable lesson anchor and land at the correct section.
@@ -236,9 +230,9 @@ Deskpal-controlled real Chrome verified:
 
 - [x] Light mode is visually designed, not merely inverted.
 - [x] Dark mode preserves the current identity without regressions.
-- [x] System can always be selected and follows a live OS preference change.
-- [x] No flash of the wrong theme on reload.
-- [x] Theme choice persists across all routes and a new tab.
+- [x] The initial VitePress `auto` state follows live OS preference changes until manual selection.
+- [x] VitePress's standard pre-paint behavior avoids a wrong-theme flash.
+- [x] Manual Light/Dark choice persists across all routes and a new tab.
 - [x] All audited pages pass at 390, 768, 1024, and 1440 px without unexpected horizontal scroll.
 - [x] Focus is clearly visible and primary custom controls have practical hit targets.
 - [x] Lesson checkpoints resume accurately and do not duplicate completion events.
@@ -248,9 +242,12 @@ Deskpal-controlled real Chrome verified:
 ## Delivered commit structure
 
 1. `refactor: introduce semantic light and dark palettes`
-2. `feat: add system-aware appearance selector`
+2. `feat: add system-aware appearance selector` *(subsequently reverted after product review)*
 3. `fix: harden responsive and keyboard interactions`
 4. `fix: make lesson resume state durable and exact`
 5. `fix: improve interactive accessibility and recovery`
 6. `test: add cross-theme UI audit`
 7. `docs: record UI audit outcomes`
+8. `refactor: restore default VitePress appearance control`
+9. `test: align audit with default appearance control`
+10. `docs: prefer default VitePress appearance behavior`
