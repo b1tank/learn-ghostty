@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { access, mkdir } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import puppeteer from "puppeteer-core";
 
@@ -114,6 +114,40 @@ async function auditSystem(browser) {
   await page.close();
 }
 
+async function auditFrameworkBoundaries(browser) {
+  const css = await readFile(resolve(root, "site/.vitepress/theme/style.css"), "utf8");
+  const forbidden = [
+    [/(^|\n)\.VPNav\b/, "global .VPNav override"],
+    [/(^|\n)\.VPSidebar\b/, "global .VPSidebar override"],
+    [/(^|\n)\.vp-doc h[1-6]\b/, "global VitePress heading override"],
+    [/(^|\n)\.vp-doc code\b/, "global VitePress code override"],
+    [/(^|\n)\.button\s*\{/, "generic .button class"],
+    [/:where\([^\n]*input[^\n]*\):focus-visible/, "global input focus override"]
+  ];
+  for (const [pattern, label] of forbidden) check(!pattern.test(css), `framework boundary: found ${label}`);
+
+  const page = await createPage(browser, { width: 1280, theme: "light" });
+  await page.goto(`${base}/course-map`, { waitUntil: "networkidle0" });
+  const heading = await page.$eval("#build-while-learning", (element) => {
+    const style = getComputedStyle(element);
+    return { paddingTop: parseFloat(style.paddingTop) || 0, borderTop: parseFloat(style.borderTopWidth) || 0, marginTop: parseFloat(style.marginTop) || 0 };
+  });
+  check(heading.paddingTop === 24 && heading.borderTop === 1 && heading.marginTop === 48, "framework boundary: VitePress heading box was globally restyled");
+
+  await page.goto(base, { waitUntil: "networkidle0" });
+  await page.click(".DocSearch-Button");
+  await page.waitForSelector(".VPLocalSearchBox .search-input");
+  const search = await page.$eval(".VPLocalSearchBox .search-input", (element) => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return { left: rect.left, right: rect.right, width: rect.width, height: rect.height, outlineOffset: parseFloat(style.outlineOffset) };
+  });
+  check(search.left >= 0 && search.right <= 1280 && search.width > 240, "framework boundary: search input escaped its dialog");
+  check(search.height >= 32 && search.height <= 48, "framework boundary: search input height was distorted");
+  check(search.outlineOffset === 0, "framework boundary: search focus treatment was overridden");
+  await page.close();
+}
+
 async function auditDefaultAppearance(browser) {
   const desktop = await createPage(browser, { width: 1440, theme: "dark", system: "dark" });
   await desktop.goto(base, { waitUntil: "networkidle0" });
@@ -208,6 +242,7 @@ try {
   await auditTheme(browser, "light");
   await auditTheme(browser, "dark");
   await auditSystem(browser);
+  await auditFrameworkBoundaries(browser);
   await auditDefaultAppearance(browser);
   await auditLayout(browser);
   await auditControls(browser);
