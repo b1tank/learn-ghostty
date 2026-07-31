@@ -67,7 +67,7 @@ async function createPage(browser, { width = 1440, theme = "light", system = "li
     { name: "prefers-color-scheme", value: system },
     { name: "prefers-reduced-motion", value: reducedMotion ? "reduce" : "no-preference" }
   ]);
-  await page.evaluateOnNewDocument((value) => localStorage.setItem("learn-ghostty-theme", value), theme);
+  await page.evaluateOnNewDocument((value) => localStorage.setItem("vitepress-theme-appearance", value === "system" ? "auto" : value), theme);
   return page;
 }
 
@@ -85,18 +85,14 @@ async function auditTheme(browser, theme) {
     }));
     probe.remove();
     return {
-      preference: document.documentElement.dataset.themePreference,
-      effective: document.documentElement.dataset.effectiveTheme,
       dark: document.documentElement.classList.contains("dark"),
+      stored: localStorage.getItem("vitepress-theme-appearance"),
       bodyBackground: getComputedStyle(document.body).backgroundColor,
-      meta: document.querySelector('meta[name="theme-color"]')?.content,
       colors
     };
   });
-  check(state.preference === theme, `${theme}: stored preference was not applied`);
-  check(state.effective === theme, `${theme}: effective theme mismatch`);
+  check(state.stored === theme, `${theme}: VitePress preference was not applied`);
   check(state.dark === (theme === "dark"), `${theme}: document dark class mismatch`);
-  check(state.meta === (theme === "dark" ? "#07110f" : "#f6f8f3"), `${theme}: browser theme-color mismatch`);
   check(contrast(state.colors["--vp-c-text-1"], state.colors["--vp-c-bg"]) >= 7, `${theme}: primary text contrast below 7:1`);
   check(contrast(state.colors["--vp-c-text-2"], state.colors["--vp-c-bg"]) >= 4.5, `${theme}: secondary text contrast below 4.5:1`);
   check(contrast(state.colors["--lime"], state.colors["--vp-c-bg"]) >= 4.5, `${theme}: green accent text contrast below 4.5:1`);
@@ -108,29 +104,34 @@ async function auditTheme(browser, theme) {
 async function auditSystem(browser) {
   const page = await createPage(browser, { theme: "system", system: "light" });
   await page.goto(base, { waitUntil: "networkidle0" });
-  check(await page.evaluate(() => document.documentElement.dataset.effectiveTheme === "light"), "system: did not start in system light");
+  check(await page.evaluate(() => !document.documentElement.classList.contains("dark")), "system: did not start in system light");
   await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "dark" }, { name: "prefers-reduced-motion", value: "no-preference" }]);
   await new Promise((done) => setTimeout(done, 80));
-  check(await page.evaluate(() => document.documentElement.dataset.effectiveTheme === "dark"), "system: did not react live to system dark");
-  check(await page.evaluate(() => localStorage.getItem("learn-ghostty-theme") === "system"), "system: live change lost System preference");
+  check(await page.evaluate(() => document.documentElement.classList.contains("dark")), "system: did not react live to system dark");
+  check(await page.evaluate(() => localStorage.getItem("vitepress-theme-appearance") === "auto"), "system: live change lost VitePress auto preference");
   await page.goto(`${base}/course-map`, { waitUntil: "networkidle0" });
-  check(await page.evaluate(() => document.documentElement.dataset.effectiveTheme === "dark"), "system: theme did not persist across routes");
+  check(await page.evaluate(() => document.documentElement.classList.contains("dark")), "system: theme did not persist across routes");
   await page.close();
 }
 
-async function auditMobileThemeControl(browser) {
-  const page = await createPage(browser, { width: 390, theme: "system", system: "dark" });
-  await page.goto(base, { waitUntil: "networkidle0" });
-  await page.click(".hamburger");
-  const controls = await page.$$eval(".theme-selector--screen button", (elements) => elements.map((element) => ({
-    label: element.getAttribute("aria-label"),
-    height: element.getBoundingClientRect().height
-  })));
-  check(controls.length === 3, "mobile theme: System, Light, and Dark choices are not all present");
-  check(controls.every((control) => control.label && control.height >= 40), "mobile theme: choices are unnamed or undersized");
-  await page.evaluate(() => [...document.querySelectorAll(".theme-selector--screen button")].find((element) => element.title === "Light theme")?.click());
-  check(await page.evaluate(() => document.documentElement.dataset.themePreference === "light" && !document.documentElement.classList.contains("dark")), "mobile theme: Light selection failed");
-  await page.close();
+async function auditDefaultAppearance(browser) {
+  const desktop = await createPage(browser, { width: 1440, theme: "dark", system: "dark" });
+  await desktop.goto(base, { waitUntil: "networkidle0" });
+  const desktopSwitch = await desktop.$(".VPNavBarAppearance .VPSwitchAppearance");
+  check(Boolean(desktopSwitch), "appearance: default desktop VitePress switch is missing");
+  await desktopSwitch?.click();
+  check(await desktop.evaluate(() => !document.documentElement.classList.contains("dark")), "appearance: default desktop switch did not toggle");
+  await desktop.close();
+
+  const mobile = await createPage(browser, { width: 390, theme: "dark", system: "dark" });
+  await mobile.goto(base, { waitUntil: "networkidle0" });
+  await mobile.click(".hamburger");
+  await new Promise((done) => setTimeout(done, 400));
+  const mobileSwitch = await mobile.$(".VPNavScreenAppearance .VPSwitchAppearance");
+  check(Boolean(mobileSwitch), "appearance: default mobile VitePress switch is missing");
+  await mobileSwitch?.evaluate((element) => element.click());
+  check(await mobile.evaluate(() => !document.documentElement.classList.contains("dark")), "appearance: default mobile switch did not toggle");
+  await mobile.close();
 }
 
 async function auditLayout(browser) {
@@ -157,17 +158,17 @@ async function auditControls(browser) {
   const page = await createPage(browser, { width: 1280, theme: "dark" });
   await page.goto(`${base}/lessons/00-ghostty-overview`, { waitUntil: "networkidle0" });
   const controls = await page.evaluate(() => {
-    const custom = [...document.querySelectorAll(".vp-doc button, .source-workbench button, .theme-selector button")].filter((element) => getComputedStyle(element).display !== "none");
+    const custom = [...document.querySelectorAll(".vp-doc button, .source-workbench button")].filter((element) => getComputedStyle(element).display !== "none");
     return custom.map((element) => {
       const rect = element.getBoundingClientRect();
       const name = (element.getAttribute("aria-label") || element.getAttribute("title") || element.textContent || "").trim();
       element.focus();
       const style = getComputedStyle(element);
-      return { name, width: rect.width, height: rect.height, themeControl: Boolean(element.closest(".theme-selector")), outlineWidth: parseFloat(style.outlineWidth), outlineStyle: style.outlineStyle };
+      return { name, width: rect.width, height: rect.height, outlineWidth: parseFloat(style.outlineWidth), outlineStyle: style.outlineStyle };
     });
   });
   check(controls.every((control) => control.name), "controls: one or more custom controls have no accessible name");
-  check(controls.filter((control) => control.height > 0).every((control) => control.height >= (control.themeControl ? 30 : 40)), "controls: one or more custom controls are below their minimum target height");
+  check(controls.filter((control) => control.height > 0).every((control) => control.height >= 40), "controls: one or more custom controls are below their minimum target height");
   check(controls.every((control) => control.outlineStyle !== "none" && control.outlineWidth >= 2), "controls: focus-visible outline is missing");
 
   await page.evaluate(() => [...document.querySelectorAll(".prediction-card")].find((element) => element.textContent.includes("When you type")).querySelector("button.reveal").click());
@@ -207,7 +208,7 @@ try {
   await auditTheme(browser, "light");
   await auditTheme(browser, "dark");
   await auditSystem(browser);
-  await auditMobileThemeControl(browser);
+  await auditDefaultAppearance(browser);
   await auditLayout(browser);
   await auditControls(browser);
   await auditErrorRecovery(browser);
