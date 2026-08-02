@@ -1,111 +1,83 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { withBase } from "vitepress";
-import manifest from "../../course/manifest.json";
-import ProgressRing from "./ProgressRing.vue";
 
 const course = ref(null);
-const mode = ref("loading");
-const storageKey = "learn-ghostty.public-progress.v1";
-
-function publicState() {
-  const empty = {
-    currentLesson: manifest.lessons[0].id,
-    currentStep: "welcome",
-    lessons: Object.fromEntries(manifest.lessons.map((lesson) => [lesson.id, {
-      status: "not_started", completion: 0, mastery: 0, confidence: 0, completedSteps: [],
-    }])),
-  };
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
-    return saved ? { ...empty, ...saved, lessons: { ...empty.lessons, ...saved.lessons } } : empty;
-  } catch { return empty; }
-}
+const error = ref("");
 
 async function loadCourse() {
-  const hosted = window.location.hostname.endsWith("github.io");
-  if (!hosted) {
-    try {
-      const response = await fetch("/api/course");
-      if (!response.ok) throw new Error("course service unavailable");
-      course.value = await response.json();
-      mode.value = "local";
-      return;
-    } catch { /* Preview and static hosts intentionally fall back. */ }
-  }
-  course.value = { manifest, state: publicState() };
-  mode.value = "public";
+  error.value = "";
+  try {
+    const response = await fetch("/api/course");
+    if (!response.ok) throw new Error("course service unavailable");
+    course.value = await response.json();
+  } catch (cause) { error.value = cause.message; }
 }
-
 onMounted(loadCourse);
 
-const current = computed(() => course.value?.manifest.lessons.find((item) => item.id === course.value.state.currentLesson));
-const progress = computed(() => course.value?.state.lessons[current.value?.id] ?? {});
-const completed = computed(() => Object.values(course.value?.state.lessons ?? {}).filter((item) => item.status === "completed").length);
-const resumeUrl = computed(() => current.value ? `${withBase(current.value.path)}#${course.value?.state.currentStep || "welcome"}` : withBase("/"));
+const currentLesson = computed(() => course.value?.manifest.lessons.find((item) => item.id === course.value.state.currentLesson));
+const currentMission = computed(() => course.value?.manifest.missions.find((item) => item.id === course.value.state.currentMission));
+const evidence = computed(() => course.value?.state.evidence?.[currentMission.value?.id] ?? { stage: "not_started", complete: false });
+const resumeUrl = computed(() => currentLesson.value ? `${currentLesson.value.path}#${course.value?.state.currentStep || "welcome"}` : "/");
+const activity = computed(() => course.value?.state.activity?.[0]);
+const nextLessons = computed(() => course.value?.manifest.lessons.filter((lesson) => lesson.order >= (currentLesson.value?.order ?? 0)).slice(0, 4) ?? []);
+const stageOrder = ["not_started", "predicted", "observed", "explained", "traced", "modified"];
+function reached(stage) { return stageOrder.indexOf(evidence.value.stage) >= stageOrder.indexOf(stage); }
 </script>
 
 <template>
-  <main class="cockpit-shell">
-    <section class="cockpit-hero">
-      <div class="eyebrow"><span class="pulse-dot"></span> VISUAL SYSTEMS COURSE</div>
-      <h1>See the whole terminal.<br><em>Build every layer.</em></h1>
-      <p class="hero-copy">A visual, source-backed path through Ghostty—from nineteenth-century wires to modern GPU pixels.</p>
-      <div class="hero-actions">
-        <a v-if="current" class="lg-button lg-button--primary" :href="resumeUrl">Continue your journey <span>→</span></a>
-        <a class="lg-button lg-button--quiet" :href="withBase('/course-map')">Explore the map</a>
-      </div>
-    </section>
-
-    <div v-if="mode === 'public'" class="service-warning public-mode-note" role="note">
-      <span><strong>Public reading mode.</strong> Lessons, visuals, and browser progress work here. Clone the course and run <code>./camp open</code> for local source tools, durable progress, native labs, and Pi.</span>
-      <a href="https://github.com/b1tank/learn-ghostty">Clone course ↗</a>
-    </div>
-
-    <section v-if="course && current" class="dashboard-grid">
-      <article class="panel current-panel">
-        <div class="panel-label">NOW LEARNING</div>
-        <div class="lesson-number">00</div>
-        <div class="current-copy">
-          <h2>{{ current.title }}</h2>
-          <p>{{ current.subtitle }}</p>
-          <div class="lesson-meta"><span>◷ {{ current.estimatedMinutes }} min</span><span>◆ Visual + source tour</span></div>
-          <a class="text-link" :href="resumeUrl">Resume at “{{ course.state.currentStep }}” →</a>
+  <main class="learner-cockpit">
+    <div v-if="error" class="service-warning" role="alert"><span>Run <code>./camp serve</code> to connect your learning record.</span><button @click="loadCourse">Retry</button></div>
+    <template v-else-if="course && currentLesson && currentMission">
+      <header class="mission-hero">
+        <div class="eyebrow"><span class="pulse-dot"></span> CURRENT MISSION · DAY {{ currentLesson.day }}</div>
+        <h1>{{ currentMission.title }}</h1>
+        <p>{{ currentMission.question }}</p>
+        <div class="mission-actions">
+          <a class="lg-button lg-button--primary" :href="resumeUrl">Resume mission <span>→</span></a>
+          <code>Ask Pi: “What do I need to prove next?”</code>
         </div>
-        <ProgressRing :value="progress.completion" label="complete" />
-      </article>
+      </header>
 
-      <article class="panel metrics-panel">
-        <div class="panel-label">YOUR SIGNAL</div>
-        <div class="metric-row">
-          <div><strong>{{ completed }}</strong><span>lessons complete</span></div>
-          <div><strong>{{ progress.mastery ?? 0 }}%</strong><span>demonstrated mastery</span></div>
-        </div>
-        <div class="signal-note">Completion records where you traveled. Mastery records what you can explain and build.</div>
-      </article>
+      <section class="learner-grid">
+        <article class="learner-panel evidence-panel">
+          <div class="panel-label">EVIDENCE, NOT POINTS</div>
+          <h2>{{ evidence.complete ? 'Mission evidence complete' : 'What your record proves so far' }}</h2>
+          <div class="evidence-ladder">
+            <div :class="{ reached: reached('observed') }"><i>01</i><strong>Observe</strong><span>Capture what the system actually did.</span></div>
+            <div :class="{ reached: reached('explained') }"><i>02</i><strong>Explain</strong><span>Give a causal account in your own words.</span></div>
+            <div :class="{ reached: reached('traced') }"><i>03</i><strong>Trace</strong><span>Find the same invariant in Ghostty.</span></div>
+            <div :class="{ reached: reached('modified') }"><i>04</i><strong>Modify</strong><span>Change behavior and preserve the invariant.</span></div>
+          </div>
+        </article>
 
-      <article class="panel path-panel">
-        <div class="panel-heading"><div><div class="panel-label">THE PATH AHEAD</div><h3>One machine, ten layers</h3></div><a :href="withBase('/course-map')">Full map →</a></div>
-        <div class="path-track">
-          <component
-            :is="lesson.status === 'available' ? 'a' : 'div'"
-            v-for="(lesson, index) in course.manifest.lessons"
-            :key="lesson.id"
-            :href="lesson.status === 'available' ? withBase(lesson.path) : undefined"
-            :aria-disabled="lesson.status === 'planned' ? 'true' : undefined"
-            :class="['path-stop', { active: lesson.id === current.id, locked: lesson.status === 'planned' }]"
-          >
-            <span class="stop-index">{{ String(index).padStart(2, '0') }}</span><span class="stop-dot"></span>
-            <span class="stop-copy"><strong>{{ lesson.title }}</strong><small>{{ lesson.status === 'available' ? 'Ready now' : 'Built when you reach it' }}</small></span>
-          </component>
-        </div>
-      </article>
+        <article class="learner-panel context-panel">
+          <div class="panel-label">LAST PROVED</div>
+          <template v-if="activity"><h2>{{ activity.event }}</h2><p>{{ new Date(activity.at).toLocaleString() }}</p></template>
+          <template v-else><h2>Nothing yet—and that is honest.</h2><p>Your first explanation will appear here after you produce it.</p></template>
+          <div class="context-divider"></div>
+          <div class="panel-label">OPEN QUESTIONS</div>
+          <p v-if="course.state.questions?.length">{{ course.state.questions[0] }}</p>
+          <p v-else>No questions saved. Confusion is useful data; ask Pi to park it when one appears.</p>
+        </article>
 
-      <article class="panel teacher-panel">
-        <div class="teacher-orb">π</div>
-        <div><div class="panel-label">PI IS YOUR TEACHER</div><h3>Ask beyond the page.</h3><p>In the local course, return to your terminal whenever a diagram raises a question. Pi knows the lesson, your progress, and the pinned Ghostty source.</p><code>what's next?</code></div>
-      </article>
-    </section>
-    <section v-else class="loading-state">Tuning the terminal…</section>
+        <article class="learner-panel system-panel">
+          <div class="panel-heading"><div><div class="panel-label">THE TRACE YOU ARE BUILDING</div><h2>Program output becomes light</h2></div><a href="/course-map">Course map →</a></div>
+          <div class="system-trace" aria-label="Terminal output path">
+            <span>PROGRAM</span><b>bytes</b><span>PTY</span><b>bytes</b><span>PARSER</span><b>actions</b><span>STATE</span><b>glyphs</b><span>GPU</span><b>frame</b><span>YOU</span>
+          </div>
+          <p>Each lesson turns one arrow from a label into something you have run, explained, and found in source.</p>
+        </article>
+
+        <article class="learner-panel queue-panel">
+          <div class="panel-label">LEARNING QUEUE</div>
+          <div class="queue-list">
+            <component :is="lesson.status === 'available' ? 'a' : 'div'" v-for="lesson in nextLessons" :key="lesson.id" :href="lesson.status === 'available' ? lesson.path : undefined" :class="{ current: lesson.id === currentLesson.id }">
+              <span>{{ String(lesson.order).padStart(2, '0') }}</span><div><strong>{{ lesson.title }}</strong><small>{{ lesson.subtitle }}</small></div><b>{{ lesson.id === currentLesson.id ? 'NOW' : lesson.status === 'available' ? 'READY' : 'PLANNED' }}</b>
+            </component>
+          </div>
+        </article>
+      </section>
+    </template>
+    <div v-else-if="!error" class="loading-state">Loading your next piece of evidence…</div>
   </main>
 </template>
