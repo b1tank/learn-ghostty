@@ -117,6 +117,21 @@
 .map-placeholder { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin: 34px 0; padding: 25px; border: 1px solid var(--vp-c-divider); border-radius: 12px; background: var(--vp-c-bg-soft); }
 .map-placeholder span { padding: 7px 10px; border: 1px solid color-mix(in srgb, var(--lime) 22%, transparent); border-radius: 5px; color: var(--lime); font: 11px var(--vp-font-family-mono); }
 .map-placeholder b { color: var(--vp-c-text-3); }
+.course-map { display: grid; gap: 24px; margin-top: 32px; }
+.course-module { overflow: hidden; border: 1px solid var(--vp-c-divider); border-radius: 12px; background: var(--vp-c-bg-soft); }
+.course-module > header { display: grid; grid-template-columns: 54px 1fr; gap: 14px; padding: 20px; border-bottom: 1px solid var(--vp-c-divider); }
+.course-module > header > span { color: var(--lime); font: 600 22px var(--vp-font-family-mono); }
+.course-module > header h2 { margin: 0; padding: 0; border: 0; font-size: 20px; }
+.course-module > header p { margin: 5px 0 0; color: var(--vp-c-text-2); font-size: 13px; }
+.course-lessons { display: grid; }
+.course-lesson { display: grid; grid-template-columns: 72px 1fr auto; gap: 16px; align-items: center; padding: 17px 20px; border-bottom: 1px solid var(--vp-c-divider); color: var(--vp-c-text-1) !important; text-decoration: none !important; }
+.course-lesson:last-child { border-bottom: 0; }
+a.course-lesson:hover { background: color-mix(in srgb, var(--lime) 6%, transparent); }
+.course-lesson__day { color: var(--vp-c-text-3); font: 9px var(--vp-font-family-mono); }
+.course-lesson h3 { margin: 0; font-size: 14px; }
+.course-lesson p { margin: 3px 0 0; color: var(--vp-c-text-2); font-size: 11px; }
+.course-lesson__evidence b { padding: 4px 7px; border: 1px solid var(--vp-c-divider); border-radius: 999px; color: var(--vp-c-text-3); font: 8px var(--vp-font-family-mono); text-transform: uppercase; }
+.course-lesson.is-planned, .course-lesson.is-building { opacity: .62; }
 
 .lesson-anchor { display: block; height: 0; scroll-margin-top: calc(var(--vp-nav-height) + 18px); visibility: hidden; }
 .lesson-hero { position: relative; display: grid; grid-template-columns: 140px 1fr; gap: 30px; scroll-margin-top: calc(var(--vp-nav-height) + 22px); margin: 8px 0 62px; padding: 42px 0 40px; border-bottom: 1px solid var(--vp-c-divider); }

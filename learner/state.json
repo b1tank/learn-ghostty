@@ -1,30 +1,21 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "currentLesson": "00-ghostty-overview",
+  "currentMission": "orientation-map",
   "currentStep": "welcome",
   "startedAt": null,
   "updatedAt": null,
   "lessons": {
     "00-ghostty-overview": {
       "status": "not_started",
-      "completion": 0,
-      "mastery": 0,
-      "confidence": 0,
-      "completedSteps": []
+      "completedMissions": []
+    },
+    "01-terminal-relationship": {
+      "status": "locked",
+      "completedMissions": []
     }
   },
-  "subsystems": {
-    "terminal-history": 0,
-    "pty-and-io": 0,
-    "zig-core": 0,
-    "vt-parser": 0,
-    "terminal-state": 0,
-    "unicode-and-fonts": 0,
-    "gpu-renderer": 0,
-    "input": 0,
-    "native-ui": 0,
-    "maintainer-workflow": 0
-  },
+  "evidence": {},
   "questions": [],
   "activity": []
 }

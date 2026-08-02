@@ -1,5 +1,19 @@
+import { readFileSync } from "node:fs";
 import { defineConfig } from "vitepress";
 import { courseApiPlugin } from "../../server/course-api.mjs";
+
+const manifest = JSON.parse(readFileSync(new URL("../../course/manifest.json", import.meta.url), "utf8"));
+const lessonById = Object.fromEntries(manifest.lessons.map((lesson) => [lesson.id, lesson]));
+const sidebar = manifest.modules.map((module) => ({
+  text: module.title.toUpperCase(),
+  items: module.lessonIds.map((id) => {
+    const lesson = lessonById[id];
+    return lesson.status === "available"
+      ? { text: `${String(lesson.order).padStart(2, "0")} · ${lesson.title}`, link: lesson.path }
+      : { text: `${String(lesson.order).padStart(2, "0")} · ${lesson.title} · ${lesson.status === "building" ? "NEXT" : "PLANNED"}` };
+  })
+}));
+sidebar.push({ text: "TOOLS", items: [{ text: "Source viewer", link: "/source" }, { text: "Course map", link: "/course-map" }] });
 
 export default defineConfig({
   base: process.env.LEARN_GHOSTTY_BASE || "/",
@@ -14,26 +28,7 @@ export default defineConfig({
       { text: "Start learning", link: "/lessons/00-ghostty-overview" },
       { text: "Course map", link: "/course-map" }
     ],
-    sidebar: {
-      "/lessons/": [
-        {
-          text: "FOUNDATION",
-          items: [
-            { text: "00 · Ghostty: the whole machine", link: "/lessons/00-ghostty-overview" },
-            { text: "01 · From teletype to PTY · NEXT" },
-            { text: "02 · Enough Zig for Ghostty · PLANNED" },
-            { text: "03 · Bytes become actions · PLANNED" }
-          ]
-        },
-        {
-          text: "YOUR TOOLS",
-          items: [
-            { text: "Source viewer", link: "/source" },
-            { text: "Course map", link: "/course-map" }
-          ]
-        }
-      ]
-    },
+    sidebar: { "/lessons/": sidebar },
     socialLinks: [{ icon: "github", link: "https://github.com/b1tank/learn-ghostty" }],
     search: { provider: "local" },
     outline: { level: [2, 3], label: "ON THIS PAGE" },
