@@ -98,20 +98,21 @@ The dashboard should answer immediately:
 
 It includes:
 
-- current lesson and estimated time;
-- overall course completion;
-- demonstrated mastery;
-- recent activity;
+- the exact current mission and question;
+- the next missing evidence field;
+- the last claim the learner proved;
 - open questions;
-- review cards due;
-- clickable architecture mastery map;
-- one-click resume.
+- the evolving end-to-end trace;
+- the canonical learning queue;
+- one-click exact-section resume.
 
-## 4. Progress views
+It does not lead with marketing copy, completion percentages, or subjective mastery scores.
 
-### Timeline
+## 4. Evidence views
 
-Lessons are shown as not started, in progress, lab passed, explain-back passed, completed, or elective.
+### Mission ladder
+
+Missions expose what is not started, predicted, observed, explained, traced in production, or safely modified. These stages are claims backed by learner-authored artifacts rather than page traversal.
 
 ### Architecture map
 
@@ -132,17 +133,7 @@ bytes and PTYs
 
 ## 5. Lesson page
 
-A lesson combines:
-
-- course navigation;
-- approachable narrative;
-- current-layer highlight in the whole stack;
-- diagrams and interactive components;
-- embedded lab console;
-- progress and source trail;
-- notes and parked questions;
-- official references;
-- “Copy question for Pi.”
+A lesson combines one or more missions. Each mission begins with a mystery or prediction, runs an observable system, builds or manipulates a small causal model, follows a narrow production source trail, and saves learner-authored evidence. Narrative and diagrams exist to explain evidence, not replace it.
 
 Reusable interactive components should include:
 

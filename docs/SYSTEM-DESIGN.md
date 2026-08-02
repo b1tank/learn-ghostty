@@ -195,36 +195,25 @@ Server-run, allowlisted projects for:
 
 The UI offers Run, Test, Reset, Show Diff, and Open in Editor. A prediction component should often gate Run or Reveal.
 
-## 6. Durable progress
+## 6. Durable evidence
 
-Machine-readable state records current lesson, step, lesson status, labs, explain-backs, confidence, and review schedule.
+`course/manifest.json` defines one hierarchy: modules contain lessons; lessons contain missions. Each mission declares the evidence it requires from prediction, observation, explanation, and source invariant.
 
-Human-readable files record:
+Machine-readable state records the current lesson and mission plus a summary evidence stage. Full learner claims are ordinary files under `learner/evidence/` so they can be inspected, challenged, edited, and committed without depending on an agent session.
 
-- where the learner stopped;
-- what they can explain;
-- current confusion;
-- unresolved questions;
-- exact next action.
+Human-readable files still record where the learner stopped, current confusion, unresolved questions, and the exact next action. Browser and Pi updates must be atomic, schema-validated, and must never invent a learner observation.
 
-The learner state is the bridge among browser sessions, Pi sessions, and Git history. Browser and Pi updates should be atomic. The server should validate state against a schema.
+## 7. Evidence semantics
 
-## 7. Progress semantics
-
-Keep two distinct dimensions:
-
-- **Completion:** content traversed and required interactions performed.
-- **Mastery:** labs, explain-backs, transfer questions, and later recall.
-
-Confidence is learner-reported and must not substitute for demonstrated mastery.
-
-Lesson states:
+A click can record navigation but cannot demonstrate understanding. Mission evidence progresses through causal capabilities:
 
 ```text
-not_started → in_progress → lab_passed → explain_back_passed → completed
+not_started → predicted → observed → explained → traced → modified
 ```
 
-Some lessons may not require every intermediate state. Electives are separate from the core percentage.
+Not every mission requires every stage. An orientation may require an explanation; a systems mission may require prediction, concrete observation, causal explanation, and a source invariant. Later transfer exercises test whether evidence remains usable in a new situation.
+
+The dashboard shows what the learner has proved, not percentages, confidence theater, or an LLM-generated mastery score.
 
 ## 8. Course CLI
 

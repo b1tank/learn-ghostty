@@ -18,7 +18,9 @@
 - macOS/SwiftUI/Metal receives a complete conceptual track and runnable material where the host permits it.
 - C is used first when it exposes fundamentals cleanly; Zig follows for production-source fluency.
 - Pi integration uses `AGENTS.md` and a project skill as the foundation. Prompt templates and a small extension add convenience but are not required.
-- Course completion and demonstrated mastery are separate metrics.
+- The canonical hierarchy is modules → lessons → missions. Dashboard, sidebar, course map, Pi, and learner state derive from `course/manifest.json`.
+- Mission progress is evidence-based: prediction, observation, explanation, and source invariant produce stages such as observed, explained, traced, and modified. Do not display mastery percentages.
+- Browser simulations must be input-driven, expose internal state, and state their limits. A timed sequence of static explanations is not a lab.
 - The site never embeds a second AI conversation.
 - Native lab execution is allowlisted; the browser cannot submit arbitrary shell commands.
 - Course development is learning-led: build the minimum foundation, then complete, use, and refine one lesson or topic before starting the next.
