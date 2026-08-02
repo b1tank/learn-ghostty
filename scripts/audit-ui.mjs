@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import puppeteer from "puppeteer-core";
 
@@ -122,13 +122,13 @@ async function auditFrameworkBoundaries(browser) {
     [/(^|\n)\.vp-doc h[1-6]\b/, "global VitePress heading override"],
     [/(^|\n)\.vp-doc code\b/, "global VitePress code override"],
     [/(^|\n)\.button\s*\{/, "generic .button class"],
-    [/:where\([^\n]*input[^\n]*\):focus-visible/, "global input focus override"]
+    [/(^|\n):where\([^\n]*input[^\n]*\):focus-visible/, "global input focus override"]
   ];
   for (const [pattern, label] of forbidden) check(!pattern.test(css), `framework boundary: found ${label}`);
 
   const page = await createPage(browser, { width: 1280, theme: "light" });
-  await page.goto(`${base}/course-map`, { waitUntil: "networkidle0" });
-  const heading = await page.$eval("#build-while-learning", (element) => {
+  await page.goto(`${base}/lessons/00-ghostty-overview`, { waitUntil: "networkidle0" });
+  const heading = await page.$eval("#four-things-people-call-the-terminal", (element) => {
     const style = getComputedStyle(element);
     return { paddingTop: parseFloat(style.paddingTop) || 0, borderTop: parseFloat(style.borderTopWidth) || 0, marginTop: parseFloat(style.marginTop) || 0 };
   });
@@ -169,7 +169,7 @@ async function auditDefaultAppearance(browser) {
 }
 
 async function auditLayout(browser) {
-  const routes = ["/", "/lessons/00-ghostty-overview", "/course-map", "/source?path=src/App.zig&line=1&end=4", "/missing-audit-page"];
+  const routes = ["/", "/lessons/00-ghostty-overview", "/lessons/01-terminal-relationship", "/course-map", "/source?path=src/App.zig&line=1&end=4", "/missing-audit-page"];
   for (const theme of ["light", "dark"]) {
     for (const width of [390, 420, 768, 1024, 1440]) {
       for (const route of routes) {
@@ -189,38 +189,80 @@ async function auditLayout(browser) {
 }
 
 async function auditControls(browser) {
+  const orientation = await createPage(browser, { width: 1280, theme: "dark" });
+  await orientation.goto(`${base}/lessons/00-ghostty-overview`, { waitUntil: "networkidle0" });
+  await orientation.evaluate(() => [...document.querySelectorAll(".architecture-node")].find((element) => element.textContent.includes("GPU")).click());
+  check(await orientation.$eval(".architecture-detail h3", (element) => element.textContent === "GPU renderer"), "architecture: layer selection failed");
+  check(await orientation.$eval('.architecture-node[aria-selected="true"]', (element) => element.textContent.includes("GPU")), "architecture: selected tab semantics failed");
+  await orientation.close();
+
   const page = await createPage(browser, { width: 1280, theme: "dark" });
-  await page.goto(`${base}/lessons/00-ghostty-overview`, { waitUntil: "networkidle0" });
+  await page.goto(`${base}/lessons/01-terminal-relationship`, { waitUntil: "networkidle0" });
   const controls = await page.evaluate(() => {
-    const custom = [...document.querySelectorAll(".vp-doc button, .source-workbench button")].filter((element) => getComputedStyle(element).display !== "none");
+    const custom = [...document.querySelectorAll(".prediction-card button, .lab-runner button, .byte-workbench button, .byte-workbench input, .byte-workbench textarea, .evidence-notebook button, .evidence-notebook textarea")].filter((element) => getComputedStyle(element).display !== "none" && !element.disabled);
     return custom.map((element) => {
       const rect = element.getBoundingClientRect();
-      const name = (element.getAttribute("aria-label") || element.getAttribute("title") || element.textContent || "").trim();
+      const name = (element.getAttribute("aria-label") || element.getAttribute("title") || element.closest("label")?.querySelector(":scope > span")?.textContent || element.textContent || "").trim();
       element.focus();
       const style = getComputedStyle(element);
       return { name, width: rect.width, height: rect.height, outlineWidth: parseFloat(style.outlineWidth), outlineStyle: style.outlineStyle };
     });
   });
   check(controls.every((control) => control.name), "controls: one or more custom controls have no accessible name");
-  check(controls.filter((control) => control.height > 0).every((control) => control.height >= 40), "controls: one or more custom controls are below their minimum target height");
-  check(controls.every((control) => control.outlineStyle !== "none" && control.outlineWidth >= 2), "controls: focus-visible outline is missing");
+  check(controls.filter((control) => control.height > 0).every((control) => control.height >= 40), "controls: one or more mission controls are below 40px high");
+  check(controls.every((control) => control.outlineStyle !== "none" && control.outlineWidth >= 2), "controls: custom focus-visible outline is missing");
 
-  await page.evaluate(() => [...document.querySelectorAll(".prediction-card")].find((element) => element.textContent.includes("When you type")).querySelector("button.reveal").click());
+  await page.click(".prediction-actions .reveal");
   check(await page.$eval(".prediction-actions .reveal", (element) => element.getAttribute("aria-expanded") === "true"), "prediction: reveal state is not announced");
-  await page.evaluate(() => [...document.querySelectorAll(".architecture-node")].find((element) => element.textContent.includes("GPU")).click());
-  check(await page.$eval(".architecture-detail h3", (element) => element.textContent === "GPU renderer"), "architecture: layer selection failed");
-  check(await page.$eval('.architecture-node[aria-selected="true"]', (element) => element.textContent.includes("GPU")), "architecture: selected tab semantics failed");
+  await page.click(".lab-title button");
+  await page.waitForSelector(".lab-runner pre");
+  check(await page.$eval(".lab-runner pre", (element) => element.classList.contains("passed") && element.textContent.includes("stdin is a terminal    yes")), "PTY lab: native comparison did not report a terminal");
+
+  await page.$eval(".byte-workbench textarea", (element) => { element.value = "H and i should occupy green cells zero and one."; element.dispatchEvent(new Event("input", { bubbles: true })); });
+  await page.click(".byte-workbench .workbench-lock button");
+  await page.click(".byte-workbench .workbench-controls button.primary");
+  await page.waitForFunction(() => document.querySelector(".machine-action strong")?.textContent.includes("complete"));
+  const terminal = await page.evaluate(() => ({
+    cells: [...document.querySelectorAll(".terminal-grid > div")].slice(0, 2).map((element) => ({ text: element.querySelector("span").textContent, className: element.className })),
+    events: document.querySelector(".action-log pre")?.textContent.split("\n").length,
+    notebooks: document.querySelectorAll(".evidence-notebook").length
+  }));
+  check(terminal.cells[0].text === "H" && terminal.cells[0].className.includes("green") && terminal.cells[1].text === "i", "byte workbench: SGR/print result is incorrect");
+  check(terminal.events === 11, "byte workbench: expected eleven byte events");
+  check(terminal.notebooks === 2, "evidence: Lesson 01 should expose two mission notebooks");
   await page.close();
 
   const reduced = await createPage(browser, { width: 1280, theme: "light", reducedMotion: true });
-  await reduced.goto(`${base}/lessons/00-ghostty-overview`, { waitUntil: "networkidle0" });
-  await reduced.click(".journey-top button");
+  await reduced.goto(`${base}/lessons/01-terminal-relationship`, { waitUntil: "networkidle0" });
+  await reduced.$eval(".byte-workbench textarea", (element) => { element.value = "Green H and i."; element.dispatchEvent(new Event("input", { bubbles: true })); });
+  await reduced.click(".byte-workbench .workbench-lock button");
+  await reduced.click(".byte-workbench .workbench-controls button.primary");
   await new Promise((done) => setTimeout(done, 30));
-  check(await reduced.$eval(".journey-stage h4", (element) => element.textContent === "Meaning becomes pixels"), "reduced motion: byte journey did not complete immediately");
-  await reduced.click(".lab-title button");
-  await reduced.waitForSelector(".lab-runner pre");
-  check(await reduced.$eval(".lab-runner pre", (element) => element.classList.contains("passed")), "lab: source check did not report success");
+  check(await reduced.$eval(".machine-action strong", (element) => element.textContent.includes("complete")), "reduced motion: byte workbench did not complete immediately");
   await reduced.close();
+}
+
+async function auditEvidencePersistence() {
+  const statePath = resolve(root, "learner/state.json");
+  const evidencePath = resolve(root, "learner/evidence/orientation-map.json");
+  const stateBackup = await readFile(statePath, "utf8");
+  const evidenceBackup = await readFile(evidencePath, "utf8").catch(() => null);
+  try {
+    const response = await fetch(`${base}/api/evidence`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ missionId: "orientation-map", explanation: "Audit claim: bytes cross PTY, parser, state, font, and GPU boundaries." })
+    });
+    const value = await response.json();
+    check(response.ok && value.evidence.complete, "evidence API: required orientation claim did not complete");
+    check(value.state.currentMission === "process-pty-observation", "evidence API: completion did not advance to the next mission");
+    const persisted = JSON.parse(await readFile(evidencePath, "utf8"));
+    check(persisted.explanation.includes("Audit claim"), "evidence API: claim was not persisted atomically");
+  } finally {
+    await writeFile(statePath, stateBackup);
+    if (evidenceBackup === null) await rm(evidencePath, { force: true });
+    else await writeFile(evidencePath, evidenceBackup);
+  }
 }
 
 async function auditErrorRecovery(browser) {
@@ -231,8 +273,8 @@ async function auditErrorRecovery(browser) {
     else request.continue();
   });
   await page.goto(base, { waitUntil: "networkidle0" });
-  check(await page.$eval(".service-warning", (element) => element.getAttribute("role") === "note"), "dashboard fallback: public-mode note semantics missing");
-  check(await page.$eval(".service-warning a", (element) => element.textContent.includes("Clone course")), "dashboard fallback: local-course action missing");
+  check(await page.$eval(".service-warning", (element) => element.getAttribute("role") === "alert"), "dashboard error: alert semantics missing");
+  check(await page.$eval(".service-warning button", (element) => element.textContent.includes("Retry")), "dashboard error: retry action missing");
   await page.close();
 }
 
@@ -246,6 +288,7 @@ try {
   await auditDefaultAppearance(browser);
   await auditLayout(browser);
   await auditControls(browser);
+  await auditEvidencePersistence();
   await auditErrorRecovery(browser);
 } finally {
   await browser.close();
