@@ -68,10 +68,10 @@
 .mission-hero > p { max-width: 690px; margin: 0; color: var(--vp-c-text-2); font-size: 19px; line-height: 1.55; }
 .mission-actions { display: flex; align-items: center; gap: 18px; margin-top: 27px; }
 .mission-actions > code { color: var(--vp-c-text-3); font-size: 11px; }
-.learner-grid { display: grid; grid-template-columns: 1.45fr .85fr; gap: 14px; }
-.learner-panel { padding: 25px; border: 1px solid var(--vp-c-divider); border-radius: 13px; background: var(--lg-panel-gradient); }
+.learner-grid { display: grid; min-width: 0; grid-template-columns: minmax(0, 1.45fr) minmax(0, .85fr); gap: 14px; }
+.learner-panel { min-width: 0; padding: 25px; border: 1px solid var(--vp-c-divider); border-radius: 13px; background: var(--lg-panel-gradient); }
 .learner-panel h2 { margin: 8px 0 18px; font-size: 22px; letter-spacing: -.03em; }
-.evidence-ladder { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--vp-c-divider); border-radius: 9px; }
+.evidence-ladder { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--vp-c-divider); border-radius: 9px; }
 .evidence-ladder > div { min-height: 135px; padding: 15px; border-right: 1px solid var(--vp-c-divider); opacity: .42; }
 .evidence-ladder > div:last-child { border-right: 0; }
 .evidence-ladder > div.reached { opacity: 1; background: color-mix(in srgb, var(--lime) 7%, transparent); }
@@ -260,7 +260,7 @@ a.course-lesson:hover { background: color-mix(in srgb, var(--lime) 6%, transpare
 .workbench-field { display: grid; grid-template-columns: 155px 1fr; gap: 14px; align-items: start; padding: 15px 20px 0; }
 .workbench-field > span { color: var(--vp-c-text-2); font: 9px var(--vp-font-family-mono); letter-spacing: .08em; }
 .workbench-field small { display: block; margin-top: 5px; color: var(--vp-c-text-3); font: 9px/1.4 var(--vp-font-family-base); letter-spacing: 0; }
-.workbench-field input, .workbench-field textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--vp-c-divider); border-radius: 7px; color: var(--vp-c-text-1); background: var(--vp-c-bg); font: 12px var(--vp-font-family-mono); resize: vertical; }
+.workbench-field input, .workbench-field textarea { width: 100%; min-height: 42px; padding: 10px 12px; border: 1px solid var(--vp-c-divider); border-radius: 7px; color: var(--vp-c-text-1); background: var(--vp-c-bg); font: 12px var(--vp-font-family-mono); resize: vertical; }
 .workbench-lock { display: flex; justify-content: flex-end; padding: 16px 20px 20px; }
 .byte-rail { display: flex; gap: 5px; overflow-x: auto; margin-top: 18px; padding: 16px 20px; border-top: 1px solid var(--vp-c-divider); border-bottom: 1px solid var(--vp-c-divider); background: var(--lg-inset); }
 .byte-rail > span { flex: 0 0 42px; padding: 7px 3px; border: 1px solid var(--vp-c-divider); border-radius: 5px; text-align: center; opacity: .5; }
