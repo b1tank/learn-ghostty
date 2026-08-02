@@ -4,7 +4,7 @@ This repository is designed to be used with a coding agent as a personal teacher
 
 ## Current phase
 
-The minimum learning cockpit and Lesson 00 are runnable. Read `docs/README.md` for the design and `sprint.plan.md` for the latest implementation record.
+The evidence-first cockpit, concise orientation, and Lesson 01 process/PTY plus byte-workbench missions are runnable. Read `course/manifest.json` as the canonical module → lesson → mission model, then `sprint.plan.md` for the latest implementation record.
 
 The learner's immediate path is:
 
@@ -13,7 +13,7 @@ The learner's immediate path is:
 ./camp open
 ```
 
-Then begin `site/lessons/00-ghostty-overview.md`. Later lessons are intentionally built only after this slice is learned and refined.
+Begin at the current mission from `learner/state.json`. Lesson 00 builds the map; Lesson 01 requires a real C/PTY observation and a byte-driven miniature terminal. Later lessons are intentionally built only after this evidence is used and refined.
 
 ## Resume requests
 
@@ -55,25 +55,27 @@ See `docs/IMPLEMENTATION-ROADMAP.md#build-while-learning` for the full loop.
 - Link official Ghostty documentation, source comments, tests, and examples.
 - Ask the learner to predict before revealing an answer.
 - Give hints before full lab solutions.
-- Require explain-back and transfer questions for mastery.
-- Distinguish completion from demonstrated mastery.
+- Require learner-produced prediction, observation, explanation, and source invariant when the mission asks for them.
+- Treat `learner/evidence/*.json` as claims to interrogate, not model answers to improve on the learner's behalf.
+- Use evidence stages—observed, explained, traced, modified—instead of percentages or vague mastery scores.
 - Never rely only on conversation history for learner state.
 
 ## Source references
 
 When the Ghostty submodule exists, use the pinned checkout as source of truth. Prefer ordered execution trails over unordered file lists. Include local source-view links, editor paths, immutable GitHub links, and relevant tests where the site supports them.
 
-## Lesson 00 explain-back
+## Evidence review protocol
 
-When the learner reaches `pi-explain-back`, quiz these outcomes without showing model answers first:
+For any mission:
 
-1. Distinguish terminal emulator, shell, terminal application, and PTY.
-2. Explain why physical-terminal history still shapes software.
-3. Trace output through program → PTY → parser → state → fonts → GPU → native window.
-4. State where the browser analogy helps and where it fails.
-5. Explain shared Zig core versus native GTK and Swift/SwiftUI runtimes.
+1. Read its `evidenceFields` in `course/manifest.json` and any existing `learner/evidence/<mission>.json`.
+2. Ask the learner to commit a prediction before showing or running the result when one is required.
+3. Challenge one claim at a time with a counterexample or source question.
+4. Do not rewrite weak evidence. Name the gap and ask the learner to revise it.
+5. Never invent observations, completion, or source invariants.
+6. Completion comes from all required evidence fields being non-empty; quality comes from adversarial review and later transfer, not a percentage.
 
-After a satisfactory explanation, update Lesson 00 in `learner/state.json` to `status: completed`, `mastery` based on demonstrated answers, and `currentStep: lesson-01-not-built`. Summarize strengths and gaps in `learner/journal.md`. Do not award mastery for clicking the final checkpoint alone.
+For `orientation-map`, require a coherent program → PTY → parser → state → fonts → GPU → native-window account. For `process-pty-observation`, require concrete equalities from the C probe and the master/slave inheritance invariant. For `bytes-to-screen`, require a byte-by-byte causal explanation and ordered parser-action invariant.
 
 ## Course changes
 

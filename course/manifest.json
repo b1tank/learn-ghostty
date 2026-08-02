@@ -58,7 +58,7 @@
       "subtitle": "Observe processes, a PTY, and control bytes before naming the machinery",
       "path": "/lessons/01-terminal-relationship",
       "estimatedMinutes": 90,
-      "status": "building",
+      "status": "available",
       "prerequisites": ["00-ghostty-overview"],
       "missionIds": ["process-pty-observation", "bytes-to-screen"],
       "sourceRefs": [

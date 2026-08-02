@@ -53,6 +53,7 @@
 .byte-workbench :where(a, button, input, textarea, [tabindex]):focus-visible,
 .architecture-explorer :where(a, button, [tabindex]):focus-visible,
 .lab-runner :where(a, button, [tabindex]):focus-visible,
+.evidence-notebook :where(a, button, textarea, [tabindex]):focus-visible,
 .source-workbench :where(a, button, [tabindex]):focus-visible,
 .source-card :where(a, button, [tabindex]):focus-visible {
   outline: 3px solid var(--lg-focus) !important;
@@ -284,6 +285,23 @@ a.course-lesson:hover { background: color-mix(in srgb, var(--lime) 6%, transpare
 .action-log { margin: 0 20px 20px; border: 1px solid var(--vp-c-divider); border-radius: 7px; }
 .action-log summary { padding: 10px 12px; color: var(--vp-c-text-2); font: 10px var(--vp-font-family-mono); cursor: pointer; }
 .action-log pre { overflow: auto; max-height: 280px; margin: 0 !important; border: 0 !important; border-top: 1px solid var(--vp-c-divider) !important; border-radius: 0 !important; font-size: 10px !important; }
+.evidence-notebook { margin: 34px 0; overflow: hidden; border: 1px solid color-mix(in srgb, var(--lime) 30%, var(--vp-c-divider)); border-radius: 13px; background: var(--lg-panel-gradient); }
+.evidence-notebook > header { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 20px 22px; border-bottom: 1px solid var(--vp-c-divider); }
+.evidence-notebook > header span { color: var(--lime); font: 9px var(--vp-font-family-mono); letter-spacing: .12em; }
+.evidence-notebook > header h3 { margin: 5px 0 0; font-size: 19px; }
+.evidence-notebook > header b { padding: 5px 8px; border: 1px solid var(--vp-c-divider); border-radius: 999px; color: var(--vp-c-text-3); font: 8px var(--vp-font-family-mono); text-transform: uppercase; }
+.evidence-notebook > header b.complete { color: var(--lime); border-color: color-mix(in srgb, var(--lime) 40%, transparent); }
+.evidence-notebook > p, .evidence-error { margin: 0; padding: 18px 22px; color: var(--vp-c-text-2); }
+.evidence-notebook > label { display: grid; grid-template-columns: 180px 1fr; gap: 18px; padding: 17px 22px; border-bottom: 1px solid var(--vp-c-divider); }
+.evidence-notebook > label > span { font-size: 12px; font-weight: 700; }
+.evidence-notebook > label small { display: block; margin-top: 6px; color: var(--vp-c-text-3); font-size: 10px; font-weight: 400; line-height: 1.45; }
+.evidence-notebook textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--vp-c-divider); border-radius: 7px; color: var(--vp-c-text-1); background: var(--vp-c-bg); font: 12px/1.55 var(--vp-font-family-base); resize: vertical; }
+.evidence-notebook > footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 22px; }
+.evidence-notebook > footer > span { color: var(--vp-c-text-3); font-size: 10px; }
+.evidence-notebook > footer > div { display: flex; gap: 7px; }
+.evidence-notebook button, .evidence-error button { min-height: 40px; padding: 8px 11px; border: 1px solid var(--vp-c-divider); border-radius: 6px; color: var(--vp-c-text-2); background: var(--lg-control); font: 10px var(--vp-font-family-mono); cursor: pointer; }
+.evidence-notebook button.primary { color: var(--on-accent); border-color: var(--accent-fill); background: var(--accent-fill); }
+.evidence-notebook button:disabled { opacity: .55; }
 
 .source-page .VPDoc .content-container { max-width: 1120px !important; }
 .source-workbench { margin-top: 32px; }
@@ -351,6 +369,9 @@ a.course-lesson:hover { background: color-mix(in srgb, var(--lime) 6%, transpare
   .terminal-grid { grid-template-columns: repeat(6, 1fr); }
   .terminal-grid > div:nth-child(6) { border-right: 0; }
   .workbench-controls { flex-wrap: wrap; justify-content: flex-start; }
+  .evidence-notebook > label { grid-template-columns: 1fr; }
+  .evidence-notebook > footer { align-items: flex-start; flex-direction: column; }
+  .evidence-notebook > footer > div { flex-wrap: wrap; }
   .journey-steps { grid-template-columns: 1fr; gap: 17px; }
   .journey-steps button::after { left: 9px; right: auto; top: 22px; bottom: -18px; width: 1px; height: auto; }
   .architecture-rail { justify-content: flex-start; }

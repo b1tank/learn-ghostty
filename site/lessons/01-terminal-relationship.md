@@ -5,6 +5,7 @@ description: "Observe processes, a pseudo-terminal, and control bytes before rea
 
 <script setup>
 import ByteWorkbench from '../components/ByteWorkbench.vue'
+import EvidenceNotebook from '../components/EvidenceNotebook.vue'
 import LabRunner from '../components/LabRunner.vue'
 import PredictionCard from '../components/PredictionCard.vue'
 import SourceLink from '../components/SourceLink.vue'
@@ -18,6 +19,8 @@ import SourceLink from '../components/SourceLink.vue'
     <p>A shell is not “inside” Ghostty like text inside a text box. Processes are connected through a kernel object that preserves the shape of an old physical terminal. You will observe that relationship before naming every part.</p>
   </div>
 </div>
+
+<span id="process-pty-observation" class="lesson-anchor"></span>
 
 ## Mission 1 — Observe the software cable
 
@@ -117,7 +120,11 @@ Before moving on, your notebook must contain:
 3. **Explanation:** why a PTY changes more than byte transport.
 4. **Source invariant:** master stays with Ghostty; slave is inherited by the child.
 
-The evidence notebook appears after the byte workbench in the completed lesson. For now, keep those four answers nearby.
+Save those claims before moving on. Partial evidence is valid; unsupported confidence is not.
+
+<EvidenceNotebook mission-id="process-pty-observation" />
+
+<span id="bytes-to-screen" class="lesson-anchor"></span>
 
 ## Mission 2 — Bytes drive a screen
 
@@ -176,3 +183,20 @@ Your notebook entry must contain:
 4. this source invariant in your own words: parser actions are ordered, and terminal-state mutation belongs after parsing.
 
 The evidence notebook below saves these claims as ordinary files. Pi will challenge them; it should not replace them.
+
+<EvidenceNotebook mission-id="bytes-to-screen" />
+
+## Explain the two boundaries together
+
+Without looking back, explain why these are different bugs:
+
+1. a child starts without a controlling terminal;
+2. the child writes `abc\rX`, but the emulator displays `abcX`.
+
+The first belongs before bytes reach the parser. The second belongs after transport. If you can locate the first boundary where meaning becomes wrong, the architecture is beginning to work for you.
+
+<div class="lesson-finish">
+  <span>NEXT LESSON · BUILT AFTER THIS EVIDENCE IS USED</span>
+  <h2>Enough Zig to read Ghostty</h2>
+  <p>Translate the C probe's process, file-descriptor, and error-handling ideas into the Zig patterns used by Ghostty.</p>
+</div>

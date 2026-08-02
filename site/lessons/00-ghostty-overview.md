@@ -5,6 +5,7 @@ description: "A fifteen-minute map for every trace you will build later."
 
 <script setup>
 import ArchitectureExplorer from '../components/ArchitectureExplorer.vue'
+import EvidenceNotebook from '../components/EvidenceNotebook.vue'
 import SourceLink from '../components/SourceLink.vue'
 </script>
 
@@ -115,12 +116,15 @@ Close the architecture explorer mentally and explain this without copying:
 
 A useful answer does not need implementation details yet. It should name the boundaries and say what changes form at each one.
 
-Ask Pi:
+Write the explanation first. Then ask Pi to attack the weakest boundary rather than rewriting it.
+
+<EvidenceNotebook mission-id="orientation-map" />
+
+Suggested Pi review:
 
 ```text
 I finished the orientation. Make me tell the byte-to-pixel story without hints.
-Challenge the first vague boundary, then save my explanation as evidence for
-mission orientation-map. Do not award a percentage.
+Challenge the first vague boundary. Do not award a percentage.
 ```
 
 ## Next: observe before naming

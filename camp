@@ -29,7 +29,8 @@ def lesson():
     state = load(STATE)
     manifest = load(MANIFEST)
     current = next(item for item in manifest["lessons"] if item["id"] == state["currentLesson"])
-    return state, current
+    mission = next(item for item in manifest.get("missions", []) if item["id"] == state["currentMission"])
+    return state, current, mission
 
 
 def server_up() -> bool:
@@ -62,24 +63,27 @@ def cmd_doctor(_args):
 
 
 def cmd_status(args):
-    state, current = lesson()
+    state, current, mission = lesson()
     value = {
         "currentLesson": current,
+        "currentMission": mission,
         "currentStep": state["currentStep"],
-        "progress": state["lessons"].get(current["id"], {}),
+        "lessonState": state["lessons"].get(current["id"], {}),
+        "evidence": state.get("evidence", {}).get(mission["id"], {"stage": "not_started", "complete": False}),
         "server": {"running": server_up(), "url": f"{URL}{current['path']}#{state['currentStep']}"},
         "lastActivity": state.get("activity", [])[:3],
     }
     if args.json:
         print(json.dumps(value, indent=2))
     else:
-        progress = value["progress"]
-        print(f"Current lesson: {current['title']}")
-        print(f"Next step:      {state['currentStep']}")
-        print(f"Completion:     {progress.get('completion', 0)}%")
-        print(f"Mastery:        {progress.get('mastery', 0)}%")
-        print(f"Dashboard:      {URL}{current['path']}#{state['currentStep']}")
-        print(f"Server:         {'running' if value['server']['running'] else 'stopped'}")
+        evidence = value["evidence"]
+        print(f"Current lesson:  {current['title']}")
+        print(f"Current mission: {mission['title']}")
+        print(f"Question:        {mission['question']}")
+        print(f"Evidence stage:  {evidence.get('stage', 'not_started')}")
+        print(f"Evidence ready:  {'yes' if evidence.get('complete') else 'no'}")
+        print(f"Dashboard:       {URL}{current['path']}#{state['currentStep']}")
+        print(f"Server:          {'running' if value['server']['running'] else 'stopped'}")
     return 0
 
 
@@ -109,7 +113,7 @@ def cmd_open(args):
         code = cmd_serve(argparse.Namespace(background=True))
         if code:
             return code
-    state, current = lesson()
+    state, current, _mission = lesson()
     target = URL if args.dashboard else f"{URL}{current['path']}#{state['currentStep']}"
     webbrowser.open(target)
     print(target)

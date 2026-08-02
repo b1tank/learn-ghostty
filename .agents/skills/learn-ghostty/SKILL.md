@@ -9,7 +9,7 @@ Read the root `AGENTS.md`, `docs/AGENT-WORKFLOW.md`, and `docs/EDITORIAL-PHILOSO
 
 ## Resume
 
-Read durable learner state, inspect the active lesson, and run `./camp status --json`. If needed, run `./camp serve --background` and open the current lesson. Give a short recap and ask one recall question. Lesson 00 is the only finished content slice; do not route the learner to planned lesson pages.
+Read `learner/state.json`, the current mission in `course/manifest.json`, and any corresponding evidence file, then run `./camp status --json`. If needed, run `./camp serve --background` and open the exact lesson anchor. Recap the last claim proved and ask for the next missing evidence field. Lessons 00 and 01 are available; do not route the learner to planned pages.
 
 ## Teach
 
@@ -20,11 +20,11 @@ Problem → history → analogy → exact term → visual model
 → miniature implementation → Ghostty source → explain-back
 ```
 
-Use plain language first. Keep the whole architecture in view. Verify claims against the pinned source and cite files and symbols. Ask for predictions and offer hints before solutions.
+Use plain language first. Keep the whole architecture in view. Verify claims against the pinned source and cite files and symbols. Ask for predictions before tools reveal results. Interrogate learner evidence with counterexamples; never write the prediction, observation, explanation, or invariant for them.
 
 ## Wrap up
 
-Record where the learner stopped, demonstrated knowledge, uncertainty, unresolved questions, lab results, confidence, and one exact next action in durable learner files. Keep completion and mastery separate. For Lesson 00, follow the explain-back rubric in the root `AGENTS.md` before setting it completed.
+Record the current mission, evidence stage, concrete observation, uncertainty, unresolved questions, and one exact next action. Do not invent confidence or mastery percentages. Preserve the learner's wording in evidence and follow the root evidence-review protocol.
 
 ## Course authoring
 

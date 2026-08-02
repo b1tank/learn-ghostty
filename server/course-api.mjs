@@ -153,10 +153,22 @@ function installCourseApi(middlewares) {
             const lesson = manifest.lessons.find((item) => item.id === mission.lessonId);
             if (lesson.missionIds.every((id) => lessonState.completedMissions.includes(id))) lessonState.status = "completed";
             state.lessons[mission.lessonId] = lessonState;
+            if (complete) {
+              const missionIndex = lesson.missionIds.indexOf(mission.id);
+              const nextMissionId = lesson.missionIds[missionIndex + 1];
+              if (nextMissionId) {
+                state.currentMission = nextMissionId;
+                state.currentStep = nextMissionId;
+              }
+            }
             if (lessonState.status === "completed") {
               const next = manifest.lessons.find((item) => item.order === lesson.order + 1 && item.status === "available");
               if (next) {
                 state.lessons[next.id] ??= { status: "not_started", completedMissions: [] };
+                if (state.lessons[next.id].status === "locked") state.lessons[next.id].status = "not_started";
+                state.currentLesson = next.id;
+                state.currentMission = next.missionIds[0];
+                state.currentStep = "welcome";
               }
             }
             if (stage !== priorStage) state.activity = [{ at: now, missionId: mission.id, event: `${mission.title}: ${stage}` }, ...(state.activity ?? [])].slice(0, 20);

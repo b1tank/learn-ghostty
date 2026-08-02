@@ -21,7 +21,7 @@ The browser is the **learning cockpit**, Pi is the **teacher**, Ghostty's source
 
 ## Read online or run the full camp
 
-The public reading mode lives at **https://b1tank.github.io/learn-ghostty/**. Lessons, visualizations, pinned source excerpts, and browser-local progress work there.
+The public reading mode lives at **https://b1tank.github.io/learn-ghostty/**. Lessons and browser-native visualizations work there; durable evidence, native labs, source navigation, and Pi require the local camp.
 
 For durable progress, local source navigation, native labs, editor integration, and Pi as your teacher, run the complete local camp:
 
@@ -37,7 +37,7 @@ git submodule update --init
 What's next?
 ```
 
-Lesson 00, **Ghostty: the whole machine**, is ready. It establishes the complete mental map, explains what the camp will teach and why, includes interactive visuals and a local source check, and ends with a Pi-guided explain-back.
+Lesson 00, **Ghostty: the whole machine**, is a concise orientation. Lesson 01, **The terminal is a relationship**, is the first evidence-producing lesson: compile a C process probe, compare ordinary execution with a real PTY, and drive a miniature terminal one byte at a time.
 
 Useful commands:
 
@@ -85,8 +85,8 @@ A one- or two-week camp cannot reproduce years of maintainer judgment. It can bu
 
 - [x] Product vision and detailed design
 - [x] Minimum learning cockpit foundation
-- [x] Lesson 00: Ghostty overview
-- [ ] PTY vertical-slice lesson
+- [x] Lesson 00: concise Ghostty orientation
+- [x] Lesson 01: process/PTY observation and byte workbench
 - [ ] First three vertical-slice lessons
 - [ ] Full two-week critical path
 - [ ] Advanced electives and maintainer ascent track
