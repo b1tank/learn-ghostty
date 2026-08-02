@@ -11,5 +11,6 @@ zig-out/
 .DS_Store
 
 # Runtime files
+.course-build/
 .course-server.pid
 .course-server.json
