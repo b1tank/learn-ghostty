@@ -50,6 +50,7 @@
 .prediction-card :where(a, button, [tabindex]):focus-visible,
 .lesson-checkpoint :where(a, button, [tabindex]):focus-visible,
 .byte-journey :where(a, button, [tabindex]):focus-visible,
+.byte-workbench :where(a, button, input, textarea, [tabindex]):focus-visible,
 .architecture-explorer :where(a, button, [tabindex]):focus-visible,
 .lab-runner :where(a, button, [tabindex]):focus-visible,
 .source-workbench :where(a, button, [tabindex]):focus-visible,
@@ -247,6 +248,42 @@ a.course-lesson:hover { background: color-mix(in srgb, var(--lime) 6%, transpare
 .lesson-finish span { color: var(--lime); font: 9px var(--vp-font-family-mono); letter-spacing: .12em; }
 .lesson-finish h2 { margin: 8px 0 10px; padding: 0; border: 0; }
 .lesson-finish p { max-width: 650px; color: var(--vp-c-text-2); }
+.byte-workbench { margin: 32px 0; overflow: hidden; border: 1px solid var(--vp-c-divider); border-radius: 13px; background: var(--lg-panel-soft); }
+.byte-workbench > header { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding: 20px 22px; border-bottom: 1px solid var(--vp-c-divider); }
+.byte-workbench > header span { color: var(--lime); font: 9px var(--vp-font-family-mono); letter-spacing: .12em; }
+.byte-workbench > header h3 { margin: 5px 0 0; font-size: 20px; }
+.byte-workbench > header p { max-width: 330px; margin: 0; color: var(--vp-c-text-3); font-size: 10px; line-height: 1.45; }
+.byte-presets { display: flex; gap: 7px; padding: 16px 20px 0; }
+.byte-presets button, .workbench-controls button, .workbench-lock button { min-height: 40px; padding: 8px 11px; border: 1px solid var(--vp-c-divider); border-radius: 6px; color: var(--vp-c-text-2); background: var(--lg-control); font: 10px var(--vp-font-family-mono); cursor: pointer; }
+.byte-presets button.selected, .workbench-controls button.primary, .workbench-lock button { color: var(--on-accent); border-color: var(--accent-fill); background: var(--accent-fill); }
+.workbench-field { display: grid; grid-template-columns: 155px 1fr; gap: 14px; align-items: start; padding: 15px 20px 0; }
+.workbench-field > span { color: var(--vp-c-text-2); font: 9px var(--vp-font-family-mono); letter-spacing: .08em; }
+.workbench-field small { display: block; margin-top: 5px; color: var(--vp-c-text-3); font: 9px/1.4 var(--vp-font-family-base); letter-spacing: 0; }
+.workbench-field input, .workbench-field textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--vp-c-divider); border-radius: 7px; color: var(--vp-c-text-1); background: var(--vp-c-bg); font: 12px var(--vp-font-family-mono); resize: vertical; }
+.workbench-lock { display: flex; justify-content: flex-end; padding: 16px 20px 20px; }
+.byte-rail { display: flex; gap: 5px; overflow-x: auto; margin-top: 18px; padding: 16px 20px; border-top: 1px solid var(--vp-c-divider); border-bottom: 1px solid var(--vp-c-divider); background: var(--lg-inset); }
+.byte-rail > span { flex: 0 0 42px; padding: 7px 3px; border: 1px solid var(--vp-c-divider); border-radius: 5px; text-align: center; opacity: .5; }
+.byte-rail > span.current { border-color: var(--lime); opacity: 1; box-shadow: 0 0 0 2px color-mix(in srgb, var(--lime) 12%, transparent); }
+.byte-rail > span.done { opacity: 1; background: color-mix(in srgb, var(--cyan) 7%, transparent); }
+.byte-rail b, .byte-rail small { display: block; font-family: var(--vp-font-family-mono); }
+.byte-rail b { font-size: 10px; }.byte-rail small { margin-top: 3px; color: var(--vp-c-text-3); font-size: 8px; }
+.terminal-machine { padding: 20px; background: var(--lg-code-shell); }
+.machine-state { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; border: 1px solid #20352c; border-radius: 7px; background: #20352c; }
+.machine-state > div { padding: 10px; background: #091510; }
+.machine-state span, .machine-action span { display: block; color: #6e887b; font: 8px var(--vp-font-family-mono); letter-spacing: .1em; }
+.machine-state strong { display: block; margin-top: 4px; color: #dce9e1; font: 11px var(--vp-font-family-mono); }
+.terminal-grid { display: grid; grid-template-columns: repeat(12, 1fr); margin-top: 17px; border: 1px solid #2a4136; }
+.terminal-grid > div { position: relative; aspect-ratio: .78; display: grid; place-items: center; border-right: 1px solid #20352c; color: #e7eee9; font: 21px var(--vp-font-family-mono); }
+.terminal-grid > div:last-child { border-right: 0; }.terminal-grid > div.is-red { color: #ff7878; }.terminal-grid > div.is-green { color: #9deb62; }
+.terminal-grid > div.cursor::after { content: ""; position: absolute; left: 20%; right: 20%; bottom: 9px; height: 2px; background: #b9ff4b; }
+.terminal-grid small { position: absolute; right: 3px; top: 2px; color: #496055; font: 7px var(--vp-font-family-mono); }
+.machine-action { min-height: 55px; margin-top: 14px; padding: 10px 12px; border-left: 3px solid #b9ff4b; background: #0d1d17; }
+.machine-action strong { display: block; margin-top: 5px; color: #dce9e1; font: 10px/1.5 var(--vp-font-family-mono); }
+.workbench-controls { display: flex; justify-content: flex-end; gap: 7px; padding: 15px 20px; }
+.workbench-controls button:disabled, .workbench-lock button:disabled { opacity: .45; cursor: default; }
+.action-log { margin: 0 20px 20px; border: 1px solid var(--vp-c-divider); border-radius: 7px; }
+.action-log summary { padding: 10px 12px; color: var(--vp-c-text-2); font: 10px var(--vp-font-family-mono); cursor: pointer; }
+.action-log pre { overflow: auto; max-height: 280px; margin: 0 !important; border: 0 !important; border-top: 1px solid var(--vp-c-divider) !important; border-radius: 0 !important; font-size: 10px !important; }
 
 .source-page .VPDoc .content-container { max-width: 1120px !important; }
 .source-workbench { margin-top: 32px; }
@@ -307,7 +344,13 @@ a.course-lesson:hover { background: color-mix(in srgb, var(--lime) 6%, transpare
   .lesson-hero__index { display: none; }
   .history-strip { grid-template-columns: 1fr; gap: 13px; }
   .history-strip > i { transform: rotate(90deg); }
-  .journey-top, .lab-title { align-items: flex-start; flex-direction: column; }
+  .journey-top, .lab-title, .byte-workbench > header { align-items: flex-start; flex-direction: column; }
+  .byte-presets { flex-wrap: wrap; }
+  .workbench-field { grid-template-columns: 1fr; }
+  .machine-state { grid-template-columns: 1fr 1fr; }
+  .terminal-grid { grid-template-columns: repeat(6, 1fr); }
+  .terminal-grid > div:nth-child(6) { border-right: 0; }
+  .workbench-controls { flex-wrap: wrap; justify-content: flex-start; }
   .journey-steps { grid-template-columns: 1fr; gap: 17px; }
   .journey-steps button::after { left: 9px; right: auto; top: 22px; bottom: -18px; width: 1px; height: auto; }
   .architecture-rail { justify-content: flex-start; }
