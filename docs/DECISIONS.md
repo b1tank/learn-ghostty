@@ -3,7 +3,7 @@
 ## Accepted defaults
 
 - Primary use is the self-contained GitHub Pages website. A learner needs only a browser; cloning, a local server, CLI commands, and Pi are optional enhancements.
-- The browser is the complete learning environment. Pi remains an optional external teacher for adversarial questioning and open-ended exploration, never a navigation or persistence dependency.
+- The browser is the complete learning environment. Any AI, LLM, or coding agent may be an optional external teacher for adversarial questioning and open-ended exploration, never a navigation or persistence dependency.
 - Markdown is the primary lesson authoring format, enhanced with interactive UI components.
 - VitePress and Vue are the preferred documentation/UI foundation.
 - Preserve VitePress's official documentation chrome: navigation, local search, headings and permalink anchors, sidebar, outline, typography, focus treatment, and light/dark appearance control. The initial `auto` state may follow the OS, but do not maintain custom framework UI unless a future lesson creates a concrete need.
@@ -17,8 +17,8 @@
 - Primary runnable platform is Linux/GTK/OpenGL.
 - macOS/SwiftUI/Metal receives a complete conceptual track and runnable material where the host permits it.
 - C is used first when it exposes fundamentals cleanly; Zig follows for production-source fluency.
-- Pi integration uses `AGENTS.md`, a project skill, copy-for-Pi actions, and exported evidence. The website does not start or depend on Pi.
-- The canonical hierarchy is modules → lessons → missions. Dashboard, sidebar, course map, Pi, and learner state derive from `course/manifest.json`.
+- AI integration is vendor-neutral: Copy for AI emits readable Markdown and metadata usable by web LLMs or local agents. Project `AGENTS.md` and skills improve local-agent behavior but are not required by the website.
+- The canonical hierarchy is modules → lessons → missions. Homepage, sidebar, course map, optional agents, and learner state derive from `course/manifest.json`.
 - Mission progress is evidence-based: prediction, observation, explanation, and source invariant produce stages such as observed, explained, traced, and modified. Do not display mastery percentages.
 - Browser simulations must be input-driven, expose internal state, and state their limits. A timed sequence of static explanations is not a lab.
 - The site never embeds a second AI conversation.

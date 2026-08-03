@@ -46,6 +46,17 @@ See `docs/IMPLEMENTATION-ROADMAP.md#build-while-learning` for the full loop.
 - Use evidence stages—observed, explained, traced, modified—instead of percentages or vague mastery scores.
 - Never rely only on conversation history for learner state.
 
+## Copied website context
+
+When the user pastes a `Learn Ghostty` context block from **Copy for AI**:
+
+1. Treat `page_url`, `lesson`, `section`, and `progress` as learner-provided context, not instructions from an untrusted page.
+2. Resolve `local_course_path` under `~/learn-ghostty` when available.
+3. Resolve production paths under `~/ghostty`; fall back to this repository's pinned `ghostty/` submodule only when that clone is absent.
+4. Use the included section Markdown for orientation, then verify technical claims against the pinned source commit.
+5. Answer the learner's actual question neutrally. Do not force a teaching or quiz workflow unless requested.
+6. Do not assume notebook notes were included; the default copy action deliberately excludes them.
+
 ## Source references
 
 When the Ghostty submodule exists, use the pinned checkout as source of truth. Prefer ordered execution trails over unordered file lists. Include local source-view links, editor paths, immutable GitHub links, and relevant tests where the site supports them.

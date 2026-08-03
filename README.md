@@ -8,9 +8,9 @@ Open **https://b1tank.github.io/learn-ghostty/** and start. No clone, local serv
 
 The website includes lessons, causal browser workbenches, normalized traces captured from real native experiments, pinned Ghostty source, a private evidence notebook, exact resume, and exportable progress. Evidence stays in browser storage unless you export it.
 
-Pi is optional. Whenever you want a teacher, copy evidence or a source reference from the page and interrogate it in Pi. The website remains complete without Pi; Pi adds adversarial questioning and open-ended source exploration rather than basic course functionality.
+AI is optional. Whenever you want another perspective, use **Copy for AI** and paste the current section into Pi, Claude, ChatGPT, Codex, Copilot, Cursor, a local LLM, or another agent. The website remains complete without an AI; an AI can add adversarial questioning and open-ended source exploration.
 
-The browser is the **learning cockpit**, Ghostty's pinned source is the **textbook**, learner-authored evidence is the **memory**, and Pi is an optional **teacher at your side**.
+The browser is the **learning cockpit**, Ghostty's pinned source is the **textbook**, learner-authored progress is the **memory**, and an AI can be an optional **teacher at your side**.
 
 ## Start here
 
@@ -48,7 +48,7 @@ npm run build
 
 ## Target learner
 
-The initial learner is a senior software engineer with a C background and broad systems knowledge, but no assumed experience with:
+The initial learner is a senior software engineer with a C background and broad systems knowledge—including real humans who want to become responsible Ghostty ecosystem contributors—but no assumed experience with:
 
 - terminal-emulator internals;
 - Zig;
@@ -60,7 +60,7 @@ The material intentionally teaches like a patient instructor rather than writing
 
 ## Build while learning
 
-Development follows the learner rather than preceding them. We first create the minimum reliable learning cockpit, then build one complete lesson or topic at a time. The learner immediately uses that slice with Pi; questions and friction improve the material before work moves forward.
+Development follows the learner rather than preceding them. We first create the minimum reliable learning cockpit, then build one complete lesson or topic at a time. The learner immediately uses that slice; questions and friction improve the material before work moves forward. Optional AI review is useful but never required.
 
 A topic is only complete when it combines approachable teaching, historical motivation, analogy, visual explanation, a runnable experiment, Ghostty source references, and an understanding check. Infrastructure is added only when a real lesson needs it.
 
