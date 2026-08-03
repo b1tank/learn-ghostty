@@ -78,10 +78,14 @@ export function saveMissionEvidence(missionId, fields) {
 export function recordSection(lessonId, sectionId) {
   const state = loadLearnerState();
   if (!manifest.lessons.some((lesson) => lesson.id === lessonId && lesson.status === "available")) return;
-  const changed = state.currentLesson !== lessonId || state.currentStep !== sectionId;
-  state.currentLesson = lessonId;
-  state.currentStep = sectionId || "welcome";
-  state.lastSectionByLesson[lessonId] = state.currentStep;
+  const nextSection = sectionId || "welcome";
+  const lessonIsCompleted = state.completedLessons.includes(lessonId);
+  const changed = state.lastSectionByLesson[lessonId] !== nextSection || (!lessonIsCompleted && (state.currentLesson !== lessonId || state.currentStep !== nextSection));
+  state.lastSectionByLesson[lessonId] = nextSection;
+  if (!lessonIsCompleted) {
+    state.currentLesson = lessonId;
+    state.currentStep = nextSection;
+  }
   state.lessons[lessonId] ??= { status: "not_started", completedMissions: [] };
   if (state.lessons[lessonId].status === "not_started") state.lessons[lessonId].status = "in_progress";
   if (changed) persist();
