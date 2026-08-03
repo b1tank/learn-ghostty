@@ -1,11 +1,16 @@
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { withBase } from "vitepress";
 import { courseManifest, learnerState, loadLearnerState } from "../lib/courseStore.js";
+
 const props = defineProps({ lessonId: { type: String, required: true } });
-const menu = ref(null);
+const root = ref(null);
+const trigger = ref(null);
+const popup = ref(null);
+const open = ref(false);
 const notice = ref("");
 const markdown = ref("");
+const popupStyle = ref({ left: "12px", top: "12px", width: "320px" });
 const lesson = courseManifest.lessons.find((item) => item.id === props.lessonId);
 const sectionId = computed(() => learnerState.value?.lastSectionByLesson?.[props.lessonId] || (learnerState.value?.currentLesson === props.lessonId ? learnerState.value.currentStep : "welcome") || "welcome");
 const pageUrl = computed(() => {
@@ -55,34 +60,88 @@ function context(section, includeNotes = false) {
 async function copy(value, message) {
   await navigator.clipboard.writeText(value);
   notice.value = message;
-  menu.value?.removeAttribute("open");
+  closeMenu(false);
   setTimeout(() => notice.value = "", 1800);
 }
 async function copySection(includeNotes = false) { await copy(context(currentSection(markdown.value), includeNotes), includeNotes ? "Section and notes copied" : "Current section copied for AI"); }
 async function copyFull() { await copy(`${markdown.value.trim()}\n\n---\n\n## Learning context\n\n${progressBlock(false)}\n`, "Full lesson copied as Markdown"); }
 async function copyUrl() { await copy(pageUrl.value, "Page URL copied"); }
 async function copyLocalPath() { await copy(`~/learn-ghostty/site${lesson.path}.md`, "Local course path copied"); }
+
+async function positionPopup() {
+  if (!open.value || !trigger.value) return;
+  const anchor = trigger.value.getBoundingClientRect();
+  const margin = 12;
+  const gap = 7;
+  const width = Math.min(340, window.innerWidth - margin * 2);
+  const left = Math.max(margin, Math.min(anchor.right - width, window.innerWidth - width - margin));
+  let top = anchor.bottom + gap;
+  popupStyle.value = { left: `${Math.round(left)}px`, top: `${Math.round(top)}px`, width: `${Math.round(width)}px` };
+  await nextTick();
+  const height = popup.value?.getBoundingClientRect().height || 0;
+  if (top + height > window.innerHeight - margin && anchor.top - height - gap >= margin) top = anchor.top - height - gap;
+  popupStyle.value = { left: `${Math.round(left)}px`, top: `${Math.round(top)}px`, width: `${Math.round(width)}px` };
+}
+async function toggleMenu() {
+  open.value = !open.value;
+  if (open.value) {
+    await positionPopup();
+    await nextTick();
+    popup.value?.querySelector('[role="menuitem"]')?.focus();
+  }
+}
+function closeMenu(returnFocus = true) {
+  if (!open.value) return;
+  open.value = false;
+  if (returnFocus) nextTick(() => trigger.value?.focus());
+}
+function onDocumentPointer(event) {
+  if (!open.value) return;
+  if (!root.value?.contains(event.target) && !popup.value?.contains(event.target)) closeMenu(false);
+}
+function onKeydown(event) {
+  if (!open.value) return;
+  if (event.key === "Escape") { event.preventDefault(); closeMenu(); return; }
+  if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+  event.preventDefault();
+  const items = [...popup.value.querySelectorAll('[role="menuitem"]')];
+  const current = items.indexOf(document.activeElement);
+  const next = event.key === "Home" ? 0 : event.key === "End" ? items.length - 1 : event.key === "ArrowDown" ? (current + 1) % items.length : (current - 1 + items.length) % items.length;
+  items[next]?.focus();
+}
+function onViewportChange() { if (open.value) positionPopup(); }
+
 onMounted(async () => {
   loadLearnerState();
   const response = await fetch(markdownUrl.value);
   markdown.value = response.ok ? await response.text() : `# ${lesson.title}\n\n${lesson.subtitle}`;
+  document.addEventListener("pointerdown", onDocumentPointer);
+  document.addEventListener("keydown", onKeydown);
+  window.addEventListener("resize", onViewportChange);
+  window.addEventListener("scroll", onViewportChange, true);
+});
+onBeforeUnmount(() => {
+  document.removeEventListener("pointerdown", onDocumentPointer);
+  document.removeEventListener("keydown", onKeydown);
+  window.removeEventListener("resize", onViewportChange);
+  window.removeEventListener("scroll", onViewportChange, true);
 });
 </script>
 
 <template>
-  <div class="ai-copy-menu">
+  <div ref="root" class="ai-copy-menu">
     <button class="ai-copy-primary" :disabled="!markdown" title="Copy the current section as AI-ready Markdown" @click="copySection(false)"><span class="ai-copy-icon" aria-hidden="true"></span> Copy for AI</button>
-    <details ref="menu">
-      <summary aria-label="More Copy for AI options">⌄</summary>
-      <div class="ai-copy-popover">
-        <button @click="copySection(false)"><strong>Copy current section</strong><small>Focused Markdown, progress, paths, and sources</small></button>
-        <button @click="copyFull"><strong>Copy full lesson</strong><small>Complete AI-clean lesson Markdown</small></button>
-        <button @click="copySection(true)"><strong>Copy section + my notes</strong><small>Explicitly include notebook answers</small></button>
-        <a :href="markdownUrl" target="_blank"><strong>View as Markdown ↗</strong><small>Open the AI-clean plaintext lesson</small></a>
-        <button @click="copyUrl"><strong>Copy page link</strong><small>Exact lesson and section URL</small></button>
-        <button @click="copyLocalPath"><strong>Copy local course path</strong><small>For agents running in ~/learn-ghostty</small></button>
-      </div>
-    </details>
+    <button ref="trigger" class="ai-copy-trigger" aria-label="More Copy for AI options" aria-haspopup="menu" :aria-expanded="open" @click="toggleMenu">⌄</button>
     <span class="ai-copy-notice" aria-live="polite">{{ notice }}</span>
+    <Teleport to="body">
+      <div v-if="open" ref="popup" class="ai-copy-popover" role="menu" aria-label="Copy for AI options" :style="popupStyle">
+        <button role="menuitem" @click="copySection(false)"><strong>Copy current section</strong><small>Focused Markdown, progress, paths, and sources</small></button>
+        <button role="menuitem" @click="copyFull"><strong>Copy full lesson</strong><small>Complete AI-clean lesson Markdown</small></button>
+        <button role="menuitem" @click="copySection(true)"><strong>Copy section + my notes</strong><small>Explicitly include notebook answers</small></button>
+        <a role="menuitem" :href="markdownUrl" target="_blank"><strong>View as Markdown ↗</strong><small>Open the AI-clean plaintext lesson</small></a>
+        <button role="menuitem" @click="copyUrl"><strong>Copy page link</strong><small>Exact lesson and section URL</small></button>
+        <button role="menuitem" @click="copyLocalPath"><strong>Copy local course path</strong><small>For agents running in ~/learn-ghostty</small></button>
+      </div>
+    </Teleport>
   </div>
 </template>

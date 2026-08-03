@@ -199,7 +199,7 @@ async function auditControls(browser) {
   const page = await createPage(browser, { width: 1280, theme: "dark" });
   await page.goto(`${base}/lessons/01-terminal-relationship`, { waitUntil: "networkidle0" });
   const controls = await page.evaluate(() => {
-    const custom = [...document.querySelectorAll(".lesson-progress button, .ai-copy-menu button, .ai-copy-menu summary, .prediction-card button, .lab-runner button, .byte-workbench button, .byte-workbench input, .byte-workbench textarea, .evidence-notebook button, .evidence-notebook textarea")].filter((element) => getComputedStyle(element).display !== "none" && element.getClientRects().length > 0 && !element.closest("details:not([open])") && !element.disabled);
+    const custom = [...document.querySelectorAll(".lesson-progress button, .ai-copy-menu button, .ai-copy-trigger, .prediction-card button, .lab-runner button, .byte-workbench button, .byte-workbench input, .byte-workbench textarea, .evidence-notebook button, .evidence-notebook textarea")].filter((element) => getComputedStyle(element).display !== "none" && element.getClientRects().length > 0 && !element.closest("details:not([open])") && !element.disabled);
     return custom.map((element) => {
       const rect = element.getBoundingClientRect();
       const name = (element.getAttribute("aria-label") || element.getAttribute("title") || element.closest("label")?.querySelector(":scope > span")?.textContent || element.textContent || "").trim();
@@ -292,8 +292,18 @@ async function auditAiCopy(browser) {
   check(copied.includes("~/learn-ghostty") && copied.includes("~/ghostty"), "Copy for AI: local agent paths missing");
   check(!copied.includes("learner_notes:"), "Copy for AI: private notes included by default");
 
-  await page.click(".ai-copy-menu summary");
+  await page.click(".ai-copy-trigger");
+  check(await page.$eval(".ai-copy-trigger", (element) => element.getAttribute("aria-expanded") === "true"), "Copy for AI: trigger did not expose expanded state");
   check((await page.$$(".ai-copy-popover > *")).length === 6, "Copy for AI: expected six menu actions");
+  check(await page.$$eval('.ai-copy-popover > *', (elements) => elements.every((element) => element.getAttribute("role") === "menuitem")), "Copy for AI: menuitem semantics missing");
+  let bounds = await page.$eval(".ai-copy-popover", (element) => { const rect = element.getBoundingClientRect(); return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, viewportWidth: innerWidth, viewportHeight: innerHeight }; });
+  check(bounds.left >= 12 && bounds.right <= bounds.viewportWidth - 12 && bounds.top >= 0 && bounds.bottom <= bounds.viewportHeight, "Copy for AI: desktop menu escaped the viewport");
+  await page.setViewport({ width: 390, height: 800, deviceScaleFactor: 1 });
+  await new Promise((done) => setTimeout(done, 100));
+  bounds = await page.$eval(".ai-copy-popover", (element) => { const rect = element.getBoundingClientRect(); return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, viewportWidth: innerWidth, viewportHeight: innerHeight }; });
+  check(bounds.left >= 12 && bounds.right <= bounds.viewportWidth - 12 && bounds.top >= 0 && bounds.bottom <= bounds.viewportHeight, "Copy for AI: mobile menu escaped the viewport");
+  await page.setViewport({ width: 1280, height: 900, deviceScaleFactor: 1 });
+  await new Promise((done) => setTimeout(done, 100));
   check((await page.$eval('.ai-copy-popover a', (element) => element.getAttribute("href"))).endsWith("/ai/lessons/01-terminal-relationship.md"), "Copy for AI: Markdown view link is incorrect");
   await page.evaluate(() => [...document.querySelectorAll(".ai-copy-popover button")].find((element) => element.textContent.includes("section + my notes")).click());
   copied = await page.evaluate(() => window.__copiedText || "");
