@@ -1,0 +1,151 @@
+---
+order: 0
+title: Open Ghostty, run ls, see pixels
+summary: Follow one ordinary terminal session from app launch to shell prompt, keyboard input, command execution, colored output, glyphs, GPU work, and visible pixels.
+duration: 45–60 minutes
+module: Scenarios
+status: published
+sourceRefs:
+  - path: src/main_ghostty.zig
+    line: 80
+    end: 112
+    label: Core and native runtime startup
+    purpose: Find where shared App state meets the selected platform event loop.
+    officialUrl: https://ghostty.org/docs/about
+  - path: src/pty.zig
+    line: 115
+    end: 171
+    label: Opening the PTY pair
+    purpose: Find master, slave, inheritance, and close-on-exec behavior.
+  - path: src/terminal/Parser.zig
+    line: 222
+    end: 285
+    label: One byte enters the parser
+    purpose: See how a byte produces ordered parser actions.
+  - path: src/renderer/generic.zig
+    line: 1127
+    end: 1165
+    label: Updating a render frame
+    purpose: Locate the handoff from terminal state to renderable frame data.
+---
+import DataFlowWalkthrough from '../../components/DataFlowWalkthrough.vue';
+import SourceLink from '../../components/SourceLink.vue';
+
+This lesson follows something deliberately ordinary:
+
+```bash
+ls --color=auto /tmp
+cat README.md
+```
+
+The goal is not to memorize every subsystem. It is to build one causal story: **what data exists at each moment, who owns it, and what form it takes next.**
+
+## Part 1: you open Ghostty
+
+On a typical Ubuntu desktop, clicking Ghostty asks the operating system to start a process. On macOS, Launch Services does the equivalent job. At this point there is no shell prompt and no PTY traffic—only a new application process beginning initialization.
+
+<div class="platform-branch">
+  <div><h3>Ubuntu / Linux</h3><p>GTK owns the native application and window events. Ghostty normally renders through OpenGL. Bash is a common login shell, but the actual shell comes from your account or Ghostty configuration.</p></div>
+  <div><h3>macOS</h3><p>SwiftUI and AppKit own the native application experience. Ghostty renders through Metal. zsh is the common default shell, but it is not guaranteed.</p></div>
+</div>
+
+Ghostty first loads process-wide state and configuration. It creates a shared Zig `App`, initializes the platform runtime, and enters the native event loop. When the runtime needs a terminal view, it creates a `Surface`.
+
+A **surface** is one interactive terminal area. It might appear as a whole window, one tab, or one split. The shared terminal core intentionally does not decide which.
+
+<DataFlowWalkthrough client:visible title="From application launch to shell prompt" analogy="Think of a live sports broadcast preparing a new feed before the viewer sees it." steps={[
+  {actor:'Operating system',input:'app launch request',action:'Creates the Ghostty process and gives it platform resources.',output:'running Ghostty process',analogy:'The network opens a new control room for a broadcast.'},
+  {actor:'Ghostty startup',input:'arguments + environment + config files',action:'Builds global state, configuration, and the shared App.',output:'configured application core',analogy:'The producer loads the rundown and graphics package.'},
+  {actor:'GTK or SwiftUI/AppKit',input:'request for a terminal view',action:'Creates a native window/container and asks the core for a Surface.',output:'native container + terminal Surface',analogy:'A screen and camera feed slot are prepared.'},
+  {actor:'Ghostty PTY layer',input:'terminal size + modes',action:'Asks the kernel for paired terminal endpoints. Ghostty keeps the master; the child inherits the slave.',output:'PTY master + PTY slave',analogy:'A dedicated two-way production line is connected.'},
+  {actor:'Ghostty process launcher',input:'configured command or account login shell',action:'Starts Bash, zsh, or another command with the PTY slave as its terminal.',output:'interactive child process',analogy:'A reporter joins the line and can now hear and speak.'},
+  {actor:'Shell',input:'startup files + environment + terminal capabilities',action:'Initializes itself and writes a prompt containing text and often color/cursor control sequences.',output:'UTF-8 + terminal control bytes',analogy:'The reporter sends words plus graphics cues.'},
+  {actor:'Ghostty pipeline',input:'bytes read from the PTY master',action:'Parses commands, updates terminal state, resolves glyphs, and prepares a GPU frame.',output:'pixels in a native window',analogy:'The control room interprets cues, updates the scoreboard, and broadcasts the composed frame.'}
+]}/>
+
+### A term only after its job is clear: PTY
+
+Ghostty and the shell need a two-way connection. An ordinary pipe carries bytes, but interactive software expects more: terminal identity, input modes, echo, window size, foreground process groups, and terminal-generated signals.
+
+Unix packages that behavior into a **pseudo-terminal**, abbreviated **PTY**. The child sees the slave side as its terminal device. Ghostty reads and writes the master side.
+
+The “software cable” analogy is useful, but incomplete. A PTY is a cable plus kernel-managed terminal behavior.
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/pty.zig" line={115} end={171} label="Open the PTY pair" note="Read only PosixPty.open. Find the master/slave descriptors and why only the slave should be inherited by the child." />
+
+## Part 2: you type ls
+
+Now suppose the prompt is visible and you type:
+
+```bash
+ls --color=auto /tmp
+```
+
+Several data representations appear before `ls` ever runs.
+
+<DataFlowWalkthrough client:visible title="Keyboard to shell command" analogy="The viewer sends instructions back through the production line." steps={[
+  {actor:'Keyboard hardware',input:'physical key movement',action:'Produces hardware scan information consumed by the operating system.',output:'OS key event',analogy:'A control button is pressed in the studio.'},
+  {actor:'Wayland/X11 or macOS',input:'OS key event',action:'Routes a focused native keyboard event to the Ghostty window.',output:'platform key event',analogy:'The instruction reaches the correct control room.'},
+  {actor:'GTK/AppKit + Ghostty input',input:'key, modifiers, produced text',action:'Checks Ghostty keybindings and terminal modes, then encodes input for the terminal application.',output:'UTF-8 or terminal key bytes',analogy:'The instruction is translated into the line protocol.'},
+  {actor:'PTY + kernel terminal handling',input:'bytes written to PTY master',action:'In normal canonical mode, echoes characters and collects the line until Enter.',output:'completed input line on PTY slave',analogy:'A producer collects the full instruction before passing it on.'},
+  {actor:'Bash or zsh',input:'ls --color=auto /tmp',action:'Parses a command name, one option, and one pathname argument.',output:'argv = [ls, --color=auto, /tmp]',analogy:'The assignment is split into who should act and the details they need.'}
+]}/>
+
+<span class="data-label">native key event</span> is not the same thing as <span class="data-label">UTF-8 input bytes</span>. The platform event knows physical/logical keys and modifiers. The shell eventually receives a byte-oriented command line.
+
+### The shell starts ls
+
+`ls` is normally an external executable rather than shell syntax. The shell searches `PATH`, creates a child process, and executes the program with an argument array and environment.
+
+The program inspects `/tmp`. With `--color=auto`, it checks whether its output is attached to a terminal. If so, it may use `LS_COLORS` to choose styles for directories, links, executables, and other file types.
+
+The color is not a property attached to a filename object. `ls` writes bytes such as:
+
+```text
+ESC [ 01 ; 34 m   directory-name   ESC [ 0 m
+```
+
+Some bytes are printable text. Others are instructions meaning “use this style” or “reset the style.”
+
+<DataFlowWalkthrough client:visible title="ls output to visible colored names" analogy="Statistics and graphics cues travel together, then the control room separates them." steps={[
+  {actor:'ls process',input:'directory entries + LS_COLORS + terminal detection',action:'Formats names and inserts ANSI/ECMA-48 style sequences.',output:'UTF-8 text + control bytes',analogy:'A stats desk sends facts plus cues for the score graphic.'},
+  {actor:'Linux/macOS kernel PTY',input:'write() calls on stdout',action:'Buffers bytes on the slave side and makes them readable from the master.',output:'ordered PTY byte stream',analogy:'The production line carries the message without deciding its visual meaning.'},
+  {actor:'Ghostty I/O path',input:'PTY byte chunks',action:'Feeds bytes into the terminal stream parser.',output:'print and control actions',analogy:'The control room separates spoken facts from production cues.'},
+  {actor:'Terminal state',input:'print, SGR, cursor, erase actions',action:'Updates cells, styles, cursor, modes, links, images, and scrollback.',output:'renderable terminal model',analogy:'The live scoreboard and graphics rundown are updated.'},
+  {actor:'Font system',input:'cell code points + style',action:'Chooses fonts, shapes text, rasterizes missing glyphs, and caches them in an atlas.',output:'glyph positions + atlas textures',analogy:'The graphics department chooses typefaces and prepares reusable artwork.'},
+  {actor:'OpenGL or Metal renderer',input:'cell backgrounds + glyphs + cursor + images',action:'Builds buffers, samples textures, runs shaders, and submits a frame.',output:'GPU-rendered surface',analogy:'The graphics engine composites the broadcast frame.'},
+  {actor:'Desktop compositor + display',input:'Ghostty surface',action:'Composes the application with the desktop and scans pixels to the physical display.',output:'light reaching your eyes',analogy:'The finished program is transmitted to the viewer.'}
+]}/>
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/terminal/Parser.zig" line={222} end={285} label="One byte enters Parser.next" note="Read the exit → transition → entry ordering. Ignore the full table for now." />
+
+## Part 3: compare cat
+
+Now run:
+
+```bash
+cat README.md
+```
+
+The keyboard, PTY, shell parsing, child-process launch, PTY return path, parser, state, fonts, and GPU are substantially the same.
+
+What changes is the producer of output. `cat` reads file bytes and writes them to stdout. Ordinary `cat` does not inspect Markdown and add syntax colors. If the file contains no control sequences, Ghostty receives text and line breaks rather than style commands.
+
+Color might still appear when:
+
+- `cat` is actually an alias for another tool;
+- a program such as `bat` performs syntax highlighting;
+- the file itself contains escape sequences;
+- another pipeline stage adds formatting.
+
+This comparison establishes an important rule:
+
+> Ghostty renders the terminal protocol it receives. It does not understand that `/tmp` contains directories or that README.md contains Markdown.
+
+## The complete story in one paragraph
+
+You launch Ghostty; the OS starts a native application; Ghostty creates shared app state, a surface, and a PTY; it starts your configured shell on the PTY slave; prompt bytes cross to the master; the parser turns control bytes into terminal actions; terminal state stores cells and styles; fonts turn code points into glyphs; OpenGL or Metal asks the GPU for a frame; and the compositor displays pixels. Keyboard events make the reverse journey to the shell. When the shell executes `ls` or `cat`, child output follows the same return path, with color appearing only when some program actually emits style sequences.
+
+## Where the broadcast analogy stops
+
+A sports control room has people interpreting semantic intentions. Ghostty does not understand “show a directory in blue.” It follows a byte protocol mechanically. The analogy explains roles and data routes, not human-level meaning.
