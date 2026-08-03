@@ -37,6 +37,14 @@ for (const lesson of manifest.lessons) {
     } catch {
       errors.push(`${lesson.id}: available lesson page is missing at ${lessonPage}`);
     }
+    const aiPage = resolve(root, "site/public/ai/lessons", `${lesson.id}.md`);
+    try {
+      const aiContent = await readFile(aiPage, "utf8");
+      if (/<(?:script|[A-Z][A-Za-z]+)\b/.test(aiContent)) errors.push(`${lesson.id}: AI Markdown contains implementation markup`);
+      if (!aiContent.includes("local_course_path: ~/learn-ghostty/")) errors.push(`${lesson.id}: AI Markdown is missing local course context`);
+    } catch {
+      errors.push(`${lesson.id}: generated AI Markdown is missing; run npm run generate:ai`);
+    }
   }
   for (const ref of lesson.sourceRefs ?? []) {
     try {

@@ -199,7 +199,7 @@ async function auditControls(browser) {
   const page = await createPage(browser, { width: 1280, theme: "dark" });
   await page.goto(`${base}/lessons/01-terminal-relationship`, { waitUntil: "networkidle0" });
   const controls = await page.evaluate(() => {
-    const custom = [...document.querySelectorAll(".prediction-card button, .lab-runner button, .byte-workbench button, .byte-workbench input, .byte-workbench textarea, .evidence-notebook button, .evidence-notebook textarea")].filter((element) => getComputedStyle(element).display !== "none" && !element.disabled);
+    const custom = [...document.querySelectorAll(".lesson-progress button, .ai-copy-menu button, .ai-copy-menu summary, .prediction-card button, .lab-runner button, .byte-workbench button, .byte-workbench input, .byte-workbench textarea, .evidence-notebook button, .evidence-notebook textarea")].filter((element) => getComputedStyle(element).display !== "none" && element.getClientRects().length > 0 && !element.closest("details:not([open])") && !element.disabled);
     return custom.map((element) => {
       const rect = element.getBoundingClientRect();
       const name = (element.getAttribute("aria-label") || element.getAttribute("title") || element.closest("label")?.querySelector(":scope > span")?.textContent || element.textContent || "").trim();
@@ -244,19 +244,70 @@ async function auditControls(browser) {
 
 async function auditBrowserPersistence(browser) {
   const page = await createPage(browser, { width: 1280, theme: "light" });
-  await page.goto(`${base}/lessons/00-ghostty-overview`, { waitUntil: "networkidle0" });
+  await page.goto(base, { waitUntil: "networkidle0" });
   await page.evaluate(() => localStorage.removeItem("learn-ghostty.evidence.v2"));
   await page.reload({ waitUntil: "networkidle0" });
+  check(Boolean(await page.$(".home-intro")) && !(await page.$(".resume-card")), "first visit: simple introduction or Start state missing");
+  check((await page.$$(".roadmap-lesson")).length === 11, "homepage: complete eleven-lesson roadmap missing");
+
+  await page.goto(`${base}/lessons/00-ghostty-overview`, { waitUntil: "networkidle0" });
+  await page.$eval("#why-software-still-imitates-old-hardware", (element) => element.scrollIntoView());
+  await new Promise((done) => setTimeout(done, 180));
+  let saved = await page.evaluate(() => JSON.parse(localStorage.getItem("learn-ghostty.evidence.v2")));
+  check(saved.lastSectionByLesson["00-ghostty-overview"] === "why-software-still-imitates-old-hardware", "resume: scrolling did not save the current section");
+
   await page.$eval(".evidence-notebook textarea", (element) => {
     element.value = "Audit claim: a program writes bytes; PTY transport, parsing, state, fonts, and GPU each change the representation.";
     element.dispatchEvent(new Event("input", { bubbles: true }));
   });
   await page.click(".evidence-notebook button.primary");
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("learn-ghostty.evidence.v2")));
+  saved = await page.evaluate(() => JSON.parse(localStorage.getItem("learn-ghostty.evidence.v2")));
   check(saved.evidence["orientation-map"].complete, "browser evidence: orientation was not saved");
-  check(saved.currentMission === "process-pty-observation", "browser evidence: completion did not advance the mission");
+  check(!saved.completedLessons.includes("00-ghostty-overview"), "lesson completion: notebook save incorrectly completed the lesson");
+
+  await page.click(".lesson-progress__actions button");
+  saved = await page.evaluate(() => JSON.parse(localStorage.getItem("learn-ghostty.evidence.v2")));
+  check(saved.completedLessons.includes("00-ghostty-overview") && saved.currentLesson === "01-terminal-relationship", "lesson completion: explicit action did not advance resume lesson");
   await page.goto(base, { waitUntil: "networkidle0" });
-  check(await page.$eval(".mission-hero h1", (element) => element.textContent.includes("Observe the software cable")), "browser evidence: dashboard did not resume persisted mission");
+  check(await page.$eval(".resume-card h2", (element) => element.textContent.includes("terminal is a relationship")), "return visit: resume card did not show the last lesson");
+  check((await page.$eval(".resume-card a", (element) => element.getAttribute("href"))).includes("01-terminal-relationship"), "return visit: resume link targets the wrong lesson");
+
+  await page.click(".home-progress-tools button.danger");
+  check(await page.$eval(".reset-dialog", (element) => element.open), "restart: confirmation dialog did not open");
+  check(await page.$eval(".reset-dialog", (element) => element.textContent.includes("Export backup")), "restart: export-before-reset action missing");
+  await page.click(".reset-dialog > div button.danger");
+  check(!(await page.$(".resume-card")), "restart: returning state remained after reset");
+  await page.close();
+}
+
+async function auditAiCopy(browser) {
+  const page = await createPage(browser, { width: 1280, theme: "light" });
+  await page.goto(`${base}/lessons/01-terminal-relationship`, { waitUntil: "networkidle0" });
+  await page.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (value) => { window.__copiedText = value; }, readText: async () => window.__copiedText || "" } }));
+  await page.$eval('h2[id*="mission-1"]', (element) => element.scrollIntoView());
+  await new Promise((done) => setTimeout(done, 180));
+  await page.click(".ai-copy-primary");
+  let copied = await page.evaluate(() => window.__copiedText || "");
+  check(copied.includes("# Current section") && copied.includes("Begin with a prediction") && copied.includes("# My question"), "Copy for AI: current section Markdown missing");
+  check(copied.includes("~/learn-ghostty") && copied.includes("~/ghostty"), "Copy for AI: local agent paths missing");
+  check(!copied.includes("learner_notes:"), "Copy for AI: private notes included by default");
+
+  await page.click(".ai-copy-menu summary");
+  check((await page.$$(".ai-copy-popover > *")).length === 6, "Copy for AI: expected six menu actions");
+  check((await page.$eval('.ai-copy-popover a', (element) => element.getAttribute("href"))).endsWith("/ai/lessons/01-terminal-relationship.md"), "Copy for AI: Markdown view link is incorrect");
+  await page.evaluate(() => [...document.querySelectorAll(".ai-copy-popover button")].find((element) => element.textContent.includes("section + my notes")).click());
+  copied = await page.evaluate(() => window.__copiedText || "");
+  check(copied.includes("learner_notes:"), "Copy for AI: explicit notes action omitted notebook metadata");
+
+  const clean = await (await fetch(`${base}/ai/lessons/01-terminal-relationship.md`)).text();
+  check(clean.includes("# The terminal is") && !/<[A-Z][A-Za-z]+/.test(clean), "AI Markdown: generated lesson is missing or contains Vue components");
+
+  await page.$eval(".source-card button", (element) => element.click());
+  copied = await page.evaluate(() => window.__copiedText || "");
+  check(copied.startsWith("~/ghostty/"), "source action: local ~/ghostty path was not copied");
+  await page.evaluate(() => [...document.querySelectorAll(".source-card button")].find((element) => element.textContent.includes("Copy for AI")).click());
+  copied = await page.evaluate(() => window.__copiedText || "");
+  check(copied.includes("Remote:") && copied.includes("Local") && copied.includes("My question:"), "source action: neutral AI context incomplete");
   await page.close();
 }
 
@@ -265,7 +316,7 @@ async function auditSelfContained(browser) {
   await page.setRequestInterception(true);
   page.on("request", (request) => request.url().includes("/api/") ? request.abort() : request.continue());
   await page.goto(base, { waitUntil: "networkidle0" });
-  check(Boolean(await page.$(".mission-hero")), "self-contained: dashboard depended on local API");
+  check(Boolean(await page.$(".home-intro")), "self-contained: homepage depended on local API");
   await page.goto(`${base}/lessons/01-terminal-relationship`, { waitUntil: "networkidle0" });
   await page.click(".lab-title button");
   await page.waitForSelector(".lab-runner pre");
@@ -275,6 +326,7 @@ async function auditSelfContained(browser) {
 
 await ensureServer();
 const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
+await browser.defaultBrowserContext().overridePermissions(base, ["clipboard-read", "clipboard-write"]);
 try {
   await auditTheme(browser, "light");
   await auditTheme(browser, "dark");
@@ -284,6 +336,7 @@ try {
   await auditLayout(browser);
   await auditControls(browser);
   await auditBrowserPersistence(browser);
+  await auditAiCopy(browser);
   await auditSelfContained(browser);
 } finally {
   await browser.close();
