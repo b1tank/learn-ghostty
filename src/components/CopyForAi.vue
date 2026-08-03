@@ -125,13 +125,13 @@ onBeforeUnmount(() => {
 <template>
   <div ref="root" class="ai-copy-menu">
     <button class="ai-copy-primary" :disabled="!markdown" title="Copy the current section as AI-ready Markdown" @click="copySection"><span class="ai-copy-icon" aria-hidden="true"></span> Copy for AI</button>
-    <button ref="trigger" class="ai-copy-trigger" aria-label="More Copy for AI options" aria-haspopup="menu" :aria-expanded="open" @click="toggleMenu">⌄</button>
+    <button ref="trigger" class="ai-copy-trigger" aria-label="More Copy for AI options" aria-haspopup="menu" :aria-expanded="open" @click="toggleMenu"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <span class="ai-copy-notice" aria-live="polite">{{ notice }}</span>
     <Teleport to="body">
       <div v-if="open" ref="popup" class="ai-copy-popover" role="menu" aria-label="Copy for AI options" :style="popupStyle">
         <button role="menuitem" @click="copySection"><strong>Copy current section</strong><small>Focused Markdown, progress, paths, and sources</small></button>
         <button role="menuitem" @click="copyFull"><strong>Copy full lesson</strong><small>Complete AI-clean lesson Markdown</small></button>
-        <a role="menuitem" :href="markdownUrl" target="_blank"><strong>View as Markdown ↗</strong><small>Open the AI-clean plaintext lesson</small></a>
+        <a role="menuitem" :href="markdownUrl" target="_blank"><strong>View as Markdown</strong><small>Open the AI-clean plaintext lesson</small></a>
         <button role="menuitem" @click="copyUrl"><strong>Copy page link</strong><small>Exact lesson and section URL</small></button>
         <button role="menuitem" @click="copyLocalPath"><strong>Copy local course path</strong><small>For agents running in ~/learn-ghostty</small></button>
       </div>

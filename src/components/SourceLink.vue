@@ -19,7 +19,7 @@ function copyAi() {
     <div class="source-card__copy"><strong>{{ label || path }}</strong><code>{{ path }}:{{ line }}{{ finalLine > line ? `–${finalLine}` : '' }}</code><small v-if="note">{{ note }}</small></div>
     <div class="source-card__actions">
       <a :href="viewUrl">Read excerpt</a>
-      <a :href="githubUrl" target="_blank" rel="noreferrer">GitHub ↗</a>
+      <a :href="githubUrl" target="_blank" rel="noreferrer">GitHub</a>
       <button @click="copy(localPath, 'Local ~/ghostty path copied')">Copy local path</button>
       <button @click="copyAi">Copy for AI</button>
     </div>

@@ -1,1 +1,121 @@
-.flow-walkthrough{margin:30px 0;overflow:hidden;border:1px solid var(--vp-c-divider);border-radius:12px;background:var(--vp-c-bg-soft)}.flow-walkthrough>header{padding:20px;border-bottom:1px solid var(--vp-c-divider)}.flow-walkthrough>header>span,.flow-detail span{color:var(--lime);font:600 9px var(--vp-font-family-mono);letter-spacing:.1em}.flow-walkthrough h3{margin:5px 0 4px;font-size:21px}.flow-walkthrough header p{margin:0;color:var(--vp-c-text-3);font-size:11px}.flow-rail{display:flex;overflow-x:auto;padding:14px;gap:7px}.flow-rail button{flex:0 0 auto;min-width:90px;min-height:52px;padding:8px;border:1px solid var(--vp-c-divider);border-radius:7px;color:var(--vp-c-text-3);background:var(--vp-c-bg);cursor:pointer}.flow-rail button.active{color:var(--on-accent);border-color:var(--accent-fill);background:var(--accent-fill)}.flow-rail b,.flow-rail span{display:block}.flow-rail b{font:8px var(--vp-font-family-mono)}.flow-rail span{margin-top:4px;font-size:10px}.flow-detail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;border-top:1px solid var(--vp-c-divider);background:var(--vp-c-divider)}.flow-detail>div{padding:16px;background:var(--vp-c-bg)}.flow-detail strong,.flow-detail code{display:block;margin-top:7px}.flow-detail code{color:var(--cyan);font-size:11px;white-space:normal}.flow-detail p{margin:7px 0 0;color:var(--vp-c-text-2);font-size:12px}.flow-analogy{grid-column:1/-1}.platform-branch{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0}.platform-branch>div{padding:18px;border:1px solid var(--vp-c-divider);border-radius:9px;background:var(--vp-c-bg-soft)}.platform-branch h3{margin:0 0 8px}.data-label{display:inline-block;padding:3px 6px;border-radius:4px;color:var(--cyan);background:color-mix(in srgb,var(--cyan) 8%,transparent);font:9px var(--vp-font-family-mono)}@media(max-width:640px){.flow-detail,.platform-branch{grid-template-columns:1fr}.flow-analogy{grid-column:1}.flow-rail button{min-width:82px}}
+/* Interactive data-flow diagrams used by scenario lessons. */
+.flow-walkthrough {
+  margin: 2rem 0;
+  overflow: hidden;
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 0.75rem;
+  background: var(--sl-color-bg-nav);
+}
+
+.flow-walkthrough > header {
+  padding: 1.25rem 1.4rem;
+  border-bottom: 1px solid var(--sl-color-hairline-light);
+}
+
+.flow-walkthrough > header > span,
+.flow-detail > div > span {
+  color: var(--sl-color-text-accent);
+  font: 700 var(--sl-text-xs) var(--__sl-font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.flow-walkthrough h3 {
+  margin: 0.45rem 0 0.25rem;
+  font-size: var(--sl-text-xl);
+}
+
+.flow-walkthrough header p {
+  margin: 0;
+  color: var(--sl-color-gray-3);
+  font-size: var(--sl-text-sm);
+}
+
+.flow-rail {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 1rem;
+  scrollbar-width: thin;
+}
+
+.flow-rail button {
+  flex: 0 0 7.5rem;
+  min-height: 4rem;
+  padding: 0.65rem;
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 0.55rem;
+  color: var(--sl-color-text);
+  background: var(--sl-color-bg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.flow-rail button:hover { border-color: var(--sl-color-accent); }
+.flow-rail button.active {
+  color: var(--sl-color-text-invert);
+  border-color: var(--sl-color-accent);
+  background: var(--sl-color-bg-accent);
+}
+
+.flow-rail b,
+.flow-rail span { display: block; }
+.flow-rail b { font: 700 var(--sl-text-2xs) var(--__sl-font-mono); }
+.flow-rail span { margin-top: 0.35rem; font-size: var(--sl-text-sm); line-height: 1.3; }
+
+.flow-detail {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  border-top: 1px solid var(--sl-color-hairline-light);
+  background: var(--sl-color-hairline-light);
+}
+
+.flow-detail > div {
+  min-width: 0;
+  padding: 1.1rem 1.25rem;
+  background: var(--sl-color-bg);
+}
+
+.flow-detail strong,
+.flow-detail code { display: block; margin-top: 0.5rem; }
+.flow-detail strong { font-size: var(--sl-text-lg); }
+.flow-detail code {
+  color: var(--sl-color-text-accent);
+  font-size: var(--sl-text-sm);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.flow-detail p { margin: 0.5rem 0 0; color: var(--sl-color-text); font-size: var(--sl-text-base); }
+.flow-analogy { grid-column: 1 / -1; background: var(--sl-color-accent-low) !important; }
+
+.platform-branch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.platform-branch > div {
+  padding: 1.25rem;
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 0.65rem;
+  background: var(--sl-color-bg-nav);
+}
+.platform-branch h3 { margin: 0 0 0.6rem; font-size: var(--sl-text-xl); }
+
+.data-label {
+  display: inline-block;
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.35rem;
+  color: var(--sl-color-text-accent);
+  background: var(--sl-color-accent-low);
+  font: var(--sl-text-xs) var(--__sl-font-mono);
+}
+
+@media (max-width: 40rem) {
+  .flow-detail,
+  .platform-branch { grid-template-columns: 1fr; }
+  .flow-analogy { grid-column: 1; }
+  .flow-rail button { flex-basis: 6.75rem; }
+}
