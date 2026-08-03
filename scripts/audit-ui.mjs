@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { access, readFile, rm, writeFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import puppeteer from "puppeteer-core";
 
@@ -242,39 +242,34 @@ async function auditControls(browser) {
   await reduced.close();
 }
 
-async function auditEvidencePersistence() {
-  const statePath = resolve(root, "learner/state.json");
-  const evidencePath = resolve(root, "learner/evidence/orientation-map.json");
-  const stateBackup = await readFile(statePath, "utf8");
-  const evidenceBackup = await readFile(evidencePath, "utf8").catch(() => null);
-  try {
-    const response = await fetch(`${base}/api/evidence`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ missionId: "orientation-map", explanation: "Audit claim: bytes cross PTY, parser, state, font, and GPU boundaries." })
-    });
-    const value = await response.json();
-    check(response.ok && value.evidence.complete, "evidence API: required orientation claim did not complete");
-    check(value.state.currentMission === "process-pty-observation", "evidence API: completion did not advance to the next mission");
-    const persisted = JSON.parse(await readFile(evidencePath, "utf8"));
-    check(persisted.explanation.includes("Audit claim"), "evidence API: claim was not persisted atomically");
-  } finally {
-    await writeFile(statePath, stateBackup);
-    if (evidenceBackup === null) await rm(evidencePath, { force: true });
-    else await writeFile(evidencePath, evidenceBackup);
-  }
+async function auditBrowserPersistence(browser) {
+  const page = await createPage(browser, { width: 1280, theme: "light" });
+  await page.goto(`${base}/lessons/00-ghostty-overview`, { waitUntil: "networkidle0" });
+  await page.evaluate(() => localStorage.removeItem("learn-ghostty.evidence.v2"));
+  await page.reload({ waitUntil: "networkidle0" });
+  await page.$eval(".evidence-notebook textarea", (element) => {
+    element.value = "Audit claim: a program writes bytes; PTY transport, parsing, state, fonts, and GPU each change the representation.";
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await page.click(".evidence-notebook button.primary");
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("learn-ghostty.evidence.v2")));
+  check(saved.evidence["orientation-map"].complete, "browser evidence: orientation was not saved");
+  check(saved.currentMission === "process-pty-observation", "browser evidence: completion did not advance the mission");
+  await page.goto(base, { waitUntil: "networkidle0" });
+  check(await page.$eval(".mission-hero h1", (element) => element.textContent.includes("Observe the software cable")), "browser evidence: dashboard did not resume persisted mission");
+  await page.close();
 }
 
-async function auditErrorRecovery(browser) {
-  const page = await createPage(browser, { width: 1280, theme: "light" });
+async function auditSelfContained(browser) {
+  const page = await createPage(browser, { width: 1280, theme: "dark" });
   await page.setRequestInterception(true);
-  page.on("request", (request) => {
-    if (request.url().endsWith("/api/course")) request.respond({ status: 503, contentType: "application/json", body: '{"error":"audit outage"}' });
-    else request.continue();
-  });
+  page.on("request", (request) => request.url().includes("/api/") ? request.abort() : request.continue());
   await page.goto(base, { waitUntil: "networkidle0" });
-  check(await page.$eval(".service-warning", (element) => element.getAttribute("role") === "alert"), "dashboard error: alert semantics missing");
-  check(await page.$eval(".service-warning button", (element) => element.textContent.includes("Retry")), "dashboard error: retry action missing");
+  check(Boolean(await page.$(".mission-hero")), "self-contained: dashboard depended on local API");
+  await page.goto(`${base}/lessons/01-terminal-relationship`, { waitUntil: "networkidle0" });
+  await page.click(".lab-title button");
+  await page.waitForSelector(".lab-runner pre");
+  check(await page.$eval(".lab-runner pre", (element) => element.textContent.includes("/dev/pts/7")), "self-contained: PTY reference trace was unavailable without API");
   await page.close();
 }
 
@@ -288,8 +283,8 @@ try {
   await auditDefaultAppearance(browser);
   await auditLayout(browser);
   await auditControls(browser);
-  await auditEvidencePersistence();
-  await auditErrorRecovery(browser);
+  await auditBrowserPersistence(browser);
+  await auditSelfContained(browser);
 } finally {
   await browser.close();
   if (server) server.kill("SIGTERM");
