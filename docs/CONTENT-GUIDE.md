@@ -19,6 +19,21 @@ user action
 
 Do not begin with a glossary or architecture inventory.
 
+## Diagrams and graphs
+
+Every flow involving more than two components, any bidirectional interaction, or any nesting such as tmux/SSH must have a diagram or interactive graph before the detailed explanation.
+
+A useful diagram labels:
+
+- each actor or owner;
+- user space, kernel space, hardware, local machine, and remote machine boundaries;
+- arrow direction;
+- the exact data representation on every edge;
+- where parsing, state mutation, composition, encryption, or rendering occurs;
+- optional branches such as Linux/OpenGL versus macOS/Metal.
+
+Diagrams are teaching artifacts, not decoration. They must have a textual equivalent, readable contrast, keyboard-accessible interactive states, and a clear statement of any simplification. Prefer version-controlled Astro/SVG/Vue source over opaque screenshots.
+
 ## Data labels
 
 Name concrete representations: hardware event, platform key event, UTF-8 bytes, command line, argv, filesystem entries, ANSI/ECMA-48 bytes, parser actions, terminal cells, code points, glyphs, atlas textures, GPU buffers, frames, pixels.

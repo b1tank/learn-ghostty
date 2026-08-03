@@ -1,6 +1,6 @@
 # Learn Ghostty
 
-A self-contained, scenario-driven course for understanding how Ghostty carries data from user input and terminal applications through PTYs, parsing, state, fonts, GPUs, native platforms, and back again.
+A self-contained, scenario-driven Astro Starlight course for understanding how Ghostty carries data from user input and terminal applications through PTYs, parsing, state, fonts, GPUs, native platforms, and back again.
 
 Open **https://b1tank.github.io/learn-ghostty/**. No clone, server, CLI, account, or AI is required.
 

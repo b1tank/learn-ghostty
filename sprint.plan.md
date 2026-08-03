@@ -41,8 +41,9 @@ Replace VitePress with a thin Astro learning site, remove stale LMS/evidence arc
   - Trace keyboard and output across local PTY, ssh process, encrypted transport, sshd, remote PTY, remote shell, and optional remote tmux/panes.
   - Separate local and remote kernels, processes, terminal state, rendering, and latency.
 
-- [x] **9. Add reusable scenario pedagogy and source references**
-  - Build a reusable data-flow walkthrough component and sports-broadcast analogy callouts with explicit analogy limits.
+- [x] **9. Add reusable scenario pedagogy, diagrams, and source references**
+  - Build a reusable data-flow diagram/walkthrough component and sports-broadcast analogy callouts with explicit analogy limits.
+  - Require diagrams for multi-component, bidirectional, nested, kernel/user, hardware/software, and local/remote flows, with labeled data on every edge and accessible text equivalents.
   - Add pinned remote GitHub links, `~/ghostty` paths, official docs, and narrow “read this / ignore that / answer this” source guidance.
 
 - [x] **10. Remove stale architecture and verify publication**
@@ -62,11 +63,11 @@ Replace VitePress with a thin Astro learning site, remove stale LMS/evidence arc
 
 ## Hiccups & Notes
 
-- Astro 7.1.6 uses the content loader API in `src/content.config.ts`; lesson frontmatter now replaces the duplicated JSON manifest and VitePress sidebar configuration.
+- Astro 7.1.6 uses Starlight's docs loader in `src/content.config.ts`; lesson frontmatter now replaces the duplicated JSON manifest and VitePress sidebar configuration. Starlight supplies the popular Astro navigation, Pagefind search, sidebar, table of contents, theme, responsive behavior, and typography baseline.
 - Reusing the Vue Copy for AI island under server rendering caused a hydration mismatch because its teleported menu has no identical SSR tree. `LessonTools` now uses `client:only="vue"`, keeping lesson HTML fully static while mounting the toolbar safely on the client.
 - Vue islands marked `client:visible` are not interactive until scrolled into view. Browser audits now scroll the walkthrough into view before testing step selection.
 - The old dev server had to be stopped before Astro could own port 4173. No learner-facing local server remains in the product architecture.
-- Four scenario lessons now cover startup/ls/cat, Codex, tmux, and SSH/remote tmux. Seven deeper lessons remain visible and unlinked until built while learning.
+- Four scenario lessons now cover startup/ls/cat, Codex, tmux, and SSH/remote tmux. Each complex flow has an interactive actor/data/transformation diagram plus a textual account and explicit analogy limit. Seven deeper lessons remain visible and unlinked until built while learning.
 - The reusable walkthrough labels actor, data in, transformation, data out, and sports-broadcast analogy at every step. Every lesson includes an explicit analogy-limit section.
 - VitePress, its theme overrides, local API, `camp`, mission/evidence state, native-lab runner, duplicated manifest, learner fixtures, and obsolete design documents were deleted rather than left stale.
 - Final Astro audit passes 101 assertions across seven routes, two themes, three viewport widths, first/return progress, explicit completion/reset, collision-aware Copy for AI, search, and interactive scenarios.

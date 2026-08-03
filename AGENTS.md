@@ -11,7 +11,7 @@ When a learner asks for help, use context copied from **Copy for AI**. If no con
 ## Current architecture
 
 - Astro static output and MDX content collections.
-- Lesson source: `src/content/lessons/*.mdx`.
+- Lesson source: `src/content/docs/lessons/*.mdx`.
 - Shared layouts: `src/layouts/`.
 - Astro/Vue components: `src/components/`.
 - Browser progress: `src/lib/progressStore.js`.
@@ -35,6 +35,7 @@ npm run build
 - Use plain student-facing language without talking down to a senior engineer.
 - Label the data type at boundaries: native event, UTF-8 bytes, argv, PTY stream, parser action, cell, glyph, texture, frame, pixels.
 - Use the sports-broadcast analogy when it clarifies roles or routing, and always state where it fails.
+- Give every multi-component or bidirectional data flow a diagram or interactive graph before the detailed prose. Label actors, boundaries, direction, and the concrete data type on each edge; include an equivalent textual explanation for accessibility.
 - Prefer short paragraphs, concrete commands, progressive disclosure, and narrow source reads.
 - Never add learner-facing quizzes, gates, evidence notebooks, mastery scores, or required answers.
 
