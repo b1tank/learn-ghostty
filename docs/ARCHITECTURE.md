@@ -4,7 +4,7 @@ Learn Ghostty is a static Astro site deployed to GitHub Pages.
 
 ## Stack
 
-- Astro static output with Starlight as the standard documentation/learning shell
+- Astro static output with Starlight as the standard documentation/learning shell and visual design system
 - Starlight docs loader, Pagefind search, navigation, sidebar, table of contents, theme, typography, and accessibility defaults
 - MDX content collections for lessons
 - Vue islands only for interactive walkthroughs, browser progress, search, and Copy for AI

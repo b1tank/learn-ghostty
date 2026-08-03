@@ -46,6 +46,21 @@ The primary scalable analogy is a live sports broadcast: producers, remote feeds
 
 Every excerpt states what to read, what to ignore, and the architectural question it answers. Include immutable GitHub and `~/ghostty` paths. Link official Ghostty documentation for authoritative behavior and policy.
 
+## Visual design
+
+Starlight is the product design system. Use its typography, spacing, navigation, search, themes, icons, focus states, and responsive behavior rather than recreating documentation chrome.
+
+Course-specific UI follows these rules:
+
+- body copy is at least 17px on lesson pages with generous line height;
+- metadata is never smaller than Starlight's `--sl-text-xs` unless it is truly tertiary;
+- use Starlight semantic colors rather than neon brand overrides or decorative gradients;
+- use Starlight SVG icons or purpose-built SVGs, never emoji or improvised Unicode glyphs for controls;
+- group related information with spacing before adding borders and cards;
+- use compact cards, restrained shadows, and one accent color;
+- verify all pages in both themes and at 390px, tablet, and desktop widths;
+- diagrams should be visually prominent enough to teach, not miniature decorations.
+
 ## Avoid
 
 - learner tests, gates, notebooks, scores, or required answers
