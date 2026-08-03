@@ -6,7 +6,6 @@ next: false
 ---
 
 <script setup>
-import AiCopyMenu from '../components/AiCopyMenu.vue'
 import ArchitectureExplorer from '../components/ArchitectureExplorer.vue'
 import EvidenceNotebook from '../components/EvidenceNotebook.vue'
 import LessonFooter from '../components/LessonFooter.vue'
@@ -24,7 +23,6 @@ import SourceLink from '../components/SourceLink.vue'
 </div>
 
 <LessonProgress lesson-id="00-ghostty-overview" />
-<AiCopyMenu lesson-id="00-ghostty-overview" />
 
 ::: tip The story to leave with
 A program writes bytes. A PTY carries them. A parser decides which bytes are text and which are commands. Terminal state remembers the result. Fonts and the GPU turn that state into pixels. Native UI carries your input back.

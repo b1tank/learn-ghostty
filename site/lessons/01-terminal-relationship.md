@@ -6,7 +6,6 @@ next: false
 ---
 
 <script setup>
-import AiCopyMenu from '../components/AiCopyMenu.vue'
 import ByteWorkbench from '../components/ByteWorkbench.vue'
 import EvidenceNotebook from '../components/EvidenceNotebook.vue'
 import LabRunner from '../components/LabRunner.vue'
@@ -26,7 +25,6 @@ import SourceLink from '../components/SourceLink.vue'
 </div>
 
 <LessonProgress lesson-id="01-terminal-relationship" />
-<AiCopyMenu lesson-id="01-terminal-relationship" />
 
 <span id="process-pty-observation" class="lesson-anchor"></span>
 

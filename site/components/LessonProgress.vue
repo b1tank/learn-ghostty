@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { withBase } from "vitepress";
+import AiCopyMenu from "./AiCopyMenu.vue";
 import { courseManifest, learnerState, loadLearnerState, markLessonComplete, recordSection } from "../lib/courseStore.js";
 const props = defineProps({ lessonId: { type: String, required: true } });
 const lesson = courseManifest.lessons.find((item) => item.id === props.lessonId);
@@ -45,6 +46,7 @@ onBeforeUnmount(() => {
       <a :href="withBase('/#roadmap')">Roadmap</a>
       <button :disabled="completed" @click="complete">{{ completed ? 'Completed ✓' : 'Mark lesson complete' }}</button>
       <a v-if="next" :href="withBase(next.path)" :aria-label="`Next lesson: ${next.title}`">Next →</a>
+      <AiCopyMenu :lesson-id="lessonId" />
     </div>
   </nav>
 </template>

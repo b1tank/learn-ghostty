@@ -71,7 +71,7 @@ onMounted(async () => {
 
 <template>
   <div class="ai-copy-menu">
-    <button class="ai-copy-primary" :disabled="!markdown" @click="copySection(false)"><span aria-hidden="true">▣</span> Copy current section for AI</button>
+    <button class="ai-copy-primary" :disabled="!markdown" title="Copy the current section as AI-ready Markdown" @click="copySection(false)"><span class="ai-copy-icon" aria-hidden="true"></span> Copy for AI</button>
     <details ref="menu">
       <summary aria-label="More Copy for AI options">⌄</summary>
       <div class="ai-copy-popover">
