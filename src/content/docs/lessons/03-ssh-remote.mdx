@@ -1,7 +1,7 @@
 ---
 order: 3
 title: SSH, remote shells, and remote tmux
-summary: Trace terminal data across two kernels, an encrypted network channel, a remote PTY, and optionally another terminal multiplexer.
+description: Trace terminal data across two kernels, an encrypted network channel, a remote PTY, and optionally another terminal multiplexer.
 duration: 45–60 minutes
 module: Scenarios
 status: published
@@ -21,9 +21,14 @@ sourceRefs:
     end: 90
     label: Ghostty's SSH helper command
     purpose: See the boundary between Ghostty CLI integration and the external SSH process.
+sidebar:
+  order: 3
 ---
-import DataFlowWalkthrough from '../../components/DataFlowWalkthrough.vue';
-import SourceLink from '../../components/SourceLink.vue';
+import DataFlowWalkthrough from '../../../components/DataFlowWalkthrough.vue';
+import SourceLink from '../../../components/SourceLink.vue';
+import LessonActions from '../../../components/LessonActions.astro';
+
+<LessonActions id="03-ssh-remote" />
 
 Run:
 

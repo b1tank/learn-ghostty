@@ -1,4 +1,0 @@
----
-import BaseLayout from "../layouts/BaseLayout.astro";import SourceViewer from "../components/SourceViewer.vue";import {getLessons} from "../lib/course.js";const lessons=await getLessons();
----
-<BaseLayout title="Ghostty source viewer" lessons={lessons}><div style="max-width:1100px;margin:auto;padding:56px 24px 90px"><h1>Follow the lesson into production</h1><p>The course never replaces Ghostty source. It gives you a focused ramp into the exact pinned snapshot.</p><SourceViewer client:load sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699"/></div></BaseLayout>

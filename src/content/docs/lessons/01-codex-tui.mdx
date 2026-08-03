@@ -1,7 +1,7 @@
 ---
 order: 1
 title: Codex as a long-running terminal UI
-summary: Separate the terminal interface from model networking, tool execution, application state, and repeated full-screen rendering.
+description: Separate the terminal interface from model networking, tool execution, application state, and repeated full-screen rendering.
 duration: 35–50 minutes
 module: Scenarios
 status: published
@@ -21,9 +21,14 @@ sourceRefs:
     end: 80
     label: Primary and alternate screens
     purpose: Locate the two screen models used by full-screen TUIs.
+sidebar:
+  order: 1
 ---
-import DataFlowWalkthrough from '../../components/DataFlowWalkthrough.vue';
-import SourceLink from '../../components/SourceLink.vue';
+import DataFlowWalkthrough from '../../../components/DataFlowWalkthrough.vue';
+import SourceLink from '../../../components/SourceLink.vue';
+import LessonActions from '../../../components/LessonActions.astro';
+
+<LessonActions id="01-codex-tui" />
 
 A command such as `ls` runs briefly, writes output, and exits. Codex is different: it stays alive, accepts keys continuously, talks to model services, launches tools, and repeatedly redraws a terminal UI.
 

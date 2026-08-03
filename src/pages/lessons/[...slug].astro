@@ -1,8 +1,0 @@
----
-import { getCollection, render } from "astro:content";
-import LessonLayout from "../../layouts/LessonLayout.astro";
-import { getLessons } from "../../lib/course.js";
-export async function getStaticPaths(){const entries=await getCollection("lessons",({data})=>data.status==="published");return entries.map(entry=>({params:{slug:entry.id},props:{entry}}))}
-const {entry}=Astro.props;const {Content,headings}=await render(entry);const lessons=await getLessons();const lesson={id:entry.id,...entry.data};const sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699";
----
-<LessonLayout lesson={lesson} lessons={lessons} headings={headings} sourceCommit={sourceCommit}><Content/></LessonLayout>

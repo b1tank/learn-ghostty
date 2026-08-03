@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.5",
+    "@astrojs/starlight": "^0.41.6",
     "@astrojs/vue": "^7.0.1",
     "astro": "^7.1.6"
   }

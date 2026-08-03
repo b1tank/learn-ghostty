@@ -1,7 +1,7 @@
 ---
 order: 0
 title: Open Ghostty, run ls, see pixels
-summary: Follow one ordinary terminal session from app launch to shell prompt, keyboard input, command execution, colored output, glyphs, GPU work, and visible pixels.
+description: Follow one ordinary terminal session from app launch to shell prompt, keyboard input, command execution, colored output, glyphs, GPU work, and visible pixels.
 duration: 45–60 minutes
 module: Scenarios
 status: published
@@ -27,9 +27,14 @@ sourceRefs:
     end: 1165
     label: Updating a render frame
     purpose: Locate the handoff from terminal state to renderable frame data.
+sidebar:
+  order: 0
 ---
-import DataFlowWalkthrough from '../../components/DataFlowWalkthrough.vue';
-import SourceLink from '../../components/SourceLink.vue';
+import DataFlowWalkthrough from '../../../components/DataFlowWalkthrough.vue';
+import SourceLink from '../../../components/SourceLink.vue';
+import LessonActions from '../../../components/LessonActions.astro';
+
+<LessonActions id="00-open-ghostty" />
 
 This lesson follows something deliberately ordinary:
 

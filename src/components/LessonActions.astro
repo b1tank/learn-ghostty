@@ -1,0 +1,7 @@
+---
+import { getEntry } from "astro:content";
+import LessonTools from "./LessonTools.vue";
+import { getLessons } from "../lib/course.js";
+const { id }=Astro.props;const entry=await getEntry("docs",`lessons/${id}`);const lessons=await getLessons();const lesson={id,summary:entry.data.description,...entry.data};
+---
+<LessonTools client:only="vue" lesson={lesson} lessons={lessons} base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" />
