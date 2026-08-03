@@ -11,6 +11,7 @@
     "audit:ui": "node scripts/audit-ui.mjs"
   },
   "devDependencies": {
+    "gray-matter": "^4.0.3",
     "puppeteer-core": "^25.4.0",
     "vue": "latest"
   },

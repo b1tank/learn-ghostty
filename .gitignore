@@ -1,17 +1,5 @@
 node_modules/
 .astro/
-.vitepress/cache/
-.vitepress/dist/
-site/.vitepress/cache/
-site/.vitepress/dist/
 dist/
-zig-cache/
-.zig-cache/
-zig-out/
 *.log
 .DS_Store
-
-# Runtime files
-.course-build/
-.course-server.pid
-.course-server.json
