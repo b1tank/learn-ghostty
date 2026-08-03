@@ -1,0 +1,141 @@
+---
+order: 1
+title: Codex as a long-running terminal UI
+summary: Separate the terminal interface from model networking, tool execution, application state, and repeated full-screen rendering.
+duration: 35–50 minutes
+module: Scenarios
+status: published
+sourceRefs:
+  - path: src/Surface.zig
+    line: 1540
+    end: 1625
+    label: Surface key-event handling
+    purpose: Find where native key events become bindings or bytes for the PTY.
+  - path: src/input/key_encode.zig
+    line: 1
+    end: 90
+    label: Terminal key encoding
+    purpose: See why a key event is not already a terminal byte sequence.
+  - path: src/terminal/ScreenSet.zig
+    line: 1
+    end: 80
+    label: Primary and alternate screens
+    purpose: Locate the two screen models used by full-screen TUIs.
+---
+import DataFlowWalkthrough from '../../components/DataFlowWalkthrough.vue';
+import SourceLink from '../../components/SourceLink.vue';
+
+A command such as `ls` runs briefly, writes output, and exits. Codex is different: it stays alive, accepts keys continuously, talks to model services, launches tools, and repeatedly redraws a terminal UI.
+
+This lesson separates systems that are easy to blur together.
+
+## Starting Codex
+
+From a shell prompt you run:
+
+```bash
+codex
+```
+
+The shell parses one command and starts the Codex process on the same PTY slave. While Codex owns the terminal foreground, the shell waits. Ghostty does not become “an AI terminal.” It still transports input bytes and interprets output bytes.
+
+<DataFlowWalkthrough client:visible title="From shell prompt to interactive Codex TUI" analogy="A sports network switches from a short report to a live show with its own producer and continuously changing graphics." steps={[
+  {actor:'Shell',input:'codex + arguments',action:'Locates and starts the Codex executable as the foreground process.',output:'long-running Codex process',analogy:'The network hands the live time slot to a new production team.'},
+  {actor:'Codex terminal setup',input:'PTY capabilities, TERM, current size',action:'Configures terminal modes and initializes its TUI renderer.',output:'mode-change + screen-control bytes',analogy:'The production team takes control of the graphics system.'},
+  {actor:'Ghostty parser/state',input:'alternate-screen, cursor, style, and text sequences',action:'Applies terminal actions and stores the new full-screen interface.',output:'terminal cells for Codex UI',analogy:'The control room replaces the previous scoreboard layout with the show layout.'},
+  {actor:'Ghostty renderer',input:'changed cells and cursor state',action:'Shapes glyphs and submits a new GPU frame.',output:'visible Codex interface',analogy:'The new live graphics package reaches the viewer.'}
+]}/>
+
+## Raw mode: keys without waiting for Enter
+
+A shell commonly begins in **canonical mode**: the kernel collects and edits a line, echoes characters, and delivers the completed line after Enter.
+
+A TUI usually wants keys immediately. It changes terminal settings so arrows, Backspace, Escape, and ordinary characters arrive without line buffering. This is commonly called **raw mode**, although actual programs may selectively keep or disable individual terminal flags.
+
+The key path is:
+
+```text
+keyboard hardware
+→ OS/window-system event
+→ GTK or AppKit
+→ Ghostty key representation
+→ Ghostty terminal encoding
+→ PTY master
+→ PTY slave
+→ Codex input loop
+```
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/input/key_encode.zig" line={1} end={90} label="A key becomes terminal bytes" note="Notice the inputs needed beyond a key name: modifiers, action, text, and active terminal modes." />
+
+The terminal application can request different keyboard protocols. Therefore a native key event cannot simply be copied into the PTY unchanged.
+
+## Alternate screen: a temporary full-screen workspace
+
+Many TUIs request the **alternate screen**. Conceptually, Ghostty keeps the normal shell screen and gives the application another screen-sized terminal state. When Codex exits cleanly, Ghostty restores the normal screen and your previous prompt/history reappears.
+
+The alternate screen is not another operating-system window or GPU framebuffer. It is another terminal-state model interpreted by Ghostty.
+
+A crash or abrupt disconnect can leave terminal modes looking wrong because the application did not send its normal cleanup sequences. Shells often provide commands such as `reset` to restore a usable state.
+
+## Continuous redraw
+
+Codex does not send a GUI widget tree to Ghostty. It emits terminal commands:
+
+- move the cursor;
+- set foreground/background styles;
+- print text;
+- erase regions;
+- hide or show the cursor;
+- enable paste, focus, mouse, or keyboard modes;
+- synchronize groups of updates.
+
+Ghostty parses those bytes and updates terminal cells. Modern TUIs try to emit only differences, but some operations repaint large regions.
+
+<DataFlowWalkthrough client:visible title="One key causes a new TUI frame" analogy="A host asks a question, the show updates its rundown, and the graphics team publishes a changed lower-third." steps={[
+  {actor:'You + Ghostty input',input:'native key event',action:'Ghostty encodes the event under the terminal modes requested by Codex.',output:'terminal input bytes',analogy:'A studio instruction is translated into the show protocol.'},
+  {actor:'Codex input loop',input:'key bytes',action:'Updates selection, editor text, scroll position, or submits an action.',output:'new application state',analogy:'The producer changes the rundown.'},
+  {actor:'Codex TUI renderer',input:'old UI state + new UI state',action:'Calculates terminal commands needed to represent the change.',output:'text + cursor/style/erase bytes',analogy:'Graphics operators produce only the changed overlay cues.'},
+  {actor:'Ghostty parser and state',input:'TUI output bytes',action:'Turns commands into changed cells, modes, and cursor state.',output:'updated render model',analogy:'The control room applies cues to the live graphics board.'},
+  {actor:'Ghostty GPU renderer',input:'updated model',action:'Builds and presents the next terminal frame.',output:'new pixels',analogy:'The viewer sees the updated broadcast frame.'}
+]}/>
+
+## The network path is separate
+
+The most important architectural separation is this:
+
+```text
+Terminal UI path:
+you ↔ Ghostty ↔ PTY ↔ Codex TUI
+
+Agent/network path:
+Codex ↔ HTTPS/model service
+Codex ↔ filesystem
+Codex ↔ tool subprocesses
+```
+
+Ghostty does not semantically receive the model prompt, token stream, repository diff, or HTTP response. Codex owns those. Codex decides how to represent them as terminal output.
+
+If the network is slow, Codex may keep animating a spinner by emitting terminal updates. Ghostty only sees the spinner frames, not the reason for the wait.
+
+## Tool execution
+
+When Codex runs a command, there are several possible arrangements. It may capture a subprocess through ordinary pipes, allocate another PTY for an interactive tool, or communicate through an internal sandbox. Codex then transforms captured results into its application state and TUI output.
+
+Do not assume every tool process writes directly to Ghostty’s PTY. The top-level terminal relationship belongs to Codex; tool I/O architecture belongs to Codex.
+
+## Resize, paste, mouse, and focus
+
+- A window resize changes Ghostty’s pixel/cell dimensions and PTY size. Codex receives a resize indication and redraws for the new dimensions.
+- Paste begins as clipboard content in the native application. Ghostty may wrap it using bracketed-paste markers requested by Codex.
+- Mouse events are ordinary desktop events until the terminal application enables mouse reporting; Ghostty then encodes them as terminal bytes.
+- Focus changes can be reported when requested.
+
+Each feature is another negotiated data format across the same PTY relationship.
+
+## The complete Codex story
+
+The shell starts a long-lived foreground Codex process. Codex configures terminal modes, often uses the alternate screen, and runs an input/event loop. Ghostty converts native input to terminal bytes. Codex updates private application state, communicates with models and tools through separate channels, and emits terminal output describing its TUI. Ghostty parses that output, maintains terminal state, shapes text, and renders frames. When Codex exits and restores modes/screens, the waiting shell becomes foreground again and prints another prompt.
+
+## Where the broadcast analogy stops
+
+A real broadcast network understands shows, teams, and stories. Ghostty has no concept of agents, prompts, or tools. It is the transport/display endpoint for the byte protocol Codex chooses to emit.
