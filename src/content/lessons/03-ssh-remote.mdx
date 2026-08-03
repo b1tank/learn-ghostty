@@ -1,0 +1,195 @@
+---
+order: 3
+title: SSH, remote shells, and remote tmux
+summary: Trace terminal data across two kernels, an encrypted network channel, a remote PTY, and optionally another terminal multiplexer.
+duration: 45–60 minutes
+module: Scenarios
+status: published
+sourceRefs:
+  - path: src/termio/Exec.zig
+    line: 88
+    end: 150
+    label: Ghostty's local foreground subprocess
+    purpose: See that the process directly attached to Ghostty is local ssh, not the remote shell.
+  - path: src/terminal/size.zig
+    line: 1
+    end: 90
+    label: Terminal dimensions
+    purpose: Connect local cell size to SSH window-change messages and the remote PTY.
+  - path: src/cli/ssh.zig
+    line: 1
+    end: 90
+    label: Ghostty's SSH helper command
+    purpose: See the boundary between Ghostty CLI integration and the external SSH process.
+---
+import DataFlowWalkthrough from '../../components/DataFlowWalkthrough.vue';
+import SourceLink from '../../components/SourceLink.vue';
+
+Run:
+
+```bash
+ssh user@example.com
+```
+
+A remote prompt appears in the same Ghostty surface. The pixels are local. The shell producing the prompt is remote. Between them are two operating systems, two PTY relationships, and an encrypted byte channel.
+
+## First separate the machines
+
+### Local machine
+
+Owns:
+
+- keyboard and display hardware;
+- desktop compositor;
+- Ghostty process and native window;
+- Ghostty terminal state, fonts, and GPU rendering;
+- local shell and local `ssh` client process;
+- local PTY connecting Ghostty to the foreground `ssh` process.
+
+### Remote machine
+
+Owns:
+
+- `sshd` server process;
+- remote account and filesystem;
+- remote PTY allocated for the SSH session;
+- remote shell and commands;
+- optional remote tmux server and pane processes.
+
+The network transports encrypted data. It does not transport a window or GPU frame.
+
+## Connecting
+
+Your local shell starts `ssh` as its foreground child. From Ghostty’s immediate perspective, `ssh` is simply the terminal application attached to the local PTY.
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/termio/Exec.zig" line={88} end={150} label="The local process attached to Ghostty" note="Read threadEnter through process startup. For an SSH session, this local subprocess is ssh—not the remote shell." />
+
+SSH authenticates, negotiates encryption, and normally requests a remote PTY for an interactive session. The remote SSH server starts the remote account’s shell with the slave side of that remote PTY.
+
+<DataFlowWalkthrough client:visible title="From local command to remote prompt" analogy="A local studio opens a secure contribution line to a reporter at another stadium." steps={[
+  {actor:'Local shell',input:'ssh user@example.com',action:'Starts the local ssh client on Ghostty’s local PTY.',output:'foreground local ssh process',analogy:'The studio assigns an operator to open a remote feed.'},
+  {actor:'Local ssh client',input:'host, account, keys/config',action:'Authenticates and establishes an encrypted transport.',output:'secure SSH connection',analogy:'A protected contribution circuit is established.'},
+  {actor:'Remote sshd',input:'authenticated session request + PTY request',action:'Allocates a remote PTY and launches the remote login shell.',output:'remote shell attached to remote PTY',analogy:'The remote stadium gives the reporter a local production line.'},
+  {actor:'Remote shell',input:'remote startup files/environment',action:'Builds and writes a remote prompt.',output:'remote UTF-8 + terminal control bytes',analogy:'The remote reporter sends words and graphics cues.'},
+  {actor:'SSH transport',input:'remote PTY output',action:'Encrypts, transports, decrypts, and writes data from local ssh to its stdout.',output:'bytes on Ghostty’s local PTY',analogy:'The secure circuit carries the remote feed home.'},
+  {actor:'Ghostty',input:'bytes from local ssh process',action:'Parses terminal commands, updates local state, and renders with the local GPU.',output:'local pixels showing remote prompt',analogy:'The local studio renders the incoming feed for viewers.'}
+]}/>
+
+## Typing a remote command
+
+Suppose you type:
+
+```bash
+uname -a
+```
+
+Input path:
+
+```text
+keyboard
+→ local OS/window event
+→ Ghostty input encoding
+→ local PTY master
+→ local ssh process
+→ SSH encrypted channel
+→ remote sshd
+→ remote PTY master
+→ remote shell
+```
+
+The remote shell parses and starts remote `uname`. It runs under the remote kernel and reads remote system information.
+
+Output path:
+
+```text
+remote uname stdout
+→ remote PTY slave/master
+→ remote sshd
+→ encrypted network
+→ local ssh process stdout
+→ local PTY slave/master
+→ Ghostty parser/state/fonts/GPU
+→ local display
+```
+
+<span class="data-label">remote process output bytes</span> eventually become <span class="data-label">local GPU pixels</span>.
+
+## TERM and capabilities
+
+The remote application needs to know what kind of terminal behavior exists at the far end. SSH forwards selected environment information, commonly including `TERM`. The remote program uses that value and terminfo data to choose control sequences.
+
+The value does not mean “the remote machine has Ghostty’s GPU.” It describes the terminal protocol capabilities expected through the connection. Rendering still happens locally.
+
+Incorrect or missing terminal capability information can cause broken colors, keys, or screen updates even when network transport works perfectly.
+
+## Resize propagation
+
+When the Ghostty window changes size:
+
+1. Ghostty computes new rows and columns.
+2. The local PTY size changes.
+3. Local ssh detects the terminal-size change.
+4. SSH sends a window-change request across the encrypted channel.
+5. sshd updates the remote PTY size.
+6. The remote foreground application receives resize information.
+7. It redraws.
+8. Output returns and Ghostty renders the new layout.
+
+No remote pixel image is resized. Terminal dimensions and fresh terminal output propagate.
+
+## Latency and partial data
+
+Networks split and delay data. SSH preserves ordered byte streams, but Ghostty may receive output in different chunk sizes from those written remotely. A correct terminal parser cannot assume one `read` call contains one complete escape sequence or one complete UTF-8 character.
+
+This is why parser state persists across chunks.
+
+## Add remote tmux
+
+Now run tmux after connecting:
+
+```bash
+ssh user@example.com
+tmux attach
+```
+
+The nesting becomes:
+
+```text
+local Ghostty
+  ↕ local PTY
+local ssh client
+  ↕ encrypted network
+remote sshd
+  ↕ remote session PTY
+remote tmux client/server
+  ↕ pane PTY A → remote shell/program
+  ↕ pane PTY B → remote shell/program
+```
+
+A pane application’s output may be:
+
+1. parsed by remote tmux;
+2. composed into tmux’s outer remote terminal stream;
+3. transported by SSH;
+4. parsed by local Ghostty;
+5. rendered by the local GPU.
+
+Detach from remote tmux and close SSH: remote pane processes can continue because the remote tmux server owns them. Close Ghostty without tmux: whether the remote command survives depends on SSH/session behavior, not Ghostty rendering.
+
+## Local tmux plus SSH
+
+Another arrangement is:
+
+```text
+local Ghostty → local tmux pane → local ssh → remote PTY → remote shell
+```
+
+Now local tmux parses remote output before Ghostty does. Add remote tmux and there are three terminal-state owners in the path. When debugging, draw the actual process/PTY nesting rather than saying “the terminal.”
+
+## The complete SSH story
+
+Ghostty is connected through a local PTY to a local ssh client. SSH creates an encrypted byte channel to remote sshd, which allocates a remote PTY and launches a remote shell or program. Keys travel from local hardware through Ghostty, the local PTY, SSH, and the remote PTY. Output travels back through the reverse route. Ghostty parses and renders locally. tmux can add another parser/state/composition layer on either side.
+
+## Where the broadcast analogy stops
+
+A remote sports feed often transports compressed audio/video. SSH terminal sessions transport terminal bytes, not rendered frames. The remote side normally does not decide the final font, glyph rasterization, or GPU output you see in Ghostty.
