@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { courseManifest, evidenceFor, loadLearnerState, saveMissionEvidence } from "../lib/courseStore.js";
 const props = defineProps({ missionId: { type: String, required: true } });
 const fieldInfo = {
   prediction: ["Prediction", "Before running or revealing: what did you expect, and why?"],
@@ -17,20 +18,17 @@ const notice = ref("");
 const error = ref("");
 const requiredFields = computed(() => mission.value?.evidenceFields ?? []);
 
-async function load() {
+function load() {
   loading.value = true; error.value = "";
   try {
-    const courseResponse = await fetch("/api/course");
-    if (!courseResponse.ok) throw new Error("course service unavailable");
-    const course = await courseResponse.json();
-    mission.value = course.manifest.missions.find((item) => item.id === props.missionId);
+    loadLearnerState();
+    mission.value = courseManifest.missions.find((item) => item.id === props.missionId);
     if (!mission.value) throw new Error("mission not found in course model");
-    const response = await fetch(`/api/evidence?missionId=${encodeURIComponent(props.missionId)}`);
-    const value = await response.json();
-    if (value.evidence) {
-      for (const field of Object.keys(form.value)) form.value[field] = value.evidence[field] ?? "";
-      stage.value = value.evidence.stage ?? "not_started";
-      complete.value = Boolean(value.evidence.complete);
+    const evidence = evidenceFor(props.missionId);
+    if (evidence) {
+      for (const field of Object.keys(form.value)) form.value[field] = evidence[field] ?? "";
+      stage.value = evidence.stage ?? "not_started";
+      complete.value = Boolean(evidence.complete);
     }
   } catch (cause) { error.value = cause.message; }
   finally { loading.value = false; }
@@ -38,11 +36,9 @@ async function load() {
 async function save() {
   saving.value = true; notice.value = ""; error.value = "";
   try {
-    const response = await fetch("/api/evidence", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ missionId: props.missionId, ...form.value }) });
-    const value = await response.json();
-    if (!response.ok) throw new Error(value.error || "evidence could not be saved");
-    stage.value = value.evidence.stage;
-    complete.value = value.evidence.complete;
+    const evidence = saveMissionEvidence(props.missionId, form.value);
+    stage.value = evidence.stage;
+    complete.value = evidence.complete;
     notice.value = complete.value ? "Mission evidence complete. The next mission is now current." : `Saved at stage: ${stage.value}.`;
   } catch (cause) { error.value = cause.message; }
   finally { saving.value = false; }
@@ -62,7 +58,7 @@ onMounted(load);
     <div v-else-if="error" class="evidence-error" role="alert">{{ error }} <button @click="load">Retry</button></div>
     <template v-else>
       <label v-for="field in requiredFields" :key="field"><span>{{ fieldInfo[field][0] }} <small>{{ fieldInfo[field][1] }}</small></span><textarea v-model="form[field]" rows="4"></textarea></label>
-      <footer><span aria-live="polite">{{ notice || 'Saved as an ordinary JSON file under learner/evidence/.' }}</span><div><button @click="copyForPi">Copy for Pi review</button><button class="primary" :disabled="saving" @click="save">{{ saving ? 'Saving…' : 'Save evidence' }}</button></div></footer>
+      <footer><span aria-live="polite">{{ notice || 'Saved privately in this browser. Export the full record from the dashboard anytime.' }}</span><div><button @click="copyForPi">Copy for Pi review</button><button class="primary" :disabled="saving" @click="save">{{ saving ? 'Saving…' : 'Save evidence' }}</button></div></footer>
     </template>
   </section>
 </template>

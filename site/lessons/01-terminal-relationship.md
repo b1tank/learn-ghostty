@@ -26,12 +26,12 @@ import SourceLink from '../components/SourceLink.vue'
 
 ### Begin with a prediction
 
-The same C program will run twice:
+The reference experiment runs the same checked-in C program twice:
 
-1. as an ordinary process whose output is captured by the course server;
+1. as an ordinary process with captured output;
 2. inside a newly allocated pseudo-terminal.
 
-The program prints seven facts about itself. Before running it, predict which facts must change merely because its connection changed.
+The website bundles a normalized trace captured from that real Linux run, so no setup is required and everyone can reason from the same evidence. When an optional local runner is already present, the page also offers a live run. Before revealing either, predict which facts must change merely because the connection changed.
 
 <PredictionCard
   question="Will the program get a new PID, session, process group, terminal device, or all four when it runs inside a new PTY?"
@@ -43,12 +43,12 @@ The program prints seven facts about itself. Before running it, predict which fa
 
 <LabRunner lab="terminal-reality" title="Compile the C probe and compare no-PTY with PTY" />
 
-This is real native code, not a browser animation. The runner:
+The reference output came from real native code, not an invented browser model:
 
-1. compiles [`labs/c/terminal-reality/main.c`](https://github.com/b1tank/learn-ghostty/blob/main/labs/c/terminal-reality/main.c) with warnings treated as errors;
-2. runs it normally;
-3. asks util-linux `script` to allocate a fresh PTY and runs the same binary again;
-4. shows both observations without interpreting them for you.
+1. [`labs/c/terminal-reality/main.c`](https://github.com/b1tank/learn-ghostty/blob/main/labs/c/terminal-reality/main.c) was compiled with warnings treated as errors;
+2. the binary ran normally;
+3. util-linux `script` allocated a fresh PTY and ran the same binary again;
+4. only volatile identifiers and the PTY number were normalized for a stable website experiment.
 
 ### Read the output like an investigator
 
@@ -73,7 +73,7 @@ Only now attach vocabulary:
 The other side of the PTY is the **master**. A terminal emulator owns that side. Bytes written by the child to the slave can be read from the master; bytes written to the master become input on the slave.
 
 ```text
-Ghostty / course runner                 shell or child
+Ghostty / PTY owner                     shell or child
 owns PTY master                         inherits PTY slave
         │                                      │
         └──────────── kernel PTY pair ─────────┘
@@ -182,7 +182,7 @@ Your notebook entry must contain:
 3. a causal explanation for every non-printing byte;
 4. this source invariant in your own words: parser actions are ordered, and terminal-state mutation belongs after parsing.
 
-The evidence notebook below saves these claims as ordinary files. Pi will challenge them; it should not replace them.
+The evidence notebook below saves these claims privately in your browser. Export the record from the dashboard for backup or optional Pi review. Pi should challenge the claims, not replace them.
 
 <EvidenceNotebook mission-id="bytes-to-screen" />
 

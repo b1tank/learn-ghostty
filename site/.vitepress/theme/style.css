@@ -81,6 +81,7 @@
 .evidence-ladder span { color: var(--vp-c-text-3); font-size: 10px; line-height: 1.4; }
 .context-panel p, .system-panel > p { color: var(--vp-c-text-2); font-size: 12px; line-height: 1.55; }
 .context-divider { height: 1px; margin: 22px 0; background: var(--vp-c-divider); }
+.record-export { min-height: 38px; padding: 7px 10px; border: 1px solid var(--vp-c-divider); border-radius: 6px; color: var(--vp-c-text-2); background: var(--lg-control); font: 9px var(--vp-font-family-mono); cursor: pointer; }
 .system-panel, .queue-panel { grid-column: 1 / -1; }
 .system-trace { display: flex; align-items: center; gap: 7px; overflow-x: auto; padding: 22px 0 14px; }
 .system-trace span { flex: 0 0 auto; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--lime) 26%, transparent); border-radius: 6px; color: var(--lime); font: 10px var(--vp-font-family-mono); }
@@ -203,6 +204,10 @@ a.course-lesson:hover { background: color-mix(in srgb, var(--lime) 6%, transpare
 .journey-top { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 22px 24px; border-bottom: 1px solid var(--vp-c-divider); }
 .journey-top span, .lab-title span { color: var(--lime); font: 9px var(--vp-font-family-mono); letter-spacing: .12em; }
 .journey-top h3, .lab-title h3 { margin: 5px 0 0; font-size: 19px; }
+.lab-title small { display: block; margin-top: 5px; color: var(--vp-c-text-3); font: 9px var(--vp-font-family-mono); }
+.lab-actions { display: flex; gap: 7px; }
+.lab-provenance { border-top: 1px solid var(--vp-c-divider); }
+.lab-provenance strong { color: var(--lime); font: 8px var(--vp-font-family-mono); letter-spacing: .1em; }
 .journey-steps { display: grid; grid-template-columns: repeat(5, 1fr); padding: 22px 22px 0; }
 .journey-steps button { position: relative; display: flex; min-height: 44px; align-items: center; gap: 7px; padding: 8px 4px; border: 0; color: var(--vp-c-text-3); background: transparent; font: 9px var(--vp-font-family-mono); cursor: pointer; }
 .journey-steps button::after { content: ""; position: absolute; z-index: 0; left: 13px; right: -5px; top: 21px; height: 1px; background: color-mix(in srgb, var(--vp-c-text-3) 30%, transparent); }

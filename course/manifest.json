@@ -106,7 +106,9 @@
       "description": "Compile a C process probe and run it inside a newly allocated PTY",
       "cwd": ".",
       "run": ["node", "scripts/run-terminal-reality.mjs"],
-      "timeoutSeconds": 20
+      "timeoutSeconds": 20,
+      "referencePlatform": "Linux · util-linux PTY · captured from the course probe",
+      "referenceOutput": "TERMINAL RELATIONSHIP PROBE\nThe same C program runs twice. Only its connection changes.\n\n── A · ordinary captured process ──────────────────────────\nstdin is a terminal    no\nstdout is a terminal   no\nterminal device        (none)\nprocess id (PID)       4201\nparent id (PPID)       4200\nsession id (SID)       4200\nprocess group (PGID)   4200\nforeground PGID        not applicable (stdin is not a terminal)\n\n── B · process inside a new PTY ───────────────────────────\nstdin is a terminal    yes\nstdout is a terminal   yes\nterminal device        /dev/pts/7\nprocess id (PID)       4301\nparent id (PPID)       4300\nsession id (SID)       4301\nprocess group (PGID)   4301\nforeground PGID        4301\n\nQuestion: which fields changed, and which changed together?\n"
     }
   }
 }
