@@ -189,7 +189,7 @@ If the optional local service exists, the same component may additionally offer 
 
 `course/manifest.json` defines one hierarchy: modules contain lessons; lessons contain missions. Each mission declares the evidence it requires from prediction, observation, explanation, and source invariant.
 
-Machine-readable browser state records the current lesson and mission plus full learner-authored evidence. The learner can export a portable JSON record for backup, transfer, or optional Pi review. Browser storage remains authoritative and private by default.
+Machine-readable browser state records the last viewed heading per lesson, explicitly completed lessons, and optional learner-authored notebook evidence. IntersectionObserver/scroll tracking updates resume automatically; completion remains an ungated button. The learner can export a portable JSON record before backup, transfer, AI review, or confirmed reset. Browser storage remains authoritative and private by default.
 
 Repository files under `learner/` are development fixtures, not the learner's runtime record. State updates must be schema-validated and must never invent an observation.
 
@@ -203,7 +203,9 @@ not_started → predicted → observed → explained → traced → modified
 
 Not every mission requires every stage. An orientation may require an explanation; a systems mission may require prediction, concrete observation, causal explanation, and a source invariant. Later transfer exercises test whether evidence remains usable in a new situation.
 
-The dashboard shows what the learner has proved, not percentages, confidence theater, or an LLM-generated mastery score.
+The homepage shows a simple first-visit explanation or returning resume card plus the complete roadmap, not percentages, confidence theater, or an LLM-generated mastery score.
+
+AI-clean Markdown is generated from lesson source at build time. A sticky vendor-neutral Copy for AI control extracts the tracked current section and adds readable URL/progress/source metadata. Private notebook evidence is opt-in, never copied by the default action.
 
 ## 8. Course CLI
 

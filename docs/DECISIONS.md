@@ -10,14 +10,17 @@
 - Scope custom styles to Learn Ghostty components (`.cockpit-*`, `.lesson-*`, `.architecture-*`, `.journey-*`, `.source-*`, or `.lg-*`). Avoid generic selectors such as `.button`, global form focus rules, and unscoped `.vp-doc`/`.VP*` overrides.
 - Let VitePress own its compatible Vite and Vue plugin versions. Keep Vue as a direct dependency for course components, but do not separately install Vite or `@vitejs/plugin-vue` without a demonstrated build requirement.
 - Mermaid handles ordinary diagrams; Canvas, SVG, or WebGL handle richer visualizers.
-- Browser localStorage is the authoritative default evidence store, with a JSON export for backup or optional Pi review. No cloud service, account, database, or local daemon is required.
+- Browser localStorage tracks the last viewed section, explicitly completed lessons, and optional notebook evidence. Section resume is automatic; completion is always an ungated personal bookmark.
+- Restart progress requires confirmation and offers an export backup before deletion. No cloud service, account, database, or local daemon is required.
 - A small Node service may enhance development checkouts with live native labs, local source access, and editor integration. The website must detect it opportunistically and remain complete when it is absent.
 - Native experiments required for understanding ship with clearly labeled, normalized reference traces captured from checked-in probes. A live run may appear as an optional enhancement but cannot gate a mission.
 - Ghostty is pinned as a git submodule so source trails are reproducible.
 - Primary runnable platform is Linux/GTK/OpenGL.
 - macOS/SwiftUI/Metal receives a complete conceptual track and runnable material where the host permits it.
 - C is used first when it exposes fundamentals cleanly; Zig follows for production-source fluency.
-- AI integration is vendor-neutral: Copy for AI emits readable Markdown and metadata usable by web LLMs or local agents. Project `AGENTS.md` and skills improve local-agent behavior but are not required by the website.
+- AI integration is vendor-neutral. The primary Copy for AI action copies the current section with clean Markdown, URL, compact progress, pinned source, `~/learn-ghostty`, `~/ghostty`, and an empty question field. Notebook answers are excluded unless the learner explicitly chooses the notes-inclusive action.
+- Every published lesson is freely accessible from the roadmap. Prerequisites recommend an order but never enforce locks.
+- Project `AGENTS.md` and skills improve local-agent behavior but are not required by the website.
 - The canonical hierarchy is modules → lessons → missions. Homepage, sidebar, course map, optional agents, and learner state derive from `course/manifest.json`.
 - Mission progress is evidence-based: prediction, observation, explanation, and source invariant produce stages such as observed, explained, traced, and modified. Do not display mastery percentages.
 - Browser simulations must be input-driven, expose internal state, and state their limits. A timed sequence of static explanations is not a lab.

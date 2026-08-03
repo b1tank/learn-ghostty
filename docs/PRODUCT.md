@@ -52,30 +52,17 @@ The website saves mission evidence and the exact next mission in browser storage
 
 ## 3. Dashboard
 
-The dashboard should answer immediately:
+The homepage serves two states without becoming an LMS dashboard.
 
-1. Where am I?
-2. What did I learn?
-3. What should I do next?
-4. Which parts of Ghostty do I understand?
+For a first-time visitor it immediately explains what the site is, who it serves, how to use it, what the complete path covers, and one obvious Start learning action. It prominently calls out real humans preparing to contribute responsibly to the Ghostty ecosystem.
 
-It includes:
+For a returning learner it adds a concise Welcome back card with the last lesson, last automatically tracked section, and one-click Resume. The full roadmap remains visible in both states; every published lesson is clickable regardless of prerequisites.
 
-- the exact current mission and question;
-- the next missing evidence field;
-- the last claim the learner proved;
-- open questions;
-- the evolving end-to-end trace;
-- the canonical learning queue;
-- one-click exact-section resume.
+Progress is intentionally simple: automatic last-section tracking, explicit Mark lesson complete, browser-local notebook answers, export, and confirmed Restart progress. No percentages or subjective mastery score appear.
 
-It does not lead with marketing copy, completion percentages, or subjective mastery scores.
+## 4. Roadmap and progress
 
-## 4. Evidence views
-
-### Mission ladder
-
-Missions expose what is not started, predicted, observed, explained, traced in production, or safely modified. These stages are claims backed by learner-authored artifacts rather than page traversal.
+The homepage roadmap is canonical and generated from the module → lesson → mission model. It shows completed, current, available, and planned lessons while treating prerequisites as recommendations rather than locks.
 
 ### Architecture map
 
@@ -96,7 +83,9 @@ bytes and PTYs
 
 ## 5. Lesson page
 
-A lesson combines one or more missions. Each mission begins with a mystery or prediction, runs an observable system, builds or manipulates a small causal model, follows a narrow production source trail, and saves learner-authored evidence. Narrative and diagrams exist to explain evidence, not replace it.
+A lesson combines one or more missions. Each mission begins with a mystery or prediction, runs an observable system, builds or manipulates a small causal model, follows a narrow production source trail, and may save learner-authored evidence. Narrative and diagrams exist to explain evidence, not replace it.
+
+Every lesson has breadcrumbs, lesson position, Back to roadmap, previous/next published lesson, explicit completion, automatic section resume, and a sticky vendor-neutral Copy for AI menu. The default copy action includes the current section as clean Markdown plus URL, compact progress, pinned source references, `~/learn-ghostty` and `~/ghostty` paths, and an empty question field. Notes are opt-in.
 
 Reusable interactive components should include:
 

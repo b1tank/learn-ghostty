@@ -18,6 +18,8 @@ Lesson 00, **Ghostty: the whole machine**, is a concise orientation. Lesson 01, 
 
 The native PTY trace is bundled and normalized, so the mission works on any browser. If a contributor already runs the optional local development service, the same page automatically offers a live probe and editor integration. Those enhancements are never prerequisites.
 
+Every lesson includes **Copy for AI**. Its primary action copies the current section as clean Markdown with the exact URL, compact progress, pinned Ghostty source, `~/learn-ghostty` and `~/ghostty` paths, and an empty question field. It works with web LLMs and local coding agents; notebook answers are included only through an explicit notes-inclusive action.
+
 ## Optional contributor setup
 
 Only contributors changing the course need the repository and development server:
