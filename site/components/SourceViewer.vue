@@ -41,9 +41,12 @@ async function load() {
   try { await loadPublicSource(); } catch (cause) { error.value = cause.message; }
 }
 
-async function copyForPi() {
-  await navigator.clipboard.writeText(`@ghostty/${params.value.path}:${params.value.line}`);
-  notice.value = "Copied a source reference for Pi"; setTimeout(() => notice.value = "", 1800);
+async function copyValue(value, message) {
+  await navigator.clipboard.writeText(value);
+  notice.value = message; setTimeout(() => notice.value = "", 1800);
+}
+async function copyForAi() {
+  await copyValue(`Learn Ghostty source context\n\nPage:\n${window.location.href}\n\nRemote:\n${githubUrl.value}\n\nLocal:\n~/ghostty/${params.value.path}:${params.value.line}${params.value.end > params.value.line ? `-${params.value.end}` : ""}\n\nMy question:\n`, "Source context copied for AI");
 }
 async function openEditor() {
   notice.value = "Opening VS Code…";
@@ -58,7 +61,7 @@ onMounted(load);
     <header class="source-header">
       <div><span class="source-kicker">PINNED GHOSTTY SOURCE</span><h2>{{ params.path }}</h2><small>{{ commit.slice(0, 12) }} · {{ source?.totalLines ?? '—' }} lines · {{ localMode ? 'local checkout' : 'public snapshot' }}</small></div>
       <div class="source-actions">
-        <button @click="copyForPi">Copy for Pi</button><button v-if="localMode" @click="openEditor">Open in VS Code</button>
+        <button @click="copyValue(`~/ghostty/${params.path}:${params.line}`, 'Local ~/ghostty path copied')">Copy local path</button><button @click="copyForAi">Copy for AI</button><button v-if="localMode" @click="openEditor">Open in VS Code</button>
         <a :href="githubUrl" target="_blank" rel="noreferrer">GitHub ↗</a>
       </div>
     </header>

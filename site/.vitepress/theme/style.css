@@ -388,8 +388,9 @@ a.course-lesson:hover { background: color-mix(in srgb, var(--lime) 6%, transpare
 .source-card__copy strong { font-size: 14px; }
 .source-card__copy code { overflow: hidden; padding: 0; border: 0; color: var(--vp-c-text-3); background: none; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .source-card__copy small { color: var(--vp-c-text-2); }
-.source-card__actions { display: flex; align-items: center; gap: 10px; }
-.source-card__actions a { color: var(--lime); font-size: 12px; white-space: nowrap; }
+.source-card__actions { display: flex; max-width: 330px; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 7px; }
+.source-card__actions a { color: var(--lime); font-size: 10px; white-space: nowrap; }
+.source-card__notice { grid-column: 2 / -1; min-height: 12px; color: var(--lime); font: 8px var(--vp-font-family-mono); text-align: right; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
