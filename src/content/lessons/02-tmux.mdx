@@ -1,0 +1,142 @@
+---
+order: 2
+title: tmux panes, sessions, and nested terminals
+summary: See why tmux is both a terminal client and a terminal emulator, how every pane gets a PTY, and how many streams become one Ghostty screen.
+duration: 40–55 minutes
+module: Scenarios
+status: published
+sourceRefs:
+  - path: src/terminal/Terminal.zig
+    line: 305
+    end: 370
+    label: Creating terminal state
+    purpose: Compare Ghostty's terminal state with the state tmux maintains for each pane.
+  - path: src/terminal/size.zig
+    line: 1
+    end: 90
+    label: Cell and pixel sizes
+    purpose: Understand the size information propagated through nested terminal layers.
+  - path: src/input/key_encode.zig
+    line: 1
+    end: 90
+    label: Input encoding before tmux
+    purpose: Locate the bytes tmux receives from Ghostty before routing them to a pane.
+---
+import DataFlowWalkthrough from '../../components/DataFlowWalkthrough.vue';
+import SourceLink from '../../components/SourceLink.vue';
+
+Run:
+
+```bash
+tmux
+```
+
+Then create two panes. Put `top` in one and a shell in the other. You now have terminal emulation nested inside terminal emulation.
+
+## The first surprising fact
+
+Ghostty does not own the PTY connected to every program in every tmux pane. Ghostty owns the outer relationship with the tmux client. The tmux server owns separate PTYs for pane programs.
+
+```text
+Ghostty Surface
+  ↕ outer PTY
+local tmux client ↔ tmux server
+                    ↕ pane PTY 1 → shell/top
+                    ↕ pane PTY 2 → shell/editor
+                    ↕ pane PTY 3 → another program
+```
+
+The tmux server may outlive the Ghostty window and client. That is why detached sessions can continue running.
+
+## Starting tmux
+
+The shell launches a tmux client like any other foreground terminal program. The client connects to a tmux server, starting one if necessary. The server owns sessions, windows, panes, pane terminal state, and child processes.
+
+<DataFlowWalkthrough client:visible title="From Ghostty prompt to a tmux session" analogy="A network control room receives one finished program assembled by a producer who manages several live feeds." steps={[
+  {actor:'Shell in Ghostty PTY',input:'tmux command',action:'Starts a tmux client as the foreground process.',output:'tmux client attached to Ghostty PTY',analogy:'A new show takes over the current broadcast slot.'},
+  {actor:'tmux client',input:'outer terminal capabilities and size',action:'Connects to the persistent tmux server and relays terminal I/O.',output:'client/server control connection',analogy:'A control-room interface connects to the show producer.'},
+  {actor:'tmux server',input:'session/window/pane configuration',action:'Creates PTYs and child shells for panes.',output:'one PTY-backed process tree per pane',analogy:'The producer opens several independent reporter feeds.'},
+  {actor:'tmux compositor',input:'terminal state for all visible panes',action:'Draws borders/status and emits one combined terminal stream.',output:'outer text + control bytes',analogy:'The producer composes a split-screen program.'},
+  {actor:'Ghostty',input:'combined tmux byte stream',action:'Parses it into one Ghostty terminal state and GPU frame.',output:'visible panes in one surface',analogy:'The network control room broadcasts the already-composed show.'}
+]}/>
+
+## Output from one pane
+
+Suppose `top` redraws in the left pane.
+
+1. `top` writes text and terminal control sequences to its pane’s PTY slave.
+2. The tmux server reads the pane PTY master.
+3. tmux parses the terminal protocol and updates its private terminal state for that pane.
+4. tmux decides which pane cells are visible and where borders/status belong.
+5. tmux emits a second terminal stream representing the combined screen.
+6. The tmux client writes that stream to the outer PTY.
+7. Ghostty parses the stream and updates its own terminal state.
+8. Ghostty shapes glyphs and renders the final GPU frame.
+
+This means output may be parsed twice:
+
+```text
+program output → tmux pane parser/state → composed output → Ghostty parser/state → pixels
+```
+
+A control sequence understood by the pane does not simply pass through unchanged. tmux may consume it, translate its effect into pane state, and later emit different sequences to reproduce the composed screen.
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/terminal/Terminal.zig" line={305} end={370} label="Ghostty creates its terminal model" note="Use this as a comparison point: tmux needs a similar conceptual model for every pane it emulates." />
+
+## Input to the selected pane
+
+Input travels through routing decisions in the opposite direction.
+
+<DataFlowWalkthrough client:visible title="A key reaches one tmux pane" analogy="A director decides whether a control-room instruction belongs to the producer or one selected reporter." steps={[
+  {actor:'Ghostty input',input:'native key event',action:'Applies Ghostty bindings and encodes remaining input under outer terminal modes.',output:'outer terminal input bytes',analogy:'The network translates a control instruction.'},
+  {actor:'tmux client/server',input:'outer PTY bytes',action:'Checks tmux prefix/key tables and current client state.',output:'tmux action or pane-bound input',analogy:'The producer decides whether the command is for production or a reporter.'},
+  {actor:'Selected pane PTY',input:'pane-bound key bytes',action:'Delivers input under that pane terminal’s modes.',output:'bytes read by selected shell/application',analogy:'Only the selected reporter receives the instruction.'},
+  {actor:'Pane application',input:'terminal key bytes',action:'Updates itself and writes new output, beginning the nested output path.',output:'pane output bytes',analogy:'The reporter responds on their dedicated feed.'}
+]}/>
+
+The tmux prefix is consumed by tmux rather than forwarded. Ghostty keybindings may consume a key even earlier. Debugging input therefore asks: **which layer first claimed the key?**
+
+## Sessions, windows, and panes
+
+- A **session** is a persistent workspace owned by the tmux server.
+- A **window** is one full tmux screen inside a session.
+- A **pane** is one rectangular terminal inside a window, usually backed by its own PTY and child process.
+- A **client** is an attached terminal view. Multiple clients can attach to the same session.
+
+These are tmux concepts, not Ghostty tabs/windows/splits. You can place a tmux client inside a Ghostty split, producing two separate layout systems.
+
+## Detach and reattach
+
+Detaching closes the client view without killing the server’s pane processes. Later, another tmux client can attach—possibly from another Ghostty window or SSH connection. The server uses retained pane state to paint the new client.
+
+Ghostty scrollback outside tmux and tmux copy-mode history are also different stores. Full-screen applications often use alternate screens, and tmux may preserve history per pane.
+
+## Resize propagation
+
+Resize is a negotiation across layers:
+
+```text
+Ghostty native view changes size
+→ Ghostty computes outer rows/columns
+→ kernel updates outer PTY
+→ tmux client/server learns client size
+→ tmux recomputes layout
+→ tmux updates each pane PTY size
+→ pane applications redraw
+→ tmux recomposes
+→ Ghostty renders
+```
+
+A resize bug can therefore belong to the native view, outer PTY, tmux layout, pane PTY, or application.
+
+## Copy mode
+
+When tmux enters copy mode, it may intercept keys and draw its own selection/history interface. Ghostty still sees only tmux’s outer terminal stream. Ghostty’s native selection and tmux copy mode are separate features with different owners and history stores.
+
+## The complete tmux story
+
+Ghostty launches a tmux client on one outer PTY. The client communicates with a persistent tmux server. The server owns sessions and creates one PTY-backed child environment per pane. It parses pane output into private pane state, composes visible panes and status, then emits a new terminal stream through the client to Ghostty. Ghostty parses that composed stream and renders it. Input travels from Ghostty to tmux, where tmux either consumes it as a command or routes it to the selected pane.
+
+## Where the broadcast analogy stops
+
+A split-screen producer chooses content semantically. tmux composes terminal cells and protocol behavior according to deterministic terminal rules. Ghostty does not know that the visible borders represent tmux panes.
