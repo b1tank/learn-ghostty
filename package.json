@@ -4,16 +4,19 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "generate:ai": "node scripts/generate-ai-content.mjs",
-    "dev": "npm run generate:ai && vitepress dev site --host 127.0.0.1 --port 4173",
-    "build": "npm run generate:ai && vitepress build site",
-    "preview": "vitepress preview site --host 127.0.0.1 --port 4173",
+    "dev": "astro dev --host 127.0.0.1 --port 4173",
+    "build": "astro build",
+    "preview": "astro preview --host 127.0.0.1 --port 4173",
     "check": "node scripts/check-course.mjs",
     "audit:ui": "node scripts/audit-ui.mjs"
   },
   "devDependencies": {
     "puppeteer-core": "^25.4.0",
-    "vitepress": "latest",
     "vue": "latest"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^7.0.5",
+    "@astrojs/vue": "^7.0.1",
+    "astro": "^7.1.6"
   }
 }
