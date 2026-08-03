@@ -1,68 +1,65 @@
-# Sprint plan — simple website, roadmap resume, and Copy for AI
+# Sprint plan — Astro migration and scenario-first curriculum
 
 ## Sprint goal
 
-Refactor Learn Ghostty into the straightforward experience agreed with the learner: a self-contained website that explains itself immediately, shows the complete roadmap, resumes the last section automatically, and lets any lesson or section be copied as clean vendor-neutral context for any AI, LLM, or coding agent.
+Replace VitePress with a thin Astro learning site, remove stale LMS/evidence architecture, and rebuild the opening curriculum around complete real-user data-flow scenarios: Ghostty startup plus `ls`/`cat`, Codex as a long-running TUI, tmux nesting, and SSH/remote tmux.
 
 ## Prioritized tasks
 
-- [x] **1. Simplify browser progress around lessons and sections**
-  - Track last visited lesson and heading automatically.
-  - Keep explicit, always-available “Mark lesson complete.”
-  - Keep all published lessons freely accessible.
-  - Add export and confirmed restart-from-scratch with backup action.
-  - Preserve existing notebook evidence without making it the homepage vocabulary.
+- [ ] **1. Establish the Astro foundation with route parity**
+  - Add Astro static output, MDX content collections, Vue islands, GitHub Pages base support, shared layouts, default navigation, theme behavior, and search.
+  - Preserve `/`, `/course-map`, `/source`, `/lessons/<slug>`, and `/ai/lessons/<slug>.md`.
+  - Reuse only interactive components that still earn their cost.
 
-- [x] **2. Replace the homepage with a clear first-visit and return experience**
-  - Explain what Learn Ghostty is, who it serves, how to use it, and what it covers.
-  - Explicitly call out experienced engineers new to terminals and real humans preparing to contribute responsibly to the Ghostty ecosystem.
-  - Show one complete clickable roadmap directly on the homepage.
-  - On revisit, show the exact lesson/section and one-click Resume.
+- [ ] **2. Replace the old curriculum model with content collections**
+  - Make lesson frontmatter the source of truth for roadmap, sidebar, previous/next navigation, source references, status, duration, and search metadata.
+  - Create four published scenario lessons and seven planned deep-dive entries.
+  - Remove the duplicated manifest, mission hierarchy, evidence state, local API, and learner fixtures.
 
-- [x] **3. Add predictable lesson navigation and automatic resume**
-  - Add breadcrumbs, lesson position, current roadmap location, previous/next links, and Back to roadmap.
-  - Track the most recently viewed section with IntersectionObserver.
-  - Add Mark lesson complete without assessment gating.
-  - Keep VitePress’s default sidebar, outline, search, and heading anchors.
+- [ ] **3. Build the simple homepage and browser progress**
+  - Explain what the course is, how to use it, who it serves, what it covers, and the real-human contributor path.
+  - Show the full roadmap and returning exact-section resume.
+  - Keep automatic section tracking, explicit completion, export, and restart-with-backup only.
 
-- [x] **4. Add a vendor-neutral Copy for AI menu inspired by Claude Docs**
-  - Primary click copies the current section with URL, progress metadata, clean Markdown, source snapshot, local paths, and an empty question field.
-  - Menu actions: current section, full lesson, current section plus notes, view Markdown, page URL, local course path.
-  - Generate AI-clean Markdown at build/dev time without Vue imports or component markup.
-  - Exclude notebook answers by default.
+- [ ] **4. Implement robust lesson chrome and Copy for AI**
+  - Add breadcrumbs, sidebar, on-page outline, previous/next, mark complete, and responsive lesson layout.
+  - Keep current-section Copy for AI with a collision-aware body portal, clean Markdown endpoints, local/remote source paths, and vendor-neutral context.
+  - Keep AI optional and notes out of the product.
 
-- [x] **5. Improve source-reference actions**
-  - Provide pinned remote GitHub source.
-  - Copy `~/ghostty/...` local paths.
-  - Copy a neutral source-context block for AI.
-  - Remove dependence on local editor/source APIs from the default learner path.
+- [ ] **5. Author Lesson 00 — Ghostty startup, `ls`, and `cat`**
+  - Walk Ubuntu/Bash/OpenGL and macOS/zsh/Metal branches from app launch through PTY creation, shell startup, prompt, keyboard input, command parsing, process execution, ANSI output, terminal state, fonts, GPU, compositor, and pixels.
+  - Label the data type on every boundary and introduce jargon only after the job is understood.
 
-- [x] **6. Align optional AI and contributor guidance**
-  - Make Pi, Claude, Codex, ChatGPT, Copilot, Cursor, and local agents equal optional consumers of copied context.
-  - Teach local agents to resolve copied page URLs and paths in `~/learn-ghostty` and `~/ghostty`.
-  - Reference official Ghostty docs, contribution guide, and AI policy at the point where contributor intent is introduced.
+- [ ] **6. Author Lesson 01 — Codex as a long-running TUI**
+  - Separate terminal UI bytes from model/network/tool data.
+  - Explain raw mode, alternate screen, redraw, cursor/style output, resize, paste, and long-running process state through the user scenario.
 
-- [x] **7. Audit the complete UX and publish**
-  - Verify first visit, returning resume, section tracking, lesson completion, open roadmap links, reset/export flow, and all Copy for AI actions.
-  - Verify public base path, dark/light, desktop/mobile, keyboard, static/no-API mode, source actions, and clean Markdown output.
-  - Run full course, security, browser, production build, and dependency checks.
+- [ ] **7. Author Lesson 02 — tmux panes and sessions**
+  - Explain client/server, pane PTYs, nested terminal parsing, split-screen composition, input routing, detach/reattach, copy mode, and resize propagation.
+
+- [ ] **8. Author Lesson 03 — SSH and remote tmux**
+  - Trace keyboard and output across local PTY, ssh process, encrypted transport, sshd, remote PTY, remote shell, and optional remote tmux/panes.
+  - Separate local and remote kernels, processes, terminal state, rendering, and latency.
+
+- [ ] **9. Add reusable scenario pedagogy and source references**
+  - Build a reusable data-flow walkthrough component and sports-broadcast analogy callouts with explicit analogy limits.
+  - Add pinned remote GitHub links, `~/ghostty` paths, official docs, and narrow “read this / ignore that / answer this” source guidance.
+
+- [ ] **10. Remove stale architecture and verify publication**
+  - Delete VitePress, local-server, mission/evidence, obsolete components, duplicated plans, and stale design documents.
+  - Replace them with current Astro architecture, content guide, and roadmap docs.
+  - Rewrite browser audits for Astro routes, first/return visits, section resume, completion/reset, copy menu containment, clean Markdown, source actions, themes, mobile/desktop, and public base path.
 
 ## Definition of done
 
-- A new visitor understands the site and starts learning from the first viewport.
-- A returning visitor resumes the exact section from the homepage.
-- The complete roadmap is always visible and every published lesson is open.
-- Any section can be copied into any AI without requiring filesystem or website access.
-- Local agents receive useful `~/learn-ghostty` and `~/ghostty` paths.
-- Reset offers export before destructive confirmation.
-- No learner-facing instruction requires `camp`, a clone, a server, or Pi.
+- Astro is the only site framework and GitHub Pages builds `dist/`.
+- Four scenario-first lessons are published and readable without tests or notebooks.
+- Homepage and lessons require only a browser; AI is optional.
+- Browser progress is limited to last section and completed lessons.
+- Copy for AI is bounded, accessible, vendor-neutral, and generated from clean Markdown.
+- Old VitePress/LMS/local-server design is removed rather than left stale.
+- Full static build, source validation, UI audit, and production dependency audit pass.
 
 ## Hiccups & Notes
 
-- The primary Copy for AI action uses the last automatically tracked heading. Keeping the control sticky avoids the paradox where scrolling back to a page-level copy button would change the tracked section before copying it.
-- VitePress lesson files contain Vue setup and custom components, so they are not suitable as AI Markdown directly. `scripts/generate-ai-content.mjs` now produces clean lesson assets, transforms source cards into pinned remote/local references, and replaces interactive widgets with honest descriptions.
-- Headless Chrome denies the operating-system clipboard even after permission overrides. The UI audit replaces `navigator.clipboard` with an in-page capture shim; production still uses the real Clipboard API under a user gesture on HTTPS/localhost.
-- Closed `<details>` popover actions retain layout rectangles in Chromium even though they cannot receive focus. Accessibility target checks now exclude descendants of closed details and separately open/test the menu actions.
-- Automatic section tracking initially could overwrite the next lesson immediately after Mark lesson complete because the learner was still viewing the old page. Completed lessons now continue recording their own last section without taking back the global resume pointer.
-- The full lesson Markdown and current-section copy exclude notebook notes by default. A separate explicit action includes them, matching the privacy decision.
-- Final browser audit passes 185 assertions across first visit, returning resume, section tracking, explicit completion, reset/export confirmation, roadmap access, Copy for AI, clean Markdown, source actions, no-API mode, themes, widths, keyboard, and reduced motion.
+_Record migration blockers, compatibility decisions, and final verification evidence here._
