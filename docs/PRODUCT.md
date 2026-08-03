@@ -2,53 +2,28 @@
 
 ## 1. Product definition
 
-Learn Ghostty is not just documentation and not an embedded AI chat application. It is a **local learning cockpit** designed around two cooperating interfaces:
+Learn Ghostty is a **self-contained learning website**, not merely documentation and not an embedded AI chat application. The browser provides the full curriculum, causal workbenches, reference traces, pinned source, evidence notebook, resume state, and export.
 
-- A browser provides the visual, structured curriculum.
-- Pi provides a conversational teacher with direct access to the course and pinned Ghostty source.
-
-A shared, durable progress model connects them. The Pi session is never the only source of memory.
+Pi is an optional teacher. The learner may copy a claim or source reference into Pi for adversarial questioning, but navigation, experiments, persistence, and completion never depend on an agent or local process.
 
 ```mermaid
 flowchart LR
-    Pi[Pi teacher] --> State[Durable learner state]
-    Browser[Learning cockpit] --> State
-    Pi --> CLI[./camp CLI]
-    CLI --> Server[Local course server]
-    Browser --> Server
-    Server --> Labs[Allowlisted labs]
-    Server --> Source[Local source viewer]
-    Source --> Ghostty[Pinned Ghostty checkout]
-    Content[Markdown + interactive components] --> Browser
+    Content[Lessons + causal workbenches] --> Browser[Self-contained website]
+    Traces[Normalized native traces] --> Browser
+    Source[Pinned public source] --> Browser
+    Browser --> State[Private browser evidence]
+    State --> Export[Portable JSON export]
+    Export -. optional .-> Pi[Pi teacher]
+    Local[Optional local enhancements] -. live probes/editor .-> Browser
 ```
 
 ## 2. Daily workflow
 
 ### Start
 
-The learner runs:
+The learner opens `https://b1tank.github.io/learn-ghostty/`. The dashboard reads private browser evidence and resumes the exact mission and section. No setup step exists in the learner journey.
 
-```console
-cd ~/learn-ghostty
-pi
-```
-
-and asks naturally:
-
-> What's next?
-
-Pi should:
-
-1. Read machine-readable progress and the human-readable journal.
-2. Inspect the active lesson and recent lab results.
-3. Check whether the local site is running and start it if necessary.
-4. Open the current lesson in the browser.
-5. Give a short reorientation.
-6. Begin with a recall or prediction question rather than a lecture.
-
-Example:
-
-> You are on Day 3, Lesson 4: CSI dispatch. Last time you completed the parser state-machine visualizer and stopped at parameter accumulation. Your open question was why a transition can produce three actions. I opened the lesson. Before continuing: why might one byte require an exit, transition, and entry action?
+If the learner wants dialogue, they copy evidence or a source reference into Pi. Pi starts with a recall or prediction question and never claims to know browser state that was not pasted or exported.
 
 ### Learn
 
@@ -58,12 +33,12 @@ In the browser, the learner can:
 - inspect persistent big-picture diagrams;
 - step through animated byte and state transitions;
 - run browser-native examples immediately;
-- run allowlisted C, Zig, OpenGL, or GTK labs locally;
+- analyze normalized traces from real checked-in native probes, with optional live execution detected automatically;
 - make predictions before revealing results;
 - follow ordered source trails into Ghostty;
-- open exact files and lines in VS Code;
-- save notes and questions;
-- see course completion separately from demonstrated mastery.
+- inspect exact files and lines in pinned public source;
+- save and export mission evidence;
+- see evidence stages rather than percentages.
 
 ### Ask
 
@@ -73,19 +48,7 @@ Pi can explain, quiz, trace production code, investigate a seeded bug, or update
 
 ### Finish and resume
 
-At the end, the learner says:
-
-> Wrap up.
-
-Pi records:
-
-- where the learner stopped;
-- what they demonstrated;
-- what remains uncertain;
-- lab and explain-back outcomes;
-- the exact first action for next time.
-
-A new Pi session can resume solely from repository state.
+The website saves mission evidence and the exact next mission in browser storage. The dashboard resumes without an agent. The learner can export a portable JSON record for backup or optional Pi review.
 
 ## 3. Dashboard
 

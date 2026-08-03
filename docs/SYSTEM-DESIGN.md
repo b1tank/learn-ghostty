@@ -77,26 +77,24 @@ Preferred initial stack:
 - Mermaid for maintainable diagrams.
 - Canvas/SVG for parser, grid, thread, and atlas visualizers.
 - WebGL for GPU-rendering lessons.
-- A small Node local service for APIs.
-- JSON and Markdown for durable learner state.
-- Zig build projects for isolated native labs.
+- Browser localStorage for private learner evidence plus portable JSON export.
+- Pinned public Ghostty source with optional local-checkout enhancement.
+- Checked-in native probes whose normalized reference traces ship with the website.
+- An optional Node development service for live probes and editor integration.
 
-The prototype should minimize dependencies and work offline after initial setup.
+The production website is static and requires no account, cloud API, clone, local server, CLI, or agent.
 
-## 3. Course server responsibilities
+## 3. Optional local-service responsibilities
 
-The server exposes only narrow local capabilities:
+The website never depends on the local service. When one is already available, it may expose narrow enhancements:
 
-- serve the site;
-- read and update learner progress;
-- run commands declared in the course manifest;
-- stream bounded lab output;
-- read source under the pinned Ghostty checkout;
-- resolve symbols and line ranges;
+- execute commands declared in the course manifest;
+- stream bounded live-lab output;
+- read the pinned local Ghostty checkout;
 - open validated files in VS Code;
 - report health and toolchain versions.
 
-It does not provide arbitrary command execution.
+The UI detects these capabilities opportunistically. Missing capabilities reveal no setup error; the bundled reference trace and public source remain the complete default path. The service does not provide arbitrary command execution.
 
 Example allowlisted lab declaration:
 
@@ -181,27 +179,19 @@ Immediate, deterministic experiments for:
 - input encoding;
 - WebGL rendering.
 
-### Native
+### Native evidence
 
-Server-run, allowlisted projects for:
+Native probes are checked into the repository and executed during development/CI. Stable reference traces are normalized and bundled into the production website so every learner can inspect the same evidence without setup. Examples include PTY/process relationships, libghostty-vt behavior, and renderer diagnostics.
 
-- C PTY launcher;
-- Zig parser and terminal state;
-- libghostty-vt examples;
-- mailbox and concurrency experiments;
-- OpenGL cell renderer;
-- GTK surface;
-- Swift/C bridge where available.
-
-The UI offers Run, Test, Reset, Show Diff, and Open in Editor. A prediction component should often gate Run or Reveal.
+If the optional local service exists, the same component may additionally offer **Run live probe**. Live execution supplements the reference trace; it never gates the lesson. A prediction should precede either reveal.
 
 ## 6. Durable evidence
 
 `course/manifest.json` defines one hierarchy: modules contain lessons; lessons contain missions. Each mission declares the evidence it requires from prediction, observation, explanation, and source invariant.
 
-Machine-readable state records the current lesson and mission plus a summary evidence stage. Full learner claims are ordinary files under `learner/evidence/` so they can be inspected, challenged, edited, and committed without depending on an agent session.
+Machine-readable browser state records the current lesson and mission plus full learner-authored evidence. The learner can export a portable JSON record for backup, transfer, or optional Pi review. Browser storage remains authoritative and private by default.
 
-Human-readable files still record where the learner stopped, current confusion, unresolved questions, and the exact next action. Browser and Pi updates must be atomic, schema-validated, and must never invent a learner observation.
+Repository files under `learner/` are development fixtures, not the learner's runtime record. State updates must be schema-validated and must never invent an observation.
 
 ## 7. Evidence semantics
 

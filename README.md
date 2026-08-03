@@ -1,52 +1,39 @@
 # Learn Ghostty
 
-A local, visual, learn-by-doing course for understanding Ghostty from terminal fundamentals to contribution-ready architecture knowledge.
-
-This repository is currently in its **design phase**. The detailed product and curriculum plans live in [`docs/`](docs/README.md).
+A self-contained visual, learn-by-doing website for understanding Ghostty from terminal fundamentals to contribution-ready architecture knowledge.
 
 ## The intended experience
 
-```console
-cd ~/learn-ghostty
-pi
-```
+Open **https://b1tank.github.io/learn-ghostty/** and start. No clone, local server, CLI, or agent is required.
 
-Then ask:
+The website includes lessons, causal browser workbenches, normalized traces captured from real native experiments, pinned Ghostty source, a private evidence notebook, exact resume, and exportable progress. Evidence stays in browser storage unless you export it.
 
-> What's next?
+Pi is optional. Whenever you want a teacher, copy evidence or a source reference from the page and interrogate it in Pi. The website remains complete without Pi; Pi adds adversarial questioning and open-ended source exploration rather than basic course functionality.
 
-Pi reads durable course progress, reminds the learner where they stopped, starts the local learning site, and opens the current lesson. The learner uses a polished browser UI for explanations, diagrams, interactive experiments, runnable labs, progress, and links into a pinned local Ghostty checkout. Pi remains alongside as a patient teacher for questions, source tours, quizzes, debugging, and improvements to the course itself.
+The browser is the **learning cockpit**, Ghostty's pinned source is the **textbook**, learner-authored evidence is the **memory**, and Pi is an optional **teacher at your side**.
 
-The browser is the **learning cockpit**, Pi is the **teacher**, Ghostty's source is the **textbook**, durable files are the **memory**, and Git is the **history**.
+## Start here
 
-## Read online or run the full camp
+Lesson 00, **Ghostty: the whole machine**, is a concise orientation. Lesson 01, **The terminal is a relationship**, is the first evidence-producing lesson: compare an authentic no-PTY/PTY trace and drive a miniature terminal one byte at a time.
 
-The public reading mode lives at **https://b1tank.github.io/learn-ghostty/**. Lessons and browser-native visualizations work there; durable evidence, native labs, source navigation, and Pi require the local camp.
+The native PTY trace is bundled and normalized, so the mission works on any browser. If a contributor already runs the optional local development service, the same page automatically offers a live probe and editor integration. Those enhancements are never prerequisites.
 
-For durable progress, local source navigation, native labs, editor integration, and Pi as your teacher, run the complete local camp:
+## Optional contributor setup
+
+Only contributors changing the course need the repository and development server:
 
 ```console
 git submodule update --init
-./camp doctor
-./camp open
+npm install
+npm run dev
 ```
 
-`./camp open` installs site dependencies when needed, starts the loopback-only learning cockpit, and opens the current lesson. In another terminal, start Pi from this repository and ask:
-
-```text
-What's next?
-```
-
-Lesson 00, **Ghostty: the whole machine**, is a concise orientation. Lesson 01, **The terminal is a relationship**, is the first evidence-producing lesson: compile a C process probe, compare ordinary execution with a real PTY, and drive a miniature terminal one byte at a time.
-
-Useful commands:
+Validation commands:
 
 ```console
-./camp status          # durable progress and exact next step
-./camp serve           # run the cockpit in the foreground
-./camp serve --background
-./camp build           # course validation plus production build
-npm run audit:ui       # cross-theme, responsive, accessibility browser audit
+npm run check
+npm run audit:ui
+npm run build
 ```
 
 ## Design documents

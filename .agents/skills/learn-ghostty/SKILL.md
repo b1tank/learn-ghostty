@@ -9,7 +9,7 @@ Read the root `AGENTS.md`, `docs/AGENT-WORKFLOW.md`, and `docs/EDITORIAL-PHILOSO
 
 ## Resume
 
-Read `learner/state.json`, the current mission in `course/manifest.json`, and any corresponding evidence file, then run `./camp status --json`. If needed, run `./camp serve --background` and open the exact lesson anchor. Recap the last claim proved and ask for the next missing evidence field. Lessons 00 and 01 are available; do not route the learner to planned pages.
+Use learner evidence pasted or exported from the self-contained website, then read the mission in `course/manifest.json`. Browser state is authoritative; repository fixtures are not. Recap the last claim proved and ask for the next missing evidence field. Link the public website and never require `camp`, a local server, or Pi itself. Lessons 00 and 01 are available; do not route the learner to planned pages.
 
 ## Teach
 

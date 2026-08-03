@@ -6,27 +6,13 @@ This repository is designed to be used with a coding agent as a personal teacher
 
 The evidence-first cockpit, concise orientation, and Lesson 01 process/PTY plus byte-workbench missions are runnable. Read `course/manifest.json` as the canonical module → lesson → mission model, then `sprint.plan.md` for the latest implementation record.
 
-The learner's immediate path is:
-
-```console
-./camp doctor
-./camp open
-```
-
-Begin at the current mission from `learner/state.json`. Lesson 00 builds the map; Lesson 01 requires a real C/PTY observation and a byte-driven miniature terminal. Later lessons are intentionally built only after this evidence is used and refined.
+The learner's immediate path is the self-contained website at `https://b1tank.github.io/learn-ghostty/`. Lesson 00 builds the map; Lesson 01 analyzes an authentic C/PTY trace and drives a byte-based miniature terminal. Pi is optional and must not be presented as a prerequisite.
 
 ## Resume requests
 
-When the user asks “what's next?”, “what's now?”, “resume”, “continue learning”, “where did I stop?”, or similar:
+When the user asks “what's next?”, “resume”, or similar, first use evidence they pasted or exported from the website. Browser storage is authoritative for the learner; `learner/state.json` is only a development fixture and may not reflect their progress. If no evidence context is available, ask which mission the website shows rather than fabricating progress.
 
-1. Read `learner/state.json` if it exists.
-2. Read `learner/journal.md` and `learner/questions.md` if they exist.
-3. Read the current lesson and recent lab results.
-4. Run `./camp status --json` when the command exists.
-5. Start the local course server and open the current lesson when supported.
-6. Respond with a concise recap and one recall/prediction question.
-
-If the server is stopped, use `./camp serve --background`, then open the URL reported by `./camp status --json`. Never fabricate progress.
+Do not start a local server or tell the learner to run `camp`. Link the website and provide a concise recall/prediction question. Use local repository tools only when the user is developing the course or explicitly asks for live local integration.
 
 ## Development behavior
 
@@ -68,7 +54,7 @@ When the Ghostty submodule exists, use the pinned checkout as source of truth. P
 
 For any mission:
 
-1. Read its `evidenceFields` in `course/manifest.json` and any existing `learner/evidence/<mission>.json`.
+1. Read its `evidenceFields` in `course/manifest.json` and the evidence pasted or exported from the website.
 2. Ask the learner to commit a prediction before showing or running the result when one is required.
 3. Challenge one claim at a time with a counterexample or source question.
 4. Do not rewrite weak evidence. Name the gap and ask the learner to revise it.
