@@ -1,0 +1,23 @@
+<section class="system-map" aria-labelledby="system-map-title">
+  <header>
+    <p class="system-map__eyebrow">THE CORE DATA PATH</p>
+    <h2 id="system-map-title">One command, many representations</h2>
+    <p>The course repeatedly returns to this map. Each arrow names the data that crosses a real boundary.</p>
+  </header>
+  <div class="system-map__scroll" tabindex="0" aria-label="Scrollable terminal data flow diagram">
+    <div class="system-map__graph">
+      <div class="system-map__node"><span>Application</span><strong>ls, Codex, tmux, ssh</strong></div>
+      <div class="system-map__edge"><span>UTF-8 + control bytes</span><i aria-hidden="true"></i></div>
+      <div class="system-map__node"><span>Kernel PTY</span><strong>ordered terminal stream</strong></div>
+      <div class="system-map__edge"><span>byte chunks</span><i aria-hidden="true"></i></div>
+      <div class="system-map__node"><span>Ghostty parser</span><strong>print and control actions</strong></div>
+      <div class="system-map__edge"><span>ordered actions</span><i aria-hidden="true"></i></div>
+      <div class="system-map__node"><span>Terminal state</span><strong>cells, styles, cursor</strong></div>
+      <div class="system-map__edge"><span>glyph + cell data</span><i aria-hidden="true"></i></div>
+      <div class="system-map__node"><span>Fonts + GPU</span><strong>textures, buffers, frame</strong></div>
+      <div class="system-map__edge"><span>pixels</span><i aria-hidden="true"></i></div>
+      <div class="system-map__node"><span>You</span><strong>local display</strong></div>
+    </div>
+  </div>
+  <p class="system-map__note"><strong>Input travels back through a related path:</strong> hardware event → native key event → Ghostty key encoding → PTY bytes → application.</p>
+</section>
