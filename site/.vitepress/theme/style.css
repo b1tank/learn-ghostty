@@ -48,6 +48,7 @@
 .home-course :where(a, button, [tabindex]):focus-visible,
 .learner-cockpit :where(a, button, [tabindex]):focus-visible,
 .cockpit-shell :where(a, button, [tabindex]):focus-visible,
+.ai-copy-menu :where(a, button, summary, [tabindex]):focus-visible,
 .lesson-progress :where(a, button, [tabindex]):focus-visible,
 .lesson-footer-nav :where(a, button, [tabindex]):focus-visible,
 .prediction-card :where(a, button, [tabindex]):focus-visible,
@@ -215,6 +216,14 @@ a.course-lesson:hover { background: color-mix(in srgb, var(--lime) 6%, transpare
 .lesson-footer-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 52px; padding-top: 24px; border-top: 1px solid var(--vp-c-divider); }
 .lesson-footer-nav a { display: grid; gap: 6px; padding: 17px; border: 1px solid var(--vp-c-divider); border-radius: 9px; color: var(--vp-c-text-1); text-decoration: none; }.lesson-footer-nav a.next { text-align: right; }
 .lesson-footer-nav span { color: var(--vp-c-text-3); font: 8px var(--vp-font-family-mono); letter-spacing: .1em; }.lesson-footer-nav strong { font-size: 13px; }
+.ai-copy-menu { position: relative; display: inline-flex; align-items: stretch; margin: -22px 0 38px; }
+.ai-copy-primary, .ai-copy-menu summary { min-height: 42px; border: 1px solid var(--vp-c-divider); color: var(--vp-c-text-1); background: var(--vp-c-bg-soft); cursor: pointer; }
+.ai-copy-primary { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 8px 0 0 8px; font-weight: 600; }.ai-copy-primary:disabled { opacity: .5; }
+.ai-copy-menu details { position: static; }.ai-copy-menu summary { display: grid; place-items: center; width: 42px; border-left: 0; border-radius: 0 8px 8px 0; list-style: none; font-size: 18px; }.ai-copy-menu summary::-webkit-details-marker { display: none; }
+.ai-copy-popover { position: absolute; z-index: 20; left: 0; top: calc(100% + 8px); width: min(390px, calc(100vw - 48px)); overflow: hidden; padding: 7px; border: 1px solid var(--vp-c-divider); border-radius: 11px; background: var(--vp-c-bg-elv); box-shadow: 0 18px 55px rgba(0,0,0,.2); }
+.ai-copy-popover button, .ai-copy-popover a { display: grid; width: 100%; gap: 3px; padding: 11px 12px; border: 0; border-radius: 7px; color: var(--vp-c-text-1); background: transparent; text-align: left; text-decoration: none; cursor: pointer; }.ai-copy-popover button:hover, .ai-copy-popover a:hover { background: var(--vp-c-bg-soft); }
+.ai-copy-popover strong { font-size: 12px; }.ai-copy-popover small { color: var(--vp-c-text-3); font-size: 10px; line-height: 1.35; }
+.ai-copy-notice { position: absolute; left: calc(100% + 12px); top: 12px; width: max-content; color: var(--lime); font: 9px var(--vp-font-family-mono); }
 .lesson-hero__index { color: color-mix(in srgb, var(--lime) 14%, transparent); font: 500 105px/.8 var(--vp-font-family-mono); letter-spacing: -.08em; }
 .lesson-eyebrow { color: var(--lime); font: 600 10px var(--vp-font-family-mono); letter-spacing: .14em; }
 .lesson-hero h1 { margin: 16px 0 20px; font-size: clamp(48px, 7vw, 76px); line-height: .94; letter-spacing: -.06em; }
@@ -416,6 +425,9 @@ a.course-lesson:hover { background: color-mix(in srgb, var(--lime) 6%, transpare
   .path-stop::before { left: 44px; top: 18px; bottom: -22px; width: 1px; height: auto; }
   .hero-actions { align-items: stretch; flex-direction: column; }
   .service-warning, .source-error { align-items: flex-start; flex-direction: column; }
+  .ai-copy-menu { display: flex; margin-top: -22px; }
+  .ai-copy-primary { flex: 1; justify-content: center; }
+  .ai-copy-notice { left: 0; top: calc(100% + 6px); }
   .lesson-progress { align-items: flex-start; flex-direction: column; }
   .lesson-progress__actions { flex-wrap: wrap; }
   .lesson-crumbs { flex-wrap: wrap; }

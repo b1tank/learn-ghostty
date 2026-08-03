@@ -1,30 +1,15 @@
 ---
-title: "00 · Ghostty: the whole machine"
-description: "A fifteen-minute map for every trace you will build later."
-prev: false
-next: false
+course: Learn Ghostty
+lesson_id: 00-ghostty-overview
+title: "Ghostty: the whole machine"
+source_commit: 6ad1fe7d8cbda36c77b337a96c9bea8a77883699
+canonical_url: https://b1tank.github.io/learn-ghostty/lessons/00-ghostty-overview
+local_course_path: ~/learn-ghostty/site/lessons/00-ghostty-overview.md
 ---
 
-<script setup>
-import AiCopyMenu from '../components/AiCopyMenu.vue'
-import ArchitectureExplorer from '../components/ArchitectureExplorer.vue'
-import EvidenceNotebook from '../components/EvidenceNotebook.vue'
-import LessonFooter from '../components/LessonFooter.vue'
-import LessonProgress from '../components/LessonProgress.vue'
-import SourceLink from '../components/SourceLink.vue'
-</script>
+# Build the map. Then earn the details.
 
-<div id="welcome" class="lesson-hero lesson-hero--compact">
-  <div class="lesson-hero__index">00</div>
-  <div class="lesson-hero__copy">
-    <span class="lesson-eyebrow">ORIENTATION · 12–15 MINUTES</span>
-    <h1>Build the map.<br><em>Then earn the details.</em></h1>
-    <p>This page gives you one story to carry through the entire camp. The next lesson stops talking and starts observing real processes, a real PTY, and real control bytes.</p>
-  </div>
-</div>
-
-<LessonProgress lesson-id="00-ghostty-overview" />
-<AiCopyMenu lesson-id="00-ghostty-overview" />
+> This page gives you one story to carry through the entire camp. The next lesson stops talking and starts observing real processes, a real PTY, and real control bytes.
 
 ::: tip The story to leave with
 A program writes bytes. A PTY carries them. A parser decides which bytes are text and which are commands. Terminal state remembers the result. Fonts and the GPU turn that state into pixels. Native UI carries your input back.
@@ -65,7 +50,7 @@ The course will introduce each historical oddity immediately before you observe 
 
 Click the layers once. Do not memorize file names yet. Ask one question at each boundary: **what form does the data have now?**
 
-<ArchitectureExplorer />
+> **Interactive on the website:** explore each architecture layer and its data boundary.
 
 The compact trace is:
 
@@ -104,13 +89,21 @@ A `Surface` is deliberately not called a `Window`. One terminal session may live
 
 Do not browse `src/`. Read only the opening comments and the indicated startup block.
 
-<SourceLink path="src/main_ghostty.zig" :line="80" :end="112" label="Core meets native runtime" note="Find the three actions: create App, initialize the chosen runtime, run its event loop. Ignore logging and CLI code." />
+**Ghostty source — Core meets native runtime**
+
+- Remote: https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/main_ghostty.zig#L80-L112
+- Local: `~/ghostty/src/main_ghostty.zig:80-112`
+- Read for: Find the three actions: create App, initialize the chosen runtime, run its event loop. Ignore logging and CLI code.
 
 Your question:
 
 > Which object contains shared behavior, and which object owns the platform event loop?
 
-<SourceLink path="src/Surface.zig" :line="1" :end="24" label="Why Ghostty says Surface" note="Read the file comment only. Identify what the core owns and what it intentionally refuses to know." />
+**Ghostty source — Why Ghostty says Surface**
+
+- Remote: https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/Surface.zig#L1-L24
+- Local: `~/ghostty/src/Surface.zig:1-24`
+- Read for: Read the file comment only. Identify what the core owns and what it intentionally refuses to know.
 
 Your question:
 
@@ -126,7 +119,7 @@ A useful answer does not need implementation details yet. It should name the bou
 
 Write the explanation first. Then ask Pi to attack the weakest boundary rather than rewriting it.
 
-<EvidenceNotebook mission-id="orientation-map" />
+> **Notebook on the website:** save evidence for mission `orientation-map`.
 
 Suggested Pi review:
 
@@ -139,10 +132,6 @@ Challenge the first vague boundary. Do not award a percentage.
 
 The next lesson begins with a mystery, not another overview. You will compile a small C probe, run it inside a newly allocated PTY, and explain the process/session/TTY relationships visible in its output. Then you will drive a tiny terminal screen one byte at a time.
 
-<div class="lesson-finish">
-  <span>FIRST REAL LESSON</span>
+  FIRST REAL LESSON
   <h2>The terminal is a relationship</h2>
   <p>Processes, a software cable, and bytes that change the screen.</p>
-</div>
-
-<LessonFooter lesson-id="00-ghostty-overview" />

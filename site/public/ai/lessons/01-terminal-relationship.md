@@ -1,34 +1,15 @@
 ---
-title: "01 · The terminal is a relationship"
-description: "Observe processes, a pseudo-terminal, and control bytes before reading Ghostty's implementation."
-prev: false
-next: false
+course: Learn Ghostty
+lesson_id: 01-terminal-relationship
+title: "The terminal is a relationship"
+source_commit: 6ad1fe7d8cbda36c77b337a96c9bea8a77883699
+canonical_url: https://b1tank.github.io/learn-ghostty/lessons/01-terminal-relationship
+local_course_path: ~/learn-ghostty/site/lessons/01-terminal-relationship.md
 ---
 
-<script setup>
-import AiCopyMenu from '../components/AiCopyMenu.vue'
-import ByteWorkbench from '../components/ByteWorkbench.vue'
-import EvidenceNotebook from '../components/EvidenceNotebook.vue'
-import LabRunner from '../components/LabRunner.vue'
-import LessonFooter from '../components/LessonFooter.vue'
-import LessonProgress from '../components/LessonProgress.vue'
-import PredictionCard from '../components/PredictionCard.vue'
-import SourceLink from '../components/SourceLink.vue'
-</script>
+# The terminal is a relationship.
 
-<div id="welcome" class="lesson-hero">
-  <div class="lesson-hero__index">01</div>
-  <div class="lesson-hero__copy">
-    <span class="lesson-eyebrow">FOUNDATIONS · TWO MISSIONS · 75–90 MINUTES</span>
-    <h1>The terminal is<br><em>a relationship.</em></h1>
-    <p>A shell is not “inside” Ghostty like text inside a text box. Processes are connected through a kernel object that preserves the shape of an old physical terminal. You will observe that relationship before naming every part.</p>
-  </div>
-</div>
-
-<LessonProgress lesson-id="01-terminal-relationship" />
-<AiCopyMenu lesson-id="01-terminal-relationship" />
-
-<span id="process-pty-observation" class="lesson-anchor"></span>
+> A shell is not “inside” Ghostty like text inside a text box. Processes are connected through a kernel object that preserves the shape of an old physical terminal. You will observe that relationship before naming every part.
 
 ## Mission 1 — Observe the software cable
 
@@ -41,15 +22,11 @@ The reference experiment runs the same checked-in C program twice:
 
 The website bundles a normalized trace captured from that real Linux run, so no setup is required and everyone can reason from the same evidence. When an optional local runner is already present, the page also offers a live run. Before revealing either, predict which facts must change merely because the connection changed.
 
-<PredictionCard
-  question="Will the program get a new PID, session, process group, terminal device, or all four when it runs inside a new PTY?"
-  hint="A PTY is more than a byte pipe. Think about who becomes the leader of a new terminal session."
-  answer="Do not treat this as the assessment answer. Run the probe and compare. The useful discovery is which identifiers become equal in the PTY case and why that grouping matters."
-/>
+> **Pause and predict:** Will the program get a new PID, session, process group, terminal device, or all four when it runs inside a new PTY?
 
 ### Run the observation
 
-<LabRunner lab="terminal-reality" title="Compile the C probe and compare no-PTY with PTY" />
+> **Systems experiment on the website:** Compile the C probe and compare no-PTY with PTY.
 
 The reference output came from real native code, not an invented browser model:
 
@@ -107,13 +84,21 @@ The PTY preserves a contract, not the hardware.
 
 You are not going to read all of `pty.zig` or `Exec.zig`.
 
-<SourceLink path="src/pty.zig" :line="115" :end="171" label="Open Ghostty's PTY pair" note="Read PosixPty.open. Find where master and slave descriptors appear, which side receives CLOEXEC, and the comment explaining why." />
+**Ghostty source — Open Ghostty's PTY pair**
+
+- Remote: https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/pty.zig#L115-L171
+- Local: `~/ghostty/src/pty.zig:115-171`
+- Read for: Read PosixPty.open. Find where master and slave descriptors appear, which side receives CLOEXEC, and the comment explaining why.
 
 Answer one source question:
 
 > Why should Ghostty's child inherit the slave descriptor but not the master descriptor?
 
-<SourceLink path="src/termio/Exec.zig" :line="88" :end="110" label="Start the subprocess on the I/O thread" note="Read threadEnter only through subprocess.start. Identify the handoff from generic Termio to the PTY-backed subprocess." />
+**Ghostty source — Start the subprocess on the I/O thread**
+
+- Remote: https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/termio/Exec.zig#L88-L110
+- Local: `~/ghostty/src/termio/Exec.zig:88-110`
+- Read for: Read threadEnter only through subprocess.start. Identify the handoff from generic Termio to the PTY-backed subprocess.
 
 Answer one boundary question:
 
@@ -130,9 +115,7 @@ Before moving on, your notebook must contain:
 
 Save those claims before moving on. Partial evidence is valid; unsupported confidence is not.
 
-<EvidenceNotebook mission-id="process-pty-observation" />
-
-<span id="bytes-to-screen" class="lesson-anchor"></span>
+> **Notebook on the website:** save evidence for mission `process-pty-observation`.
 
 ## Mission 2 — Bytes drive a screen
 
@@ -140,7 +123,7 @@ A PTY carries bytes; it does not decide what those bytes mean on screen. The nex
 
 This workbench is deliberately tiny and honest about its limits. It handles printable ASCII, escape/CSI framing for SGR colors 0/31/32, carriage return, backspace, and one row of twelve cells. It does not pretend to be Ghostty. Its purpose is to make causality visible before production complexity arrives.
 
-<ByteWorkbench />
+> **Interactive on the website:** edit and step terminal byte sequences through parser state, style, cursor, and cells.
 
 ### Three discoveries to earn
 
@@ -160,7 +143,11 @@ For `abc\bX`, notice that BS moves left but also erases nothing. A later printab
 
 ### Find the parser boundary—not all parser behavior
 
-<SourceLink path="src/terminal/Parser.zig" :line="222" :end="285" label="One byte enters Parser.next" note="Read the order in the comment: exit action, transition action, entry action. Ignore the full transition table for now." />
+**Ghostty source — One byte enters Parser.next**
+
+- Remote: https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/terminal/Parser.zig#L222-L285
+- Local: `~/ghostty/src/terminal/Parser.zig:222-285`
+- Read for: Read the order in the comment: exit action, transition action, entry action. Ignore the full transition table for now.
 
 Answer:
 
@@ -168,7 +155,11 @@ Answer:
 
 Then read only the action vocabulary near the top of the file:
 
-<SourceLink path="src/terminal/Parser.zig" :line="13" :end="57" label="Parser states and transition actions" note="Find ground, escape, csi_entry, csi_param, print, collect, param, and csi_dispatch. Map each familiar toy state to the production vocabulary." />
+**Ghostty source — Parser states and transition actions**
+
+- Remote: https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/terminal/Parser.zig#L13-L57
+- Local: `~/ghostty/src/terminal/Parser.zig:13-57`
+- Read for: Find ground, escape, csi_entry, csi_param, print, collect, param, and csi_dispatch. Map each familiar toy state to the production vocabulary.
 
 ### The boundary you now own
 
@@ -192,7 +183,7 @@ Your notebook entry must contain:
 
 The evidence notebook below saves these claims privately in your browser. Export the record from the dashboard for backup or optional Pi review. Pi should challenge the claims, not replace them.
 
-<EvidenceNotebook mission-id="bytes-to-screen" />
+> **Notebook on the website:** save evidence for mission `bytes-to-screen`.
 
 ## Explain the two boundaries together
 
@@ -203,10 +194,6 @@ Without looking back, explain why these are different bugs:
 
 The first belongs before bytes reach the parser. The second belongs after transport. If you can locate the first boundary where meaning becomes wrong, the architecture is beginning to work for you.
 
-<div class="lesson-finish">
-  <span>NEXT LESSON · BUILT AFTER THIS EVIDENCE IS USED</span>
+  NEXT LESSON · BUILT AFTER THIS EVIDENCE IS USED
   <h2>Enough Zig to read Ghostty</h2>
   <p>Translate the C probe's process, file-descriptor, and error-handling ideas into the Zig patterns used by Ghostty.</p>
-</div>
-
-<LessonFooter lesson-id="01-terminal-relationship" />

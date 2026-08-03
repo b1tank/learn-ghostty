@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vitepress dev site --host 127.0.0.1 --port 4173",
-    "build": "vitepress build site",
+    "generate:ai": "node scripts/generate-ai-content.mjs",
+    "dev": "npm run generate:ai && vitepress dev site --host 127.0.0.1 --port 4173",
+    "build": "npm run generate:ai && vitepress build site",
     "preview": "vitepress preview site --host 127.0.0.1 --port 4173",
     "check": "node scripts/check-course.mjs",
     "audit:ui": "node scripts/audit-ui.mjs"
