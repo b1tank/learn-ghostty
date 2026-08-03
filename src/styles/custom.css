@@ -433,12 +433,13 @@
 .system-map header > p:last-child { margin: 0; color: var(--course-muted); font-size: var(--sl-text-sm); }
 .system-map__pipeline { display: grid; gap: 0; margin: 1.5rem 0 0; padding: 0; list-style: none; }
 .system-map__stage { margin: 0 !important; padding: 0; }
+.system-map__stage > * { margin: 0 !important; }
 .system-map__node {
   display: grid;
   grid-template-columns: 3.25rem 12rem minmax(0, 1fr);
   align-items: center;
-  min-height: 4.75rem;
-  padding: .9rem 1rem;
+  min-height: 3.75rem;
+  padding: .7rem .85rem;
   border: 1px solid var(--sl-color-hairline-light);
   border-radius: .65rem;
   background: var(--sl-color-bg);
@@ -450,7 +451,7 @@
 .system-map__edge {
   display: grid;
   grid-template-columns: 3.25rem minmax(0, 1fr);
-  min-height: 4.5rem;
+  min-height: 2.75rem;
   align-items: center;
 }
 .system-map__edge i { position: relative; width: 1px; height: 100%; justify-self: center; background: var(--sl-color-gray-4); }
@@ -467,4 +468,38 @@
   .system-map__node p { margin-top: .2rem; }
   .system-map__edge { grid-template-columns: 2.5rem minmax(0, 1fr); min-height: 4.25rem; }
   .system-map__edge > div { display: grid; gap: .15rem; }
+}
+
+/* Homepage composition: hero and the complete data path share the first view. */
+@media (min-width: 72rem) {
+  .sl-container:has(> .hero) {
+    display: grid;
+    grid-template-columns: minmax(28rem, 0.9fr) minmax(34rem, 1.1fr);
+    column-gap: 3.5rem;
+    align-items: start;
+    max-width: 86rem;
+  }
+  .sl-container:has(> .hero) > .hero {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+    padding-block: 4.5rem 3rem;
+  }
+  .sl-container:has(> .hero) > .sl-markdown-content {
+    display: contents;
+  }
+  .sl-container:has(> .hero) .system-map {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    margin: 3rem 0 2.5rem;
+  }
+  .sl-container:has(> .hero) .home-course {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+  }
+  .sl-container:has(> .hero) > footer {
+    grid-column: 1 / -1;
+  }
 }
