@@ -1,11 +1,15 @@
 ---
 title: "00 · Ghostty: the whole machine"
 description: "A fifteen-minute map for every trace you will build later."
+prev: false
+next: false
 ---
 
 <script setup>
 import ArchitectureExplorer from '../components/ArchitectureExplorer.vue'
 import EvidenceNotebook from '../components/EvidenceNotebook.vue'
+import LessonFooter from '../components/LessonFooter.vue'
+import LessonProgress from '../components/LessonProgress.vue'
 import SourceLink from '../components/SourceLink.vue'
 </script>
 
@@ -17,6 +21,8 @@ import SourceLink from '../components/SourceLink.vue'
     <p>This page gives you one story to carry through the entire camp. The next lesson stops talking and starts observing real processes, a real PTY, and real control bytes.</p>
   </div>
 </div>
+
+<LessonProgress lesson-id="00-ghostty-overview" />
 
 ::: tip The story to leave with
 A program writes bytes. A PTY carries them. A parser decides which bytes are text and which are commands. Terminal state remembers the result. Fonts and the GPU turn that state into pixels. Native UI carries your input back.
@@ -136,3 +142,5 @@ The next lesson begins with a mystery, not another overview. You will compile a 
   <h2>The terminal is a relationship</h2>
   <p>Processes, a software cable, and bytes that change the screen.</p>
 </div>
+
+<LessonFooter lesson-id="00-ghostty-overview" />

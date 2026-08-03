@@ -1,12 +1,16 @@
 ---
 title: "01 · The terminal is a relationship"
 description: "Observe processes, a pseudo-terminal, and control bytes before reading Ghostty's implementation."
+prev: false
+next: false
 ---
 
 <script setup>
 import ByteWorkbench from '../components/ByteWorkbench.vue'
 import EvidenceNotebook from '../components/EvidenceNotebook.vue'
 import LabRunner from '../components/LabRunner.vue'
+import LessonFooter from '../components/LessonFooter.vue'
+import LessonProgress from '../components/LessonProgress.vue'
 import PredictionCard from '../components/PredictionCard.vue'
 import SourceLink from '../components/SourceLink.vue'
 </script>
@@ -19,6 +23,8 @@ import SourceLink from '../components/SourceLink.vue'
     <p>A shell is not “inside” Ghostty like text inside a text box. Processes are connected through a kernel object that preserves the shape of an old physical terminal. You will observe that relationship before naming every part.</p>
   </div>
 </div>
+
+<LessonProgress lesson-id="01-terminal-relationship" />
 
 <span id="process-pty-observation" class="lesson-anchor"></span>
 
@@ -200,3 +206,5 @@ The first belongs before bytes reach the parser. The second belongs after transp
   <h2>Enough Zig to read Ghostty</h2>
   <p>Translate the C probe's process, file-descriptor, and error-handling ideas into the Zig patterns used by Ghostty.</p>
 </div>
+
+<LessonFooter lesson-id="01-terminal-relationship" />
