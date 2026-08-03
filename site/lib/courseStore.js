@@ -13,7 +13,9 @@ function initialState() {
     currentStep: "welcome",
     startedAt: null,
     updatedAt: null,
-    lessons: Object.fromEntries(manifest.lessons.filter((lesson) => lesson.status === "available").map((lesson, index) => [lesson.id, { status: index === 0 ? "not_started" : "locked", completedMissions: [] }])),
+    lessons: Object.fromEntries(manifest.lessons.filter((lesson) => lesson.status === "available").map((lesson) => [lesson.id, { status: "not_started", completedMissions: [] }])),
+    lastSectionByLesson: {},
+    completedLessons: [],
     evidence: {},
     questions: [],
     activity: []
@@ -25,7 +27,7 @@ export function loadLearnerState() {
   const empty = initialState();
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
-    learnerState.value = saved ? { ...empty, ...saved, lessons: { ...empty.lessons, ...saved.lessons }, evidence: { ...saved.evidence } } : empty;
+    learnerState.value = saved ? { ...empty, ...saved, lessons: { ...empty.lessons, ...saved.lessons }, lastSectionByLesson: { ...empty.lastSectionByLesson, ...saved.lastSectionByLesson }, completedLessons: [...new Set(saved.completedLessons ?? [])], evidence: { ...saved.evidence } } : empty;
   } catch { learnerState.value = empty; }
   return learnerState.value;
 }
@@ -58,7 +60,6 @@ export function saveMissionEvidence(missionId, fields) {
   lessonState.status = "in_progress";
   lessonState.completedMissions ??= [];
   if (evidence.complete && !lessonState.completedMissions.includes(missionId)) lessonState.completedMissions.push(missionId);
-  if (lesson.missionIds.every((id) => lessonState.completedMissions.includes(id))) lessonState.status = "completed";
   state.lessons[lesson.id] = lessonState;
 
   if (evidence.complete) {
@@ -67,19 +68,50 @@ export function saveMissionEvidence(missionId, fields) {
     if (nextMission) {
       state.currentMission = nextMission;
       state.currentStep = nextMission;
-    } else {
-      const nextLesson = manifest.lessons.find((item) => item.order === lesson.order + 1 && item.status === "available");
-      if (nextLesson) {
-        state.lessons[nextLesson.id] = { ...(state.lessons[nextLesson.id] ?? {}), status: "not_started", completedMissions: state.lessons[nextLesson.id]?.completedMissions ?? [] };
-        state.currentLesson = nextLesson.id;
-        state.currentMission = nextLesson.missionIds[0];
-        state.currentStep = "welcome";
-      }
     }
   }
   state.activity = [{ at: now, missionId, event: `${mission.title}: ${evidence.stage}` }, ...(state.activity ?? []).filter((item) => item.missionId !== missionId || item.event !== `${mission.title}: ${evidence.stage}`)].slice(0, 20);
   persist();
   return evidence;
+}
+
+export function recordSection(lessonId, sectionId) {
+  const state = loadLearnerState();
+  if (!manifest.lessons.some((lesson) => lesson.id === lessonId && lesson.status === "available")) return;
+  const changed = state.currentLesson !== lessonId || state.currentStep !== sectionId;
+  state.currentLesson = lessonId;
+  state.currentStep = sectionId || "welcome";
+  state.lastSectionByLesson[lessonId] = state.currentStep;
+  state.lessons[lessonId] ??= { status: "not_started", completedMissions: [] };
+  if (state.lessons[lessonId].status === "not_started") state.lessons[lessonId].status = "in_progress";
+  if (changed) persist();
+}
+
+export function markLessonComplete(lessonId) {
+  const state = loadLearnerState();
+  const lesson = manifest.lessons.find((item) => item.id === lessonId);
+  if (!lesson || lesson.status !== "available") return;
+  state.lessons[lessonId] ??= { status: "in_progress", completedMissions: [] };
+  state.lessons[lessonId].status = "completed";
+  if (!state.completedLessons.includes(lessonId)) state.completedLessons.push(lessonId);
+  const next = manifest.lessons.find((item) => item.order > lesson.order && item.status === "available");
+  if (next) {
+    state.currentLesson = next.id;
+    state.currentMission = next.missionIds[0];
+    state.currentStep = state.lastSectionByLesson[next.id] || "welcome";
+  }
+  persist();
+}
+
+export function resetLearnerProgress() {
+  localStorage.removeItem(storageKey);
+  learnerState.value = initialState();
+  window.dispatchEvent(new CustomEvent("learn-ghostty-state", { detail: learnerState.value }));
+}
+
+export function hasLearnerProgress() {
+  const state = loadLearnerState();
+  return Boolean(state.startedAt || state.completedLessons.length || Object.keys(state.lastSectionByLesson).length || Object.keys(state.evidence).length);
 }
 
 export function evidenceFor(missionId) {
