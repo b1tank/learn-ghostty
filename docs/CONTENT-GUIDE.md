@@ -61,6 +61,18 @@ Course-specific UI follows these rules:
 - verify all pages in both themes and at 390px, tablet, and desktop widths;
 - diagrams should be visually prominent enough to teach, not miniature decorations.
 
+## Layout invariants
+
+Professional UI depends on relationships staying aligned, not on isolated components looking acceptable.
+
+- Sibling cards in the same row must share one top edge and stretch to the same height. Reset prose-flow margins inside grids instead of allowing framework stack spacing to shift later siblings.
+- Buttons in one action group must share an explicit height, baseline, padding model, font metrics, and margin reset. Never rely on browser defaults for one control and custom sizing for another.
+- Diagram edge labels own a dedicated lane. Text may not sit on top of connector lines, spill into nodes, or rely on overlap to fit.
+- Node text is left-aligned and vertically predictable; connectors carry only relationship/data labels.
+- At narrow widths, dense horizontal diagrams become vertical flows rather than shrinking text or clipping nodes.
+- Spacing communicates hierarchy: align first, add whitespace second, add a border or card only when it clarifies grouping.
+- Validate bounding boxes, not just screenshots: sibling top coordinates, control heights, popup containment, and node/edge intersection are regression-testable invariants.
+
 ## Avoid
 
 - learner tests, gates, notebooks, scores, or required answers
