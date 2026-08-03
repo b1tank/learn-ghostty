@@ -1,23 +1,37 @@
+---
+const stages = [
+  { actor: 'Application', detail: 'ls, Codex, tmux, ssh', output: 'UTF-8 text and terminal control bytes' },
+  { actor: 'Kernel PTY', detail: 'ordered terminal stream', output: 'byte chunks from the PTY master' },
+  { actor: 'Ghostty parser', detail: 'recognizes text and commands', output: 'ordered print and control actions' },
+  { actor: 'Terminal state', detail: 'cells, styles, cursor, modes', output: 'cell, code point, style, and image data' },
+  { actor: 'Fonts and GPU', detail: 'glyphs, textures, buffers, shaders', output: 'a rendered surface containing pixels' },
+  { actor: 'You', detail: 'the local display', output: null },
+];
+---
 <section class="system-map" aria-labelledby="system-map-title">
   <header>
     <p class="system-map__eyebrow">THE CORE DATA PATH</p>
     <h2 id="system-map-title">One command, many representations</h2>
-    <p>The course repeatedly returns to this map. Each arrow names the data that crosses a real boundary.</p>
+    <p>Read from top to bottom. Each connector names the concrete data that crosses into the next owner.</p>
   </header>
-  <div class="system-map__scroll" tabindex="0" aria-label="Scrollable terminal data flow diagram">
-    <div class="system-map__graph">
-      <div class="system-map__node"><span>Application</span><strong>ls, Codex, tmux, ssh</strong></div>
-      <div class="system-map__edge"><span>UTF-8 + control bytes</span><i aria-hidden="true"></i></div>
-      <div class="system-map__node"><span>Kernel PTY</span><strong>ordered terminal stream</strong></div>
-      <div class="system-map__edge"><span>byte chunks</span><i aria-hidden="true"></i></div>
-      <div class="system-map__node"><span>Ghostty parser</span><strong>print and control actions</strong></div>
-      <div class="system-map__edge"><span>ordered actions</span><i aria-hidden="true"></i></div>
-      <div class="system-map__node"><span>Terminal state</span><strong>cells, styles, cursor</strong></div>
-      <div class="system-map__edge"><span>glyph + cell data</span><i aria-hidden="true"></i></div>
-      <div class="system-map__node"><span>Fonts + GPU</span><strong>textures, buffers, frame</strong></div>
-      <div class="system-map__edge"><span>pixels</span><i aria-hidden="true"></i></div>
-      <div class="system-map__node"><span>You</span><strong>local display</strong></div>
-    </div>
-  </div>
-  <p class="system-map__note"><strong>Input travels back through a related path:</strong> hardware event → native key event → Ghostty key encoding → PTY bytes → application.</p>
+  <ol class="system-map__pipeline" aria-label="Terminal output data flow">
+    {stages.map((stage, index) => (
+      <li class="system-map__stage">
+        <div class="system-map__node">
+          <span class="system-map__number">{String(index + 1).padStart(2, '0')}</span>
+          <div>
+            <strong>{stage.actor}</strong>
+            <p>{stage.detail}</p>
+          </div>
+        </div>
+        {stage.output && (
+          <div class="system-map__edge">
+            <i aria-hidden="true"></i>
+            <div><span>DATA TO NEXT STAGE</span><strong>{stage.output}</strong></div>
+          </div>
+        )}
+      </li>
+    ))}
+  </ol>
+  <p class="system-map__note"><strong>Input travels in the other direction:</strong> hardware event, native key event, Ghostty key encoding, PTY bytes, then the application.</p>
 </section>
