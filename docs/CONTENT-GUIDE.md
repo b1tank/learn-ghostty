@@ -67,6 +67,7 @@ Professional UI depends on relationships staying aligned, not on isolated compon
 
 - Sibling cards in the same row must share one top edge and stretch to the same height. Reset prose-flow margins inside grids instead of allowing framework stack spacing to shift later siblings.
 - Buttons in one action group must share an explicit height, baseline, padding model, font metrics, and margin reset. Never rely on browser defaults for one control and custom sizing for another.
+- Foundational roadmap diagrams show the complete path without horizontal scrolling. If a flow cannot fit, use a vertical pipeline, rows, or progressive sub-diagrams—not a hidden continuation behind a scrollbar.
 - Diagram edge labels own a dedicated lane. Text may not sit on top of connector lines, spill into nodes, or rely on overlap to fit.
 - Node text is left-aligned and vertically predictable; connectors carry only relationship/data labels.
 - At narrow widths, dense horizontal diagrams become vertical flows rather than shrinking text or clipping nodes.
