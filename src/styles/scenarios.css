@@ -1,93 +1,246 @@
-/* Interactive data-flow diagrams used by scenario lessons. */
+/* Animated, accessible data-flow diagrams used by scenario lessons. */
 .flow-walkthrough {
-  margin: 2rem 0;
+  margin: 2.25rem 0;
   overflow: hidden;
   border: 1px solid var(--sl-color-hairline-light);
-  border-radius: 0.75rem;
+  border-radius: 0.8rem;
   background: var(--sl-color-bg-nav);
 }
 
-.flow-walkthrough > header {
+.flow-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
   padding: 1.25rem 1.4rem;
   border-bottom: 1px solid var(--sl-color-hairline-light);
 }
 
-.flow-walkthrough > header > span,
-.flow-detail > div > span {
+.flow-header > div:first-child { min-width: 0; }
+.flow-header span,
+.flow-detail__step,
+.flow-data span,
+.flow-analogy span {
   color: var(--sl-color-text-accent);
   font: 700 var(--sl-text-xs) var(--__sl-font-mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.flow-walkthrough h3 {
-  margin: 0.45rem 0 0.25rem;
+.flow-header h3 {
+  margin: 0.4rem 0 0.2rem;
   font-size: var(--sl-text-xl);
 }
 
-.flow-walkthrough header p {
+.flow-header p {
   margin: 0;
   color: var(--sl-color-gray-3);
   font-size: var(--sl-text-sm);
 }
 
-.flow-rail {
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding: 1rem;
-  scrollbar-width: thin;
-}
-
-.flow-rail button {
-  flex: 0 0 7.5rem;
-  min-height: 4rem;
-  padding: 0.65rem;
+.flow-header__controls button,
+.flow-footer button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin: 0 !important;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--sl-color-hairline-light);
-  border-radius: 0.55rem;
+  border-radius: 0.5rem;
   color: var(--sl-color-text);
   background: var(--sl-color-bg);
-  text-align: left;
+  font: 650 var(--sl-text-xs) var(--__sl-font-mono);
   cursor: pointer;
 }
 
-.flow-rail button:hover { border-color: var(--sl-color-accent); }
-.flow-rail button.active {
-  color: var(--sl-color-text-invert);
-  border-color: var(--sl-color-accent);
-  background: var(--sl-color-bg-accent);
+.flow-header__controls svg { width: 1rem; height: 1rem; }
+.flow-header__controls button:hover,
+.flow-footer button:hover:not(:disabled) { border-color: var(--sl-color-accent); }
+
+.flow-track {
+  position: relative;
+  padding: 1.2rem 1.2rem 0.8rem;
 }
 
-.flow-rail b,
-.flow-rail span { display: block; }
-.flow-rail b { font: 700 var(--sl-text-2xs) var(--__sl-font-mono); }
-.flow-rail span { margin-top: 0.35rem; font-size: var(--sl-text-sm); line-height: 1.3; }
-
-.flow-detail {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1px;
-  border-top: 1px solid var(--sl-color-hairline-light);
+.flow-track__line {
+  position: absolute;
+  z-index: 0;
+  left: calc(1.2rem + 2rem);
+  right: calc(1.2rem + 2rem);
+  top: 2.55rem;
+  height: 2px;
   background: var(--sl-color-hairline-light);
 }
 
-.flow-detail > div {
+.flow-track__line i {
+  display: block;
+  width: var(--flow-progress);
+  height: 100%;
+  background: var(--sl-color-accent);
+  transition: width 0.45s ease;
+}
+
+.flow-track__line b {
+  position: absolute;
+  top: 50%;
+  left: var(--flow-progress);
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 2px solid var(--sl-color-bg-nav);
+  border-radius: 50%;
+  background: var(--sl-color-accent);
+  box-shadow: 0 0 0 3px var(--sl-color-accent-low);
+  transform: translate(-50%, -50%);
+  transition: left 0.45s ease;
+}
+
+.flow-walkthrough.is-playing .flow-track__line b {
+  animation: flow-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes flow-pulse {
+  50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--sl-color-accent) 18%, transparent); }
+}
+
+.flow-rail {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--flow-count, 1), minmax(4.5rem, 1fr));
+  gap: 0.4rem;
+}
+
+.flow-rail button {
   min-width: 0;
-  padding: 1.1rem 1.25rem;
+  min-height: 4.5rem;
+  padding: 0.55rem 0.4rem;
+  border: 0;
+  color: var(--sl-color-gray-3);
+  background: transparent;
+  text-align: center;
+  cursor: pointer;
+}
+
+.flow-rail button b {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  margin: 0 auto 0.45rem;
+  border: 2px solid var(--sl-color-hairline-light);
+  border-radius: 50%;
+  color: var(--sl-color-gray-3);
+  background: var(--sl-color-bg-nav);
+  font: 700 var(--sl-text-2xs) var(--__sl-font-mono);
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.flow-rail button span {
+  display: block;
+  overflow: hidden;
+  font-size: var(--sl-text-xs);
+  font-weight: 650;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+}
+
+.flow-rail button.done b {
+  border-color: var(--sl-color-accent);
+  color: var(--sl-color-text-invert);
+  background: var(--sl-color-bg-accent);
+}
+
+.flow-rail button.active { color: var(--sl-color-white); }
+.flow-rail button.active b {
+  border-color: var(--sl-color-accent);
+  color: var(--sl-color-text-invert);
+  background: var(--sl-color-bg-accent);
+  transform: scale(1.12);
+}
+
+.flow-detail {
+  margin: 0 !important;
+  padding: 1.35rem 1.4rem;
+  border-top: 1px solid var(--sl-color-hairline-light);
   background: var(--sl-color-bg);
 }
 
-.flow-detail strong,
-.flow-detail code { display: block; margin-top: 0.5rem; }
-.flow-detail strong { font-size: var(--sl-text-lg); }
-.flow-detail code {
+.flow-detail__main h4 {
+  margin: 0.35rem 0 0.45rem;
+  color: var(--sl-color-white);
+  font-size: var(--sl-text-2xl);
+}
+
+.flow-detail__main p {
+  max-width: 47rem;
+  margin: 0;
+  color: var(--sl-color-text);
+  font-size: var(--sl-text-base);
+}
+
+.flow-data {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2rem minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+  margin-top: 1.1rem;
+}
+
+.flow-data > div {
+  min-width: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 0.55rem;
+  background: var(--sl-color-bg-nav);
+}
+
+.flow-data code {
+  display: block;
+  margin-top: 0.35rem;
   color: var(--sl-color-text-accent);
   font-size: var(--sl-text-sm);
   white-space: normal;
   overflow-wrap: anywhere;
 }
-.flow-detail p { margin: 0.5rem 0 0; color: var(--sl-color-text); font-size: var(--sl-text-base); }
-.flow-analogy { grid-column: 1 / -1; background: var(--sl-color-accent-low) !important; }
+
+.flow-data > svg {
+  width: 2rem;
+  color: var(--sl-color-gray-3);
+}
+
+.flow-analogy {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--sl-color-accent);
+  border-radius: 0.4rem;
+  background: var(--sl-color-accent-low);
+}
+
+.flow-analogy p {
+  margin: 0.35rem 0 0;
+  color: var(--sl-color-text);
+  font-size: var(--sl-text-sm);
+}
+
+.flow-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0.8rem 1.4rem;
+  border-top: 1px solid var(--sl-color-hairline-light);
+}
+
+.flow-footer span {
+  min-width: 3rem;
+  color: var(--sl-color-gray-3);
+  font: var(--sl-text-xs) var(--__sl-font-mono);
+  text-align: center;
+}
+
+.flow-footer button:disabled { opacity: 0.4; cursor: default; }
 
 .platform-branch {
   display: grid;
@@ -102,6 +255,7 @@
   border-radius: 0.65rem;
   background: var(--sl-color-bg-nav);
 }
+
 .platform-branch h3 { margin: 0 0 0.6rem; font-size: var(--sl-text-xl); }
 
 .data-label {
@@ -113,9 +267,25 @@
   font: var(--sl-text-xs) var(--__sl-font-mono);
 }
 
-@media (max-width: 40rem) {
-  .flow-detail,
+@media (max-width: 50rem) {
+  .flow-header { align-items: flex-start; flex-direction: column; }
+  .flow-track { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); padding: 1rem; }
+  .flow-track__line { left: 1.85rem; right: auto; top: 2rem; bottom: 2rem; width: 2px; height: auto; }
+  .flow-track__line i { width: 100%; height: var(--flow-progress); transition: height 0.45s ease; }
+  .flow-track__line b { top: var(--flow-progress); left: 50%; transition: top 0.45s ease; }
+  .flow-rail { grid-column: 1 / -1; grid-template-columns: 1fr; gap: 0.3rem; }
+  .flow-rail button { display: grid; grid-template-columns: 2rem minmax(0, 1fr); min-height: 3.25rem; align-items: center; gap: 0.75rem; padding: 0.35rem 0; text-align: left; }
+  .flow-rail button b { margin: 0; }
+  .flow-rail button span { text-overflow: clip; white-space: normal; }
+  .flow-data { grid-template-columns: 1fr; }
+  .flow-data > svg { transform: rotate(90deg); justify-self: center; }
+  .flow-detail__main h4 { font-size: var(--sl-text-xl); }
+  .flow-footer { justify-content: space-between; }
   .platform-branch { grid-template-columns: 1fr; }
-  .flow-analogy { grid-column: 1; }
-  .flow-rail button { flex-basis: 6.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-track__line i,
+  .flow-track__line b,
+  .flow-rail button b { transition: none; animation: none; }
 }
