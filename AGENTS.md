@@ -36,6 +36,7 @@ npm run build
 - Label the data type at boundaries: native event, UTF-8 bytes, argv, PTY stream, parser action, cell, glyph, texture, frame, pixels.
 - Use the sports-broadcast analogy when it clarifies roles or routing, and always state where it fails.
 - Give every multi-component or bidirectional data flow a diagram or interactive graph before the detailed prose. Label actors, boundaries, direction, and the concrete data type on each edge; include an equivalent textual explanation for accessibility.
+- Animate flows only to reveal causality: start when visible, provide play/pause/replay and manual navigation, pause after learner interaction, keep current state readable without motion, and honor reduced-motion preferences.
 - Preserve layout invariants across all custom UI: sibling cards share top edges/heights, grouped controls share exact dimensions/baselines, and diagram edge labels occupy dedicated space without intersecting nodes or connector lines. Foundational maps must expose the complete path without horizontal scrolling; reflow dense diagrams vertically or split them into explicit sub-flows instead of hiding stages off-screen.
 - Prefer short paragraphs, concrete commands, progressive disclosure, and narrow source reads.
 - Never add learner-facing quizzes, gates, evidence notebooks, mastery scores, or required answers.

@@ -34,6 +34,8 @@ A useful diagram labels:
 
 Diagrams are teaching artifacts, not decoration. They must have a textual equivalent, readable contrast, keyboard-accessible interactive states, and a clear statement of any simplification. Prefer version-controlled Astro/SVG/Vue source over opaque screenshots.
 
+Animation should reveal causality rather than add motion for its own sake. Animated flows must start only when visible, expose play/pause/replay and manual steps, pause when the learner takes control, preserve the current state in text, and honor `prefers-reduced-motion` by avoiding automatic motion.
+
 ## Data labels
 
 Name concrete representations: hardware event, platform key event, UTF-8 bytes, command line, argv, filesystem entries, ANSI/ECMA-48 bytes, parser actions, terminal cells, code points, glyphs, atlas textures, GPU buffers, frames, pixels.
