@@ -44,7 +44,7 @@ export default defineConfig({
       editLink: { baseUrl: "https://github.com/b1tank/learn-ghostty/edit/main/src/content/docs/" },
       head: [{ tag: "script", content: externalLinks }],
       sidebar: [
-        { label: "Rebuild Ghostty", items: ["chapters/00-process-exists", "chapters/01-app-lifecycle", "chapters/02-entry-routing", "chapters/03-runtime-surface", "chapters/04-child-process-pipes", "chapters/05-pty", "chapters/06-termio", "chapters/07-parser", "chapters/08-terminal-state", "chapters/09-first-window-gpu"] },
+        { label: "Rebuild Ghostty", items: ["chapters/00-process-exists", "chapters/01-app-lifecycle", "chapters/02-entry-routing", "chapters/03-runtime-surface", "chapters/04-child-process-pipes", "chapters/05-pty", "chapters/06-termio", "chapters/07-parser", "chapters/08-terminal-state", "chapters/09-first-window-gpu", "chapters/10-first-rectangle"] },
         { label: "Field guides", items: ["field-guides/run-ls-cat", "field-guides/codex-tui", "field-guides/tmux", "field-guides/ssh-remote"] },
         { label: "Course", items: ["course-map"] },
         { label: "Tools", items: ["history", "source"] }

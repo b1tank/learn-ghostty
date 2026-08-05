@@ -1,15 +1,144 @@
 ---
-title: "Chapter 10: First GPU rectangle"
-description: Create a graphics surface and draw one known color before fonts or terminal cells enter the renderer.
+title: "Chapter 10: First OpenGL rectangle"
+description: Give runtime Surface a GtkGLArea, verify an OpenGL 4.3+ context, and draw one regionally verified rectangle.
 order: 10
 module: Reconstruction
-status: planned
-duration: Built after the native window is understood
+status: published
+duration: 45–60 minutes
 sidebar:
   order: 10
-draft: true
-sourceRefs: []
-historyRefs: []
+next: false
+historyRefs:
+  - commit: 7f34afa3953289d33f95150c5f7d6a6d458a6993
+    date: "2023-02-23"
+    path: src/apprt/gtk.zig
+    line: 180
+    end: 238
+    label: First GTK GLArea color
+    purpose: See Ghostty connect realize/render callbacks, load OpenGL, and clear a GTK GLArea to one known color.
+    context: Ghostty established the graphics callback before its mature renderer architecture existed.
+sourceRefs:
+  - path: src/renderer/OpenGL.zig
+    line: 130
+    end: 180
+    label: Current OpenGL capability initialization
+    purpose: Read version validation, debug setup, and GTK procedure loading; ignore later renderer resources.
+  - path: src/apprt/gtk/class/surface.zig
+    line: 3250
+    end: 3380
+    label: Current GTK GLArea lifecycle
+    purpose: Read realize, unrealize, context-current, and render handoffs around the core renderer.
 ---
+import EvolutionStrip from '../../../components/EvolutionStrip.astro';
+import FidelityLegend from '../../../components/FidelityLegend.astro';
+import LessonActions from '../../../components/LessonActions.astro';
+import OutputPreview from '../../../components/OutputPreview.astro';
+import RectangleArtifact from '../../../components/RectangleArtifact.astro';
+import SourceLink from '../../../components/SourceLink.vue';
 
-The native window is real but blank. This chapter remains unpublished until a tagged checkpoint draws one known rectangle and includes a real before/after capture.
+<LessonActions entryId="chapters/10-first-rectangle" />
+
+## What you will see
+
+<RectangleArtifact />
+
+<OutputPreview file="src/data/reconstruction/chapter-10/output.txt" title="OpenGL capability and rectangle evidence" tag="chapter-10-first-rectangle" caption="The capture runs GTK's normal close path through an explicit capture-only timeout. CI repeats the native build, lifecycle smoke test, capture, and pixel checks." />
+
+## Why a rectangle comes before a glyph
+
+The blank window proved native ownership but no graphics context. A glyph would mix context creation, shaders, textures, font discovery, rasterization, metrics, blending, and atlas ownership.
+
+One rectangle isolates:
+
+```text
+GtkGLArea → current OpenGL context → viewport → known background → known region
+```
+
+Terminal state remains disconnected intentionally.
+
+## The readiness work
+
+Before drawing, the GTK scaffold was hardened:
+
+- runtime Surface now owns GtkWindow and GtkGLArea;
+- normal execution waits for window close;
+- capture timeout is opt-in;
+- GTK callbacks live in a small C shim compiled against real headers;
+- no-display initialization returns an error;
+- a native CI job builds/tests GTK and runs Xvfb capture.
+
+This work prevents the screenshot from hiding a broken lifecycle.
+
+## Historical path
+
+<EvolutionStrip moments={[
+ {kind:'then',eyebrow:'THEN · 2023-02-23',title:'Clear the first GLArea color',description:'Ghostty connected realize/render callbacks, loaded OpenGL, and cleared the GTK graphics surface to one color.',revision:'7f34afa',href:'https://github.com/ghostty-org/ghostty/blob/7f34afa3953289d33f95150c5f7d6a6d458a6993/src/apprt/gtk.zig#L180-L238',linkLabel:'Open first GTK render'},
+ {kind:'reconstruction',eyebrow:'RECONSTRUCTION · CHAPTER 10',title:'Verify context and rectangle',description:'GtkGLArea requests OpenGL 4.3, records llvmpipe capabilities, clears a navy background, and scissor-clears a centered green region.',revision:'chapter-10-first-rectangle'},
+ {kind:'now',eyebrow:'NOW · PINNED MAIN',title:'Drive the production renderer',description:'Current GTK Surface manages realize, unrealize, context errors, app-thread drawing, and renderer frame handoff.',revision:'6ad1fe7',href:'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/apprt/gtk/class/surface.zig#L3250-L3380',linkLabel:'Open current GLArea path'}
+]} />
+
+## Context acceptance
+
+The realized GLArea reports:
+
+```text
+vendor=Mesa
+renderer=llvmpipe
+version=4.5 Core Profile
+shading language=4.50
+```
+
+The runtime requests at least OpenGL 4.3, matching current Ghostty's minimum direction. llvmpipe is accepted as deterministic CI evidence; hardware and Wayland remain separate support gates.
+
+## Draw operation
+
+The render callback:
+
+1. makes the GLArea context current;
+2. sets a viewport from widget dimensions;
+3. clears the full client area to dark navy;
+4. enables scissor testing;
+5. clears the centered half-width/half-height region to green;
+6. disables scissor testing.
+
+No shader, vertex buffer, texture, or renderer abstraction is needed for this milestone.
+
+## Pixel verification
+
+The capture checks three root-image samples:
+
+```text
+center     = srgb(51,204,102)
+background = srgb(13,18,31)
+root       = srgb(0,0,0)
+```
+
+The center must differ from the client background, and the client background must differ from the X root display. This verifies the intended graphical layers rather than accepting any changed screenshot hash.
+
+## Fidelity
+
+<FidelityLegend />
+
+| File | Status | Deferred production behavior |
+|---|---|---|
+| `src/apprt/gtk.zig` | adapted | thin Zig ownership wrapper around the native shim |
+| `src/apprt/gtk_shim.c` | adapted | GLArea lifecycle and one scissored clear; no renderer object, context loss, resize policy, or input |
+| `build.zig` | adapted | optional GTK4/libepoxy and capture options |
+| native CI | project-owned | deterministic llvmpipe evidence, not hardware/Wayland support |
+
+## Compare with current Ghostty
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/renderer/OpenGL.zig" line={130} end={180} label="Current OpenGL initialization" note="Read version validation and GTK loading. Ignore resources not earned by the rectangle." />
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/apprt/gtk/class/surface.zig" line={3250} end={3380} label="Current GtkGLArea lifecycle" note="Read realize/unrealize/render ownership and context error handling." />
+
+## Checkpoint
+
+```text
+implementation  5bc46b51742610097358128b5391c3471f491a72
+tag             chapter-10-first-rectangle
+```
+
+## The next limitation
+
+The graphics surface can draw geometry but not text. The next checkpoint should isolate font discovery, metrics, and one rasterized glyph before introducing an atlas or terminal-cell rendering.

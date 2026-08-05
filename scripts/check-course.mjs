@@ -67,7 +67,7 @@ for (const path of contentFiles) {
 const orders = lessons.map((lesson) => lesson.order);
 if (new Set(orders).size !== orders.length) errors.push("lesson order values must be unique");
 if (lessons.length !== 16) errors.push(`expected 16 reconstruction/field-guide entries, found ${lessons.length}`);
-if (lessons.filter((lesson) => lesson.status === "published").length !== 14) errors.push("expected ten reconstruction chapters plus four published field guides");
+if (lessons.filter((lesson) => lesson.status === "published").length !== 15) errors.push("expected eleven reconstruction chapters plus four published field guides");
 
 const reconstructionRoot = resolve(root, "src/data/reconstruction");
 const snapshotDirs = (await readdir(reconstructionRoot, { withFileTypes: true })).filter((entry) => entry.isDirectory());

@@ -1,0 +1,17 @@
+$ GDK_BACKEND=x11 zig build run -Dgtk=true -Dcapture-timeout-ms=1800
+[entry] ghostty
+[main] process started
+[app] created
+[gtk] initialized
+[surface 1] created
+[gl] vendor=Mesa
+[gl] renderer=llvmpipe (LLVM 15.0.7, 256 bits)
+[gl] version=4.5 (Core Profile) Mesa 23.2.1-1ubuntu3.1~22.04.4
+[gl] shading_language=4.50
+[gtk] window presented 900x600
+[gl] rectangle x=225 y=150 width=450 height=300
+[gtk] event loop exited
+[surface 1] destroyed
+[gtk] terminated
+[app] destroyed
+[main] process exiting

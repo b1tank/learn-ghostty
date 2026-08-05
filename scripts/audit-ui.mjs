@@ -32,7 +32,7 @@ async function newPage(browser, width = 1280, theme = "light") {
 await ensureServer();
 const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
 try {
-  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/chapters/05-pty", "/chapters/06-termio", "/chapters/07-parser", "/chapters/08-terminal-state", "/chapters/09-first-window-gpu", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/history", "/source"];
+  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/chapters/05-pty", "/chapters/06-termio", "/chapters/07-parser", "/chapters/08-terminal-state", "/chapters/09-first-window-gpu", "/chapters/10-first-rectangle", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/history", "/source"];
   for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
     const page = await newPage(browser, width, theme);
     await page.goto(base + route, { waitUntil: "networkidle0" });
@@ -246,12 +246,28 @@ try {
       metadata: document.querySelectorAll(".native-artifact dl > div").length,
       history: document.querySelectorAll(".evolution-strip li").length,
       output: document.querySelector(".output-preview")?.textContent?.includes("[gtk] window presented 900x600"),
-      next: Boolean(document.querySelector('a[rel="next"]')),
+      next: document.querySelector('a[rel="next"]')?.getAttribute("href") ?? "",
     };
   });
   check(nativeState.image && nativeState.metadata === 4 && nativeState.history === 3 && nativeState.output, "Chapter 09 is missing its real screenshot, metadata, history, or output");
-  check(!nativeState.next, "Chapter 09 should stop at the current published frontier");
+  check(nativeState.next.includes("/chapters/10-first-rectangle"), "Chapter 09 does not advance to Chapter 10");
   await nativeWindow.close();
+
+  const rectangle = await newPage(browser, 1280, "dark");
+  await rectangle.goto(base + "/chapters/10-first-rectangle", { waitUntil: "networkidle0" });
+  const rectangleState = await rectangle.evaluate(() => {
+    const image = document.querySelector(".rect-art img");
+    return {
+      image: image?.complete && image.naturalWidth === 1280 && image.naturalHeight === 800,
+      metadata: document.querySelectorAll(".rect-art dl > div").length,
+      history: document.querySelectorAll(".evolution-strip li").length,
+      output: document.querySelector(".output-preview")?.textContent?.includes("[gl] rectangle x=225"),
+      next: Boolean(document.querySelector('a[rel="next"]')),
+    };
+  });
+  check(rectangleState.image && rectangleState.metadata === 3 && rectangleState.history === 3 && rectangleState.output, "Chapter 10 is missing rectangle evidence, metadata, history, or output");
+  check(!rectangleState.next, "Chapter 10 should stop at the current published frontier");
+  await rectangle.close();
 
   const history = await newPage(browser, 1280, "dark");
   await history.goto(base + "/history", { waitUntil: "networkidle0" });
@@ -347,6 +363,8 @@ try {
   check(terminalMarkdown.includes("[terminal cursor] row=2 col=0") && terminalMarkdown.includes("src/terminal/Terminal.zig") && !/<[A-Z][A-Za-z]+/.test(terminalMarkdown), "Chapter 08 AI Markdown is invalid");
   const nativeMarkdown = await (await fetch(base + "/ai/lessons/09-first-window-gpu.md")).text();
   check(nativeMarkdown.includes("[gtk] window presented 900x600") && nativeMarkdown.includes("src/apprt/gtk.zig") && !/<[A-Z][A-Za-z]+/.test(nativeMarkdown), "Chapter 09 AI Markdown is invalid");
+  const rectangleMarkdown = await (await fetch(base + "/ai/lessons/10-first-rectangle.md")).text();
+  check(rectangleMarkdown.includes("[gl] rectangle x=225") && rectangleMarkdown.includes("src/apprt/gtk_shim.c") && !/<[A-Z][A-Za-z]+/.test(rectangleMarkdown), "Chapter 10 AI Markdown is invalid");
 
   for (const [legacy, expected] of [["/lessons/00-open-ghostty", "/field-guides/run-ls-cat"], ["/lessons/01-codex-tui", "/field-guides/codex-tui"]]) {
     const response = await fetch(base + legacy, { redirect: "follow" });

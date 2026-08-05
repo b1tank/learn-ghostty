@@ -1,0 +1,18 @@
+{
+  "chapter": "10-first-rectangle",
+  "title": "First OpenGL rectangle",
+  "source_repository": "b1tank/ghostty-from-scratch",
+  "source_tag": "chapter-10-first-rectangle",
+  "source_commit": "19a044b0d4faf5f53c0c257477ae34bb1d377a41",
+  "upstream_repository": "ghostty-org/ghostty",
+  "upstream_commit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+  "output_sha256": "f661d421dbabe3353be47ac79698837e67a617c7b799088c7af16ec1c4d2095f",
+  "screenshot_sha256": "a4cb8970553718c0c15e1b92d43c98f8868a7dadb433b39bdf521e08980362b0",
+  "files": [
+    {"path":"build.zig","status":"adapted","reason":"Optional GTK4/libepoxy and capture options.","sha256":"dd9ad23fa5dca0b8746a9df21ccd5c6040520982ec9fa702abc436ead1bdef2a"},
+    {"path":"src/build_config.zig","status":"adapted","reason":"GTK and capture-timeout options.","sha256":"93258695c111c14312d2f2fb13e9d066204b6ebc9f6aa5693014f0e407c45fa5"},
+    {"path":"src/apprt.zig","status":"adapted","reason":"Headless/GTK selector.","sha256":"60b73e9387ffa22ddf2f246a707d2ac4b87eaa324d3e27d02351abb6335e88ab"},
+    {"path":"src/apprt/gtk.zig","status":"adapted","reason":"Runtime Surface owns native shim objects.","sha256":"6020e3ed5f954c55d19477ec4733aab7d587c9ae55b2ea63cb62de36bad99732"},
+    {"path":"src/apprt/gtk_shim.c","status":"adapted","reason":"Header-checked GTK/GLArea lifecycle and OpenGL rectangle callback.","sha256":"876373ece1bcd560ca489e0aafa40257112cd7d35e7600c0eca00bedfb161dcf"}
+  ]
+}

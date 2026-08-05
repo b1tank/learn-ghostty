@@ -1,0 +1,3 @@
+center=srgb(51,204,102)
+background=srgb(13,18,31)
+root=srgb(0,0,0)
