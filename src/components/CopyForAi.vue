@@ -129,11 +129,11 @@ onBeforeUnmount(() => {
     <span class="ai-copy-notice" aria-live="polite">{{ notice }}</span>
     <Teleport to="body">
       <div v-if="open" ref="popup" class="ai-copy-popover" role="menu" aria-label="Copy for AI options" :style="popupStyle">
-        <button role="menuitem" @click="copySection"><strong>Copy current section</strong><small>Focused Markdown, progress, paths, and sources</small></button>
-        <button role="menuitem" @click="copyFull"><strong>Copy full lesson</strong><small>Complete AI-clean lesson Markdown</small></button>
-        <a role="menuitem" :href="markdownUrl" target="_blank"><strong>View as Markdown</strong><small>Open the AI-clean plaintext lesson</small></a>
-        <button role="menuitem" @click="copyUrl"><strong>Copy page link</strong><small>Exact lesson and section URL</small></button>
-        <button role="menuitem" @click="copyLocalPath"><strong>Copy local course path</strong><small>For agents running in ~/learn-ghostty</small></button>
+        <button role="menuitem" @click="copySection"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3h10v14H5zM8 7h4m-4 3h4m-4 3h2"/></svg><span><strong>Copy current section</strong><small>Focused Markdown, progress, paths, and sources</small></span></button>
+        <button role="menuitem" @click="copyFull"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4.5h5.5A2.5 2.5 0 0 1 11 7v9H5a2 2 0 0 0-2 2V4.5Z"/><path d="M17 4.5h-3A3 3 0 0 0 11 7v9h4a2 2 0 0 1 2 2V4.5Z"/></svg><span><strong>Copy full lesson</strong><small>Complete AI-clean lesson Markdown</small></span></button>
+        <a role="menuitem" :href="markdownUrl" target="_blank"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2h7l4 4v12H5zM12 2v5h4M8 11h5M8 14h5"/></svg><span><strong>View as Markdown</strong><small>Open the AI-clean plaintext lesson</small></span></a>
+        <button role="menuitem" @click="copyUrl"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 12 6.5 13.5a3 3 0 0 1-4-4L6 6a3 3 0 0 1 4 0"/><path d="m12 8 1.5-1.5a3 3 0 0 1 4 4L14 14a3 3 0 0 1-4 0"/><path d="m7 13 6-6"/></svg><span><strong>Copy page link</strong><small>Exact lesson and section URL</small></span></button>
+        <button role="menuitem" @click="copyLocalPath"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14v11H3z"/><path d="m6 9 2 2-2 2m4 0h4"/></svg><span><strong>Copy local course path</strong><small>For agents running in ~/learn-ghostty</small></span></button>
       </div>
     </Teleport>
   </div>

@@ -20,6 +20,6 @@ const completed = computed(() => state.value?.completedLessons?.includes(lesson.
 <template>
   <aside v-if="visible" class="reconstruction-resume">
     <div><span>YOUR CHECKPOINT</span><strong>{{ lesson.title }}</strong></div>
-    <a :href="href">{{ completed ? 'Revisit chapter' : 'Continue chapter' }}</a>
+    <a :href="href"><span>{{ completed ? 'Revisit chapter' : 'Continue chapter' }}</span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4"/></svg></a>
   </aside>
 </template>

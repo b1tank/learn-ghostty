@@ -196,7 +196,7 @@ onBeforeUnmount(() => request?.abort());
           </button>
         </li>
       </ol>
-      <button v-if="visible.length < filtered.length" class="commit-more" @click="visibleCount += 100">Show 100 more <small>{{ (filtered.length - visible.length).toLocaleString() }} remain</small></button>
+      <button v-if="visible.length < filtered.length" class="commit-more" @click="visibleCount += 100"><span><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v11m-4-4 4 4 4-4"/></svg>Show 100 more</span><small>{{ (filtered.length - visible.length).toLocaleString() }} remain</small></button>
     </aside>
 
     <article v-if="selected" class="commit-detail">
@@ -224,7 +224,7 @@ onBeforeUnmount(() => request?.abort());
       <p v-if="notice" class="commit-notice" aria-live="polite">{{ notice }}</p>
 
       <div v-if="loadingDiff" class="commit-loading"><span></span>Loading diff from GitHub…</div>
-      <div v-else-if="error" class="commit-error"><p>{{ error }}</p><div><button @click="loadDiff">Retry</button><a :href="diffUrl" target="_blank" rel="noopener">Open raw diff</a></div></div>
+      <div v-else-if="error" class="commit-error"><p>{{ error }}</p><div><button @click="loadDiff"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16 6V3l-1.5 1.5A7 7 0 1 0 17 10h-2a5 5 0 1 1-2-4l-2 2h5Z"/></svg><span>Retry</span></button><a :href="diffUrl" target="_blank" rel="noopener"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2h7l4 4v12H5zM12 2v5h4M8 11h5M8 14h5"/></svg><span>Open raw diff</span></a></div></div>
       <div v-else class="diff-files">
         <details v-for="(file, fileIndex) in files" :key="`${selected.sha}-${file.path}`" :open="fileIndex < 2">
           <summary><span>{{ file.path }}</span><small><b>+{{ file.additions }}</b> <i>−{{ file.deletions }}</i></small></summary>

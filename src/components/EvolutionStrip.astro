@@ -14,7 +14,7 @@ const { moments } = Astro.props;
           <small>{moment.eyebrow}</small>
           <strong>{moment.title}</strong>
           <p>{moment.description}</p>
-          {moment.href ? <a href={moment.href}><code>{moment.revision}</code><span>{moment.linkLabel}</span></a> : <code>{moment.revision}</code>}
+          {moment.href ? <a href={moment.href}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4-4 4 4-4 4"/></svg><code>{moment.revision}</code><span>{moment.linkLabel}</span></a> : <code>{moment.revision}</code>}
         </div>
       </li>
     ))}
