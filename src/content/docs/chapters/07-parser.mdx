@@ -1,15 +1,193 @@
 ---
 title: "Chapter 07: Incremental VT parser"
-description: Consume arbitrary PTY chunks and emit printable, control, and SGR actions without depending on read boundaries.
+description: Preserve parser state across arbitrary PTY chunks and emit printable, C0 control, and SGR actions.
 order: 7
 module: Reconstruction
-status: planned
-duration: Built after Termio byte ownership is understood
+status: published
+duration: 45–60 minutes
 sidebar:
   order: 7
-draft: true
-sourceRefs: []
-historyRefs: []
+next: false
+historyRefs:
+  - commit: 8d389b4ea9263930a8aa8e7a9d2081d9894a52b1
+    date: "2022-04-18"
+    path: src/terminal/Parser.zig
+    line: 1
+    end: 107
+    label: Initial VT state table
+    purpose: See parser states and transition actions introduced before behavior was wired through.
+    context: Ghostty first encoded the vt100.net state machine as data and state names.
+  - commit: 20f9ad3f551b1060be05105118412dc5687fdf21
+    date: "2022-04-18"
+    path: src/terminal/Parser.zig
+    line: 1
+    end: 142
+    label: First printable and execute actions
+    purpose: See the first parser turn table transitions into caller-visible print and execute actions.
+    context: "The same day, Ghostty implemented the smallest useful parser behavior: printable bytes and controls."
+  - commit: 468f6e2b515a374e8c04be1122302984275d81e3
+    date: "2022-05-08"
+    path: src/terminal/Parser.zig
+    line: 1
+    end: 270
+    label: First CSI dispatch
+    purpose: See parameter collection and CSI final-byte dispatch appear after the basic state machine worked.
+    context: CSI dispatch arrived weeks later rather than being mixed into the first print/execute checkpoint.
+sourceRefs:
+  - path: src/terminal/Parser.zig
+    line: 1
+    end: 86
+    label: Current parser states and actions
+    purpose: Read the state/action vocabulary and caller-facing Action union; ignore OSC, DCS, APC, and detailed storage.
+  - path: src/terminal/parse_table.zig
+    line: 1
+    end: 40
+    label: Current table-driven transition source
+    purpose: See that byte class, current state, transition action, and next state are data rather than nested conditionals.
 ---
+import CodeSnapshot from '../../../components/CodeSnapshot.astro';
+import EvolutionStrip from '../../../components/EvolutionStrip.astro';
+import FidelityLegend from '../../../components/FidelityLegend.astro';
+import FrontierMap from '../../../components/FrontierMap.astro';
+import LessonActions from '../../../components/LessonActions.astro';
+import OutputPreview from '../../../components/OutputPreview.astro';
+import ParserStateDiagram from '../../../components/ParserStateDiagram.astro';
+import SourceLink from '../../../components/SourceLink.vue';
 
-Termio now exposes real escape bytes. This chapter remains unpublished until a tagged parser checkpoint proves that splitting every escape sequence across input chunks produces the same ordered actions.
+<LessonActions entryId="chapters/07-parser" />
+
+## What you will see
+
+The raw Termio bytes now produce ordered protocol actions:
+
+<OutputPreview file="src/data/reconstruction/chapter-07/output.txt" title="One action stream independent of PTY read boundaries" tag="chapter-07-parser" caption="The live child sequence is read in buffers no larger than three bytes. Parser actions still reconstruct print runs, CR/LF controls, green SGR 32, and reset SGR 0." />
+
+## Why searching bytes is no longer enough
+
+Chapter 06 searched for the literal readiness marker `ready>`. VT syntax is stateful:
+
+```text
+ESC arrives now
+[ arrives in the next read
+32 arrives later
+m finally dispatches the action
+```
+
+<ParserStateDiagram />
+
+A parser call ending mid-sequence is not an error. The parser's state is the incomplete protocol context.
+
+<FrontierMap current="I/O + parser" />
+
+## How Ghostty built its parser
+
+Ghostty did not begin with today's complete parser. On April 18, 2022 it first encoded the VT state table, then implemented only print and execute. CSI dispatch followed on May 8; OSC, DCS, UTF-8, colon parameters, and many correctness fixes arrived later.
+
+<EvolutionStrip moments={[
+  { kind:'then', eyebrow:'THEN · 2022-04-18', title:'Print and execute first', description:'The initial state machine emitted printable bytes and C0 controls. CSI dispatch had not been implemented.', revision:'20f9ad3', href:'https://github.com/ghostty-org/ghostty/blob/20f9ad3f551b1060be05105118412dc5687fdf21/src/terminal/Parser.zig', linkLabel:'Open first behavior' },
+  { kind:'reconstruction', eyebrow:'RECONSTRUCTION · CHAPTER 07', title:'Add one earned CSI family', description:'Ground, escape, and CSI states emit ASCII print, C0 execute, and the SGR parameters produced by the real child probe.', revision:'chapter-07-parser' },
+  { kind:'now', eyebrow:'NOW · PINNED MAIN', title:'Cover the VT protocol surface', description:'Current parser handles CSI, ESC, OSC, DCS, APC, UTF-8, intermediates, separators, passthrough, cancellation, and bounded storage.', revision:'6ad1fe7', href:'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/terminal/Parser.zig', linkLabel:'Open current parser' },
+]} />
+
+Our added SGR support is justified by the actual `ESC [ 32 m` and `ESC [ 0 m` bytes from Chapter 06—not by a desire to enumerate VT features.
+
+## Step 1: define caller-visible actions
+
+<CodeSnapshot file="src/data/reconstruction/chapter-07/terminal/Parser.zig" label="src/terminal/Parser.zig" status="adapted" reason="Ground/escape/CSI subset emitting ASCII print, C0 execute, and one SGR parameter; full VT and Unicode behavior remain deferred." />
+
+The action union separates parsing from effects:
+
+```zig
+pub const Action = union(enum) {
+    print: u8,
+    execute: u8,
+    sgr: u16,
+};
+```
+
+The parser does not move a cursor, color a cell, or render. It reports what the byte stream requested.
+
+## Step 2: preserve state between calls
+
+The three states are:
+
+- `ground`: printable bytes and C0 controls;
+- `escape`: saw ESC and waits for an introducer;
+- `csi`: collects digits until final byte `m`.
+
+On `m`, the parser emits `sgr(parameter)` and returns to ground. An empty parameter means reset `0`.
+
+## Step 3: feed every Termio chunk
+
+Termio owns one Parser value and calls `parser.feed(bytes)` inside its read append path. The parser therefore sees the exact bytes in their actual chunking while preserving state across reads.
+
+<CodeSnapshot file="src/data/reconstruction/chapter-07/termio/Termio.zig" label="src/termio/Termio.zig" status="adapted" reason="Adds persistent parser stream state to the Chapter 06 PTY owner; terminal mutation remains absent." />
+
+The three-byte buffers split the green sequence:
+
+```text
+... 1B | 5B 33 | 32 6D ...
+```
+
+Yet only one `[parser sgr] 32` appears.
+
+## Step 4: prove chunk invariance in a test
+
+The parser test feeds:
+
+```text
+A ESC [ 3 2 m B ESC [ 0 m CR LF
+```
+
+once as a whole slice and again one byte per call. It compares final state and every action exactly.
+
+That test protects the invariant better than asserting a particular PTY read size.
+
+## Step 5: render actions as evidence
+
+Consecutive print actions are grouped for readability. Controls and SGR remain explicit:
+
+```text
+[parser print] reply:hello
+[parser sgr] 0
+[parser execute] CR
+[parser execute] LF
+```
+
+This trace is not terminal state. It is the ordered instruction stream terminal state will consume.
+
+## Fidelity
+
+<FidelityLegend />
+
+| File | Status | Deferred production behavior |
+|---|---|---|
+| `src/terminal/Parser.zig` | adapted | UTF-8, full CSI, ESC dispatch, OSC, DCS, APC, intermediates, cancellation, bounded parameter lists |
+| `src/terminal/main.zig` | adapted | exports only Parser |
+| `src/termio/Termio.zig` | adapted | owns Parser but no Terminal or renderer wakeup |
+| `src/Surface.zig` | adapted | traces actions instead of displaying state |
+
+## Compare with current Ghostty
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/terminal/Parser.zig" line={1} end={86} label="Current parser vocabulary" note="Read State, TransitionAction, and Action. Ignore detailed structures for protocol families not introduced here." />
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/terminal/parse_table.zig" line={1} end={40} label="Current transition table" note="See state transitions represented as data. Do not attempt to memorize the full table." />
+
+The reconstruction uses a direct switch because three states are still readable. A generated/table-driven representation becomes useful when the protocol surface makes direct branching hard to audit.
+
+## Checkpoint
+
+```text
+commit  b4549bf84e5c36d3c760f3e14e0de244f3489e35
+tag     chapter-07-parser
+```
+
+## The next limitation
+
+Actions disappear after tracing. Chapter 08 introduces durable terminal state:
+
+```text
+parser actions → cells + cursor + current style → deterministic debug frame
+```
+
+No renderer or window is needed to prove the state transition.

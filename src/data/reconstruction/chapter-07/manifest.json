@@ -1,0 +1,16 @@
+{
+  "chapter": "07-parser",
+  "title": "Incremental VT parser",
+  "source_repository": "b1tank/ghostty-from-scratch",
+  "source_tag": "chapter-07-parser",
+  "source_commit": "b4549bf84e5c36d3c760f3e14e0de244f3489e35",
+  "upstream_repository": "ghostty-org/ghostty",
+  "upstream_commit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+  "output_sha256": "89b1665a2c86f9312187496cf6e3fc9651a71d9db22ab263ccdff365ad68bd0c",
+  "files": [
+    { "path": "src/terminal/main.zig", "status": "adapted", "reason": "Exports only Parser.", "sha256": "17d1c57021d148857ff9bd318ff7c385a83ea4ded558939ab4ccff1bf18311da" },
+    { "path": "src/terminal/Parser.zig", "status": "adapted", "reason": "ASCII print/C0/single-SGR ground-escape-CSI subset.", "sha256": "df39d7c98e19c0d969545a618959d50511639be5f11ee27921aa970d28f931c5" },
+    { "path": "src/termio/Termio.zig", "status": "adapted", "reason": "Feeds every PTY read chunk into persistent parser state.", "sha256": "c56398dfaed8e866d5dd221e77051ac78ca7074234e2f10639547b09c5c753b6" },
+    { "path": "src/Surface.zig", "status": "adapted", "reason": "Prints parser action evidence after the interactive exchange.", "sha256": "0ed25e1ac604e6c70448124a251fc80fdbbe8f8bb500884192a8a637e61b57fe" }
+  ]
+}
