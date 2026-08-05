@@ -32,7 +32,7 @@ async function newPage(browser, width = 1280, theme = "light") {
 await ensureServer();
 const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
 try {
-  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/chapters/05-pty", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
+  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/chapters/05-pty", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/history", "/source"];
   for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
     const page = await newPage(browser, width, theme);
     await page.goto(base + route, { waitUntil: "networkidle0" });
@@ -189,6 +189,28 @@ try {
   check(ptyState.actors === 4 && ptyState.facts === 4 && ptyState.history === 3 && ptyState.output, "Chapter 05 is missing PTY relationships, history, or output");
   check(!ptyState.next, "Chapter 05 should stop at the current published frontier");
   await pty.close();
+
+  const history = await newPage(browser, 1280, "dark");
+  await history.goto(base + "/history", { waitUntil: "networkidle0" });
+  await history.waitForSelector(".diff-files details");
+  const historyState = await history.evaluate(() => ({
+    count: document.querySelectorAll(".commit-list li").length,
+    firstSha: document.querySelector(".commit-heading code")?.textContent?.trim(),
+    firstSubject: document.querySelector(".commit-heading h2")?.textContent?.trim(),
+    files: document.querySelectorAll(".diff-files details").length,
+    additions: document.querySelectorAll(".diff-line.is-add").length,
+    layoutFits: document.querySelector(".commit-explorer").getBoundingClientRect().right <= document.documentElement.clientWidth,
+  }));
+  check(historyState.count === 80 && historyState.firstSha === "f8b0000444663ade13d75e1e703bbad3cfdd1ce2" && historyState.firstSubject === "Initial", "history viewer does not begin at Ghostty's first commit");
+  check(historyState.files === 9 && historyState.additions === 196 && historyState.layoutFits, "history viewer did not render the complete initial diff or fit its container");
+  await history.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (value) => { window.__historyCopy = value; } } }));
+  await history.click(".commit-copy-ai");
+  const historyCopy = await history.evaluate(() => window.__historyCopy || "");
+  check(historyCopy.includes("Every hunk") && historyCopy.includes("Complete diff:") && historyCopy.includes("diff --git a/.envrc b/.envrc") && historyCopy.includes("My question:"), "history Copy for ChatGPT context is incomplete");
+  await history.type(".commit-search input", "remove mach-glfw");
+  await history.waitForFunction(() => document.querySelectorAll(".commit-list li").length === 1);
+  check((await history.$eval(".commit-list strong", (element) => element.textContent.trim())) === "remove mach-glfw", "history search did not filter commit subjects");
+  await history.close();
 
   const flow = await newPage(browser);
   await flow.goto(base + "/field-guides/tmux", { waitUntil: "networkidle0" });

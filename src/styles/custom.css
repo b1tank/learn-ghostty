@@ -552,3 +552,92 @@
   .lifecycle-diagram li code { display: block; overflow: visible; font-size: var(--sl-text-2xs); text-align: left; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
   .lifecycle-diagram li i { display: none; }
 }
+
+/* Commit history */
+.commit-explorer {
+  display: grid;
+  grid-template-columns: 18rem minmax(0, 1fr);
+  width: min(78rem, calc(100vw - 20rem));
+  min-height: 42rem;
+  gap: 1rem;
+  margin: 2rem 0 4rem 50%;
+  transform: translateX(-50%);
+}
+.commit-explorer :where(button, a, input, summary):focus-visible { outline: 3px solid var(--lg-focus); outline-offset: 2px; }
+.commit-browser,
+.commit-detail { min-width: 0; border: 1px solid var(--course-border); border-radius: var(--course-radius-md); background: var(--course-surface); }
+.commit-browser { align-self: start; overflow: hidden; }
+.commit-browser > header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 1rem; border-bottom: 1px solid var(--course-border); }
+.commit-browser h2 { margin: .2rem 0 0; font-size: var(--sl-text-lg); }
+.commit-browser > header > strong { color: var(--course-muted); font: 600 var(--sl-text-xs) var(--__sl-font-mono); }
+.commit-kicker { color: var(--sl-color-text-accent); font: 700 var(--sl-text-2xs) var(--__sl-font-mono); letter-spacing: .06em; }
+.commit-search { display: block; padding: .75rem; border-bottom: 1px solid var(--course-border); }
+.commit-search input { width: 100%; height: 2.5rem; padding: 0 .7rem; border: 1px solid var(--course-border); border-radius: var(--course-radius-sm); color: var(--sl-color-white); background: var(--sl-color-bg); font: var(--sl-text-xs) var(--__sl-font); }
+.commit-search input::placeholder { color: var(--course-muted); }
+.commit-list { max-height: 68rem; overflow-y: auto; margin: 0 !important; padding: 0 !important; list-style: none; scrollbar-width: thin; }
+.commit-list li { margin: 0 !important; border-bottom: 1px solid var(--course-border); }
+.commit-list button { display: grid; width: 100%; gap: .25rem; padding: .75rem; border: 0; color: var(--sl-color-white); background: transparent; text-align: left; cursor: pointer; }
+.commit-list button:hover { background: var(--sl-color-bg-inline-code); }
+.commit-list button.selected { box-shadow: inset 3px 0 var(--sl-color-accent); background: var(--sl-color-accent-low); }
+.commit-list button > span { display: flex; justify-content: space-between; gap: .5rem; color: var(--course-muted); font-size: var(--sl-text-2xs); }
+.commit-list code { padding: 0; color: var(--sl-color-text-accent); background: transparent; font-size: inherit; }
+.commit-list strong { overflow: hidden; font-size: var(--sl-text-xs); line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.commit-list small { overflow: hidden; color: var(--course-muted); font-size: var(--sl-text-2xs); text-overflow: ellipsis; white-space: nowrap; }
+.commit-more { display: flex; width: 100%; justify-content: space-between; padding: .8rem; border: 0; color: var(--sl-color-text-accent); background: var(--course-surface-soft); font: 650 var(--sl-text-xs) var(--__sl-font); cursor: pointer; }
+.commit-more small { color: var(--course-muted); }
+.commit-empty { margin: 0 !important; padding: 1rem; color: var(--course-muted); font-size: var(--sl-text-sm); }
+.commit-detail { align-self: start; overflow: hidden; scroll-margin-top: calc(var(--sl-nav-height) + 1rem); }
+.commit-detail__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--course-border); }
+.commit-heading { min-width: 0; }
+.commit-heading h2 { margin: .35rem 0 .55rem; font-size: var(--sl-text-xl); line-height: 1.25; overflow-wrap: anywhere; }
+.commit-heading p { display: flex; flex-wrap: wrap; gap: .35rem .75rem; margin: 0; color: var(--course-muted); font-size: var(--sl-text-xs); }
+.commit-heading code { padding: 0; color: var(--sl-color-text-accent); background: transparent; font-size: inherit; overflow-wrap: anywhere; }
+.commit-nav { display: flex; flex: 0 0 auto; gap: .35rem; }
+.commit-nav button,
+.commit-actions :where(button, a),
+.commit-error :where(button, a) { min-height: 2.4rem; padding: .5rem .7rem; border: 1px solid var(--course-border); border-radius: var(--course-radius-sm); color: var(--sl-color-text); background: var(--course-surface-soft); font: 650 var(--sl-text-xs) var(--__sl-font); text-decoration: none; cursor: pointer; }
+.commit-nav button:disabled,
+.commit-actions button:disabled { opacity: .45; cursor: default; }
+.commit-actions { display: flex; flex-wrap: wrap; gap: .45rem; padding: .8rem 1.25rem .5rem; }
+.commit-actions .commit-copy-ai { color: var(--sl-color-text-invert); border-color: var(--sl-color-accent); background: var(--sl-color-bg-accent); }
+.commit-copy-note,
+.commit-rate,
+.commit-notice { margin: 0 !important; padding: 0 1.25rem .8rem; color: var(--course-muted); font-size: var(--sl-text-xs); }
+.commit-notice { color: var(--sl-color-text-accent); }
+.commit-loading { display: flex; align-items: center; gap: .7rem; min-height: 14rem; justify-content: center; border-top: 1px solid var(--course-border); color: var(--course-muted); font-size: var(--sl-text-sm); }
+.commit-loading span { width: 1rem; height: 1rem; border: 2px solid var(--course-border); border-top-color: var(--sl-color-accent); border-radius: 50%; animation: commit-spin .7s linear infinite; }
+@keyframes commit-spin { to { transform: rotate(360deg); } }
+.commit-error { margin: .75rem; padding: 1rem; border: 1px solid var(--course-danger); border-radius: var(--course-radius-sm); color: var(--course-danger); }
+.commit-error p { margin: 0 0 .75rem; }
+.commit-error > div { display: flex; gap: .5rem; }
+.diff-files { border-top: 1px solid var(--course-border); background: var(--lg-code-shell); }
+.diff-files details { margin: 0; border-bottom: 1px solid hsl(220, 10%, 25%); }
+.diff-files summary { display: flex; min-height: 2.8rem; align-items: center; justify-content: space-between; gap: 1rem; padding: .65rem 1rem; color: var(--lg-code-text); background: hsl(224, 13%, 16%); font: 600 var(--sl-text-xs) var(--__sl-font-mono); cursor: pointer; }
+.diff-files summary > span { min-width: 0; overflow-wrap: anywhere; }
+.diff-files summary small { flex: 0 0 auto; color: var(--lg-code-muted); font-size: var(--sl-text-2xs); }
+.diff-files summary b { color: hsl(142, 48%, 66%); }
+.diff-files summary i { margin-left: .35rem; color: hsl(4, 65%, 70%); font-style: normal; }
+.diff-scroll { max-height: 42rem; overflow: auto; scrollbar-width: thin; }
+.diff-scroll pre { min-width: max-content; margin: 0 !important; padding: .55rem 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; }
+.diff-line { display: grid; grid-template-columns: 3.25rem 3.25rem minmax(30rem, 1fr); color: var(--lg-code-text); font: var(--sl-text-xs)/1.6 var(--__sl-font-mono); }
+.diff-line > b { padding: 0 .55rem; color: var(--lg-code-muted); text-align: right; font-weight: 400; user-select: none; }
+.diff-line > span { padding: 0 1rem 0 .65rem; white-space: pre; }
+.diff-line.is-add { background: hsla(142, 45%, 34%, .24); }
+.diff-line.is-remove { background: hsla(4, 55%, 42%, .22); }
+.diff-line.is-hunk { color: hsl(210, 65%, 73%); background: hsla(210, 60%, 42%, .2); }
+.diff-line.is-meta { color: var(--lg-code-muted); }
+
+@media (max-width: 70rem) {
+  .commit-explorer { width: 100%; grid-template-columns: 1fr; margin-left: 0; transform: none; }
+  .commit-list { max-height: 28rem; }
+}
+@media (max-width: 40rem) {
+  .commit-detail__header { flex-direction: column; }
+  .commit-nav { width: 100%; }
+  .commit-nav button { flex: 1; }
+  .commit-actions :where(button, a) { flex: 1 1 auto; text-align: center; }
+  .diff-line { grid-template-columns: 2.5rem 2.5rem minmax(26rem, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .commit-loading span { animation: none; }
+}

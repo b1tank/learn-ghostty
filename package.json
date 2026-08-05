@@ -8,6 +8,7 @@
     "build": "astro build && node scripts/check-built-links.mjs",
     "preview": "astro preview --host 127.0.0.1 --port 4173",
     "fetch:history": "node scripts/fetch-historical-source.mjs",
+    "history:index": "node scripts/generate-commit-history.mjs",
     "check": "node scripts/check-course.mjs",
     "audit:ui": "node scripts/audit-ui.mjs"
   },

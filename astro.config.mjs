@@ -22,7 +22,7 @@ export default defineConfig({
         { label: "Rebuild Ghostty", items: ["chapters/00-process-exists", "chapters/01-app-lifecycle", "chapters/02-entry-routing", "chapters/03-runtime-surface", "chapters/04-child-process-pipes", "chapters/05-pty"] },
         { label: "Field guides", items: ["field-guides/run-ls-cat", "field-guides/codex-tui", "field-guides/tmux", "field-guides/ssh-remote"] },
         { label: "Course", items: ["course-map"] },
-        { label: "Tools", items: ["source"] }
+        { label: "Tools", items: ["history", "source"] }
       ]
     }),
     vue()
