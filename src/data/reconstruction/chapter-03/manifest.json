@@ -1,0 +1,18 @@
+{
+  "chapter": "03-runtime-surface",
+  "title": "Runtime and Surface",
+  "source_repository": "b1tank/ghostty-from-scratch",
+  "source_tag": "chapter-03-runtime-surface",
+  "source_commit": "40752eab8f9c1a05eda14d60cfe15d2c7773372c",
+  "upstream_repository": "ghostty-org/ghostty",
+  "upstream_commit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+  "output_sha256": "b8f8d4b2e8ea07c4bc46eaa06b4c796f10facc454426237cf8c342f895590216",
+  "files": [
+    { "path": "src/App.zig", "status": "adapted", "reason": "Shared state and Surface accounting only.", "sha256": "b6ee089f6a464267a99bcbfd903d7c999b8f574e3690c8d2a49c052160069e6c" },
+    { "path": "src/Surface.zig", "status": "adapted", "reason": "Stable core Surface without terminal I/O or rendering.", "sha256": "664f36cabc9cc5505d3ae06eaaa5bc29e4e462f258537e4a1d4b0c4d05c0bc02" },
+    { "path": "src/apprt.zig", "status": "adapted", "reason": "Compile-time selector with one headless runtime.", "sha256": "bed8f59f5a1b4e15222ac0c0c56a2827d5c566dccb547191315d6c426bf8da5e" },
+    { "path": "src/apprt/headless.zig", "status": "temporary", "reason": "Teaching runtime removed when the first native runtime exists.", "sha256": "1bac62badff4ec37df13dd73e596b13ea2a9cba3893e19cec11182f1ccd520d6" },
+    { "path": "src/main_ghostty.zig", "status": "adapted", "reason": "Current App/runtime lifetime ordering without globals or CLI actions.", "sha256": "67ba6f7d822cbc0a2dbd5afba929e798656eff573bb9aa31a044de7b5f13cdd4" },
+    { "path": "src/build_config.zig", "status": "adapted", "reason": "Static headless runtime selection.", "sha256": "709be464f27fe742ca9bce908eba3d58b6b2173c5692c9426b81039e745feb95" }
+  ]
+}

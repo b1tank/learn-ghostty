@@ -32,7 +32,7 @@ async function newPage(browser, width = 1280, theme = "light") {
 await ensureServer();
 const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
 try {
-  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
+  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
   for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
     const page = await newPage(browser, width, theme);
     await page.goto(base + route, { waitUntil: "networkidle0" });
@@ -147,11 +147,23 @@ try {
     steps: document.querySelectorAll(".routing li").length,
     history: document.querySelectorAll(".evolution-strip li").length,
     output: document.querySelector(".output-preview")?.textContent?.includes("[entry] ghostty"),
-    next: Boolean(document.querySelector('a[rel="next"]')),
+    next: document.querySelector('a[rel="next"]')?.getAttribute("href") ?? "",
   }));
   check(routingState.steps === 4 && routingState.history === 3 && routingState.output, "Chapter 02 is missing its route, history, or exact output");
-  check(!routingState.next, "Chapter 02 should stop at the current published frontier");
+  check(routingState.next.includes("/chapters/03-runtime-surface"), "Chapter 02 does not advance to Chapter 03");
   await routing.close();
+
+  const runtime = await newPage(browser, 1280, "dark");
+  await runtime.goto(base + "/chapters/03-runtime-surface", { waitUntil: "networkidle0" });
+  const runtimeState = await runtime.evaluate(() => ({
+    lifetimes: document.querySelectorAll(".runtime-map li").length,
+    history: document.querySelectorAll(".evolution-strip li").length,
+    output: document.querySelector(".output-preview")?.textContent?.includes("[runtime] terminated"),
+    next: Boolean(document.querySelector('a[rel="next"]')),
+  }));
+  check(runtimeState.lifetimes === 4 && runtimeState.history === 3 && runtimeState.output, "Chapter 03 is missing runtime lifetimes, history, or output");
+  check(!runtimeState.next, "Chapter 03 should stop at the current published frontier");
+  await runtime.close();
 
   const flow = await newPage(browser);
   await flow.goto(base + "/field-guides/tmux", { waitUntil: "networkidle0" });
@@ -169,6 +181,8 @@ try {
   check(lifecycleMarkdown.includes("[app] destroyed") && lifecycleMarkdown.includes("src/App.zig") && !/<[A-Z][A-Za-z]+/.test(lifecycleMarkdown), "Chapter 01 AI Markdown is invalid");
   const routingMarkdown = await (await fetch(base + "/ai/lessons/02-entry-routing.md")).text();
   check(routingMarkdown.includes("[entry] ghostty") && routingMarkdown.includes("src/main_ghostty.zig") && !/<[A-Z][A-Za-z]+/.test(routingMarkdown), "Chapter 02 AI Markdown is invalid");
+  const runtimeMarkdown = await (await fetch(base + "/ai/lessons/03-runtime-surface.md")).text();
+  check(runtimeMarkdown.includes("[runtime] terminated") && runtimeMarkdown.includes("src/Surface.zig") && !/<[A-Z][A-Za-z]+/.test(runtimeMarkdown), "Chapter 03 AI Markdown is invalid");
 
   for (const [legacy, expected] of [["/lessons/00-open-ghostty", "/field-guides/run-ls-cat"], ["/lessons/01-codex-tui", "/field-guides/codex-tui"]]) {
     const response = await fetch(base + legacy, { redirect: "follow" });

@@ -1,0 +1,14 @@
+<figure class="runtime-map" aria-labelledby="runtime-map-title">
+  <figcaption id="runtime-map-title"><span>LIFETIME NESTING</span><strong>The runtime closes platform objects before shared App state</strong></figcaption>
+  <div class="runtime-map__timeline" aria-hidden="true"><span>startup</span><i></i><span>shutdown</span></div>
+  <ol>
+    <li class="core"><b>Core App</b><span>shared state</span></li>
+    <li class="runtime"><b>Runtime App</b><span>event-loop owner</span></li>
+    <li class="rt-surface"><b>Runtime Surface</b><span>platform container</span></li>
+    <li class="surface"><b>Core Surface</b><span>terminal-session owner</span></li>
+  </ol>
+  <p>The headless runtime creates one pair of Surface objects during <code>run</code>. <code>terminate</code> destroys them before <code>App.destroy</code> checks that no core surfaces remain.</p>
+</figure>
+<style>
+.runtime-map{margin:1.5rem 0;padding:1.25rem;border:1px solid var(--course-border);border-radius:var(--course-radius-md);background:var(--course-surface)}.runtime-map figcaption span,.runtime-map figcaption strong,.runtime-map li b,.runtime-map li span{display:block}.runtime-map figcaption span{color:var(--sl-color-text-accent);font:700 var(--sl-text-2xs) var(--__sl-font-mono);letter-spacing:.06em}.runtime-map figcaption strong{margin-top:.3rem;font-size:var(--sl-text-xl)}.runtime-map__timeline{display:flex;align-items:center;gap:.6rem;margin:1rem 0 .65rem;color:var(--course-muted);font:var(--sl-text-2xs) var(--__sl-font-mono)}.runtime-map__timeline i{height:1px;flex:1;background:var(--course-border)}.runtime-map ol{display:grid;gap:.45rem;margin:0;padding:0;list-style:none}.runtime-map li{margin:0!important;padding:.65rem .8rem;border:1px solid var(--course-border);border-radius:.45rem;background:var(--course-surface-soft)}.runtime-map li b{font-size:var(--sl-text-sm)}.runtime-map li span{margin-top:.15rem;color:var(--course-muted);font-size:var(--sl-text-xs)}.runtime-map li.core{width:100%}.runtime-map li.runtime{width:90%;margin-inline:auto!important;border-color:var(--sl-color-accent)}.runtime-map li.rt-surface{width:76%;margin-inline:auto!important}.runtime-map li.surface{width:62%;margin-inline:auto!important;background:var(--sl-color-accent-low)}.runtime-map>p{margin:1rem 0 0;color:var(--sl-color-text);font-size:var(--sl-text-sm)}
+</style>

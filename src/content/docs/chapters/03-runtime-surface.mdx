@@ -1,16 +1,204 @@
 ---
-title: "Chapter 03: Runtime and Surface contract"
-description: Separate shared application behavior from a temporary headless runtime and one terminal surface.
+title: "Chapter 03: Runtime and Surface"
+description: Move the event-loop lifetime out of shared App state and introduce one headless runtime Surface around one core Surface.
 order: 3
 module: Reconstruction
-status: planned
-duration: Built after the previous chapter is learned
+status: published
+duration: 35–50 minutes
 sidebar:
   order: 3
-draft: true
-sourceRefs: []
+next: false
+historyRefs:
+  - commit: 3d8c62c41ff673a5156388863db8f70680d3e05e
+    date: "2023-02-22"
+    path: src/apprt.zig
+    line: 1
+    end: 62
+    label: First runtime-selected App boundary
+    purpose: See compile-time platform selection expose apprt.App while shared App state remains platform agnostic.
+    context: The runtime refactor moved the GUI event loop behind a selected apprt implementation and launched GLFW without a window.
+  - commit: fbe35c226bf354d7c256d2bb5970f434d567889a
+    date: "2023-02-22"
+    path: src/Surface.zig
+    line: 1
+    end: 49
+    label: First core Surface
+    purpose: Read why a terminal session is a Surface rather than necessarily a window.
+    context: The next commit introduced a platform-neutral terminal surface and separated it from the runtime's window/container object.
+sourceRefs:
+  - path: src/apprt.zig
+    line: 1
+    end: 48
+    label: Current runtime selector
+    purpose: Read the platform-neutral contract and compile-time runtime selection; ignore individual backends.
+  - path: src/main_ghostty.zig
+    line: 80
+    end: 108
+    label: Current shared App and runtime App lifetimes
+    purpose: See shared state created before the runtime and destroyed after runtime termination.
+  - path: src/Surface.zig
+    line: 1
+    end: 20
+    label: Current Surface responsibility
+    purpose: Read the file-level contract explaining why Surface is not synonymous with window.
 ---
+import CodeSnapshot from '../../../components/CodeSnapshot.astro';
+import EvolutionStrip from '../../../components/EvolutionStrip.astro';
+import FidelityLegend from '../../../components/FidelityLegend.astro';
+import FrontierMap from '../../../components/FrontierMap.astro';
+import LessonActions from '../../../components/LessonActions.astro';
+import OutputPreview from '../../../components/OutputPreview.astro';
+import RuntimeSurfaceDiagram from '../../../components/RuntimeSurfaceDiagram.astro';
+import SourceLink from '../../../components/SourceLink.vue';
 
-The core needs a place for one terminal session.
+<LessonActions entryId="chapters/03-runtime-surface" />
 
-This chapter remains unpublished until its code checkpoint, visual proof, source comparison, and learner walkthrough are complete.
+## What you will see
+
+The trace now contains two nested ownership pairs:
+
+<OutputPreview file="src/data/reconstruction/chapter-03/output.txt" title="Runtime and Surface lifetimes close in reverse order" tag="chapter-03-runtime-surface" caption="The headless runtime creates one Surface during its tick. Runtime termination destroys the Surface before shared App teardown." />
+
+There is still no native window. “Headless” is an honest platform implementation whose only output is the ownership trace.
+
+## The limitation
+
+Chapter 02 routes into `main_ghostty`, but Chapter 01's temporary `App.run()` gives shared state ownership of the event loop. That does not scale to native platforms:
+
+- GTK owns a GLib event loop;
+- macOS owns Cocoa's application lifecycle;
+- embedding hosts may own the loop themselves;
+- browser builds receive callbacks from JavaScript.
+
+The core should not pretend these lifecycles are identical.
+
+<FrontierMap current="Runtime + Surface" />
+
+## How the split appeared
+
+Ghostty's February 2023 runtime refactor made platform selection compile-time and exposed the chosen runtime's `App`. The next commit introduced `Surface`: a terminal session drawable inside a window, tab, split, preview, or host-owned container.
+
+<EvolutionStrip moments={[
+  { kind:'then', eyebrow:'THEN · 2023-02-22', title:'Select an application runtime', description:'apprt.App owned the GUI loop while core App stopped depending directly on GLFW or GTK.', revision:'3d8c62c', href:'https://github.com/ghostty-org/ghostty/blob/3d8c62c41ff673a5156388863db8f70680d3e05e/src/apprt.zig', linkLabel:'Open early runtime' },
+  { kind:'reconstruction', eyebrow:'RECONSTRUCTION · CHAPTER 03', title:'Prove ownership headlessly', description:'A headless runtime App creates one runtime Surface around one core Surface and closes both in order.', revision:'chapter-03-runtime-surface' },
+  { kind:'now', eyebrow:'NOW · PINNED MAIN', title:'Compile platform contracts away', description:'Current GTK, embedded, browser, and no-runtime implementations share core App and Surface behavior through compile-time interfaces.', revision:'6ad1fe7', href:'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/apprt.zig', linkLabel:'Open current apprt' },
+]} />
+
+The sequence matters: runtime extraction came before the mature Surface accumulated PTY, parser, renderer, input, and thread ownership.
+
+## The lifetime model
+
+<RuntimeSurfaceDiagram />
+
+Two similarly named types have different jobs:
+
+| Type | Owns |
+|---|---|
+| core `App` | state shared across all terminal sessions |
+| runtime `App` | platform application lifecycle and event loop |
+| core `Surface` | one terminal session's platform-neutral state |
+| runtime `Surface` | the platform container that hosts a core Surface |
+
+## Step 1: select a runtime
+
+<CodeSnapshot file="src/data/reconstruction/chapter-03/apprt.zig" label="src/apprt.zig" status="adapted" reason="Current compile-time selector reduced to one teaching-only headless backend." />
+
+The selection uses the build configuration introduced in Chapter 02:
+
+```zig
+pub const runtime = switch (build_config.app_runtime) {
+    .headless => headless,
+};
+```
+
+`pub const App = runtime.App` gives callers one stable type name even though the implementation changes at compile time.
+
+## Step 2: keep Surface platform neutral
+
+<CodeSnapshot file="src/data/reconstruction/chapter-03/Surface.zig" label="src/Surface.zig" status="adapted" reason="Stable App-owned Surface allocation with no terminal I/O, renderer, input, or configuration yet." />
+
+The core Surface stores only:
+
+```zig
+app: *App,
+id: u64,
+```
+
+Creation increments App's live-surface count. Destruction decrements it before freeing the stable allocation. `App.deinit` asserts that the count is zero, making teardown order executable rather than documentary.
+
+A Surface is not called `Window` because a terminal session may later live inside a tab, split, quick terminal, embedded host, or browser element.
+
+## Step 3: make the headless runtime own the loop
+
+<CodeSnapshot file="src/data/reconstruction/chapter-03/apprt/headless.zig" label="src/apprt/headless.zig" status="temporary" reason="Observable platform lifecycle scaffold removed when the first native runtime exists." />
+
+The runtime App stores a pointer to shared core App and an optional runtime Surface. Its single tick:
+
+```zig
+self.surface = .{};
+try self.surface.?.init(self.core_app, 1);
+std.debug.print("[runtime] tick\n", .{});
+```
+
+`terminate` closes the runtime Surface, which closes the core Surface. Only then may core App be destroyed.
+
+## Step 4: change startup ownership
+
+<CodeSnapshot file="src/data/reconstruction/chapter-03/main_ghostty.zig" label="src/main_ghostty.zig" status="adapted" reason="Matches current shared-App/runtime-App ordering with a headless runtime and temporary traces." />
+
+The temporary `App.run()` is gone. Startup now reads:
+
+```zig
+const app = try App.create(allocator);
+defer app.destroy();
+
+var app_runtime: apprt.App = undefined;
+app_runtime.init(app);
+defer app_runtime.terminate();
+
+try app_runtime.run();
+```
+
+The nested scope makes the reverse cleanup order visible before `[main] process exiting`.
+
+## Build and run
+
+```console
+zig fmt --check .
+zig build
+zig build test
+zig build run
+```
+
+The tests independently prove core App, core Surface, and headless runtime lifetimes with `std.testing.allocator`.
+
+## Fidelity
+
+<FidelityLegend />
+
+| File | Status | Frontier-related difference |
+|---|---|---|
+| `src/App.zig` | adapted | live count instead of production Surface list, mailbox, fonts, and config |
+| `src/Surface.zig` | adapted | identity and App ownership only |
+| `src/apprt.zig` | adapted | one runtime choice |
+| `src/apprt/headless.zig` | temporary | no production equivalent; exists to prove lifecycle without GUI dependencies |
+| `src/main_ghostty.zig` | adapted | production ordering without globals, CLI actions, or native runtime |
+
+## Compare with current Ghostty
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/apprt.zig" line={1} end={48} label="Current runtime selector" note="Read the contract, compile-time switch, and exported App/Surface types. Ignore backend internals." />
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/main_ghostty.zig" line={80} end={108} label="Current App/runtime startup" note="Read the nested lifetimes and event-loop handoff. Ignore quit timers until multiple surfaces exist." />
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/Surface.zig" line={1} end={20} label="Current Surface contract" note="Read why Surface is a widget-like terminal session rather than necessarily a window." />
+
+## Checkpoint
+
+```text
+commit  40752eab8f9c1a05eda14d60cfe15d2c7773372c
+tag     chapter-03-runtime-surface
+```
+
+## The next limitation
+
+The Surface has identity and ownership but no terminal program. Chapter 04 launches a real child through ordinary pipes and measures the missing terminal semantics before introducing a PTY.
