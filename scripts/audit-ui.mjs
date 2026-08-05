@@ -32,7 +32,7 @@ async function newPage(browser, width = 1280, theme = "light") {
 await ensureServer();
 const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
 try {
-  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/chapters/05-pty", "/chapters/06-termio", "/chapters/07-parser", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/history", "/source"];
+  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/chapters/05-pty", "/chapters/06-termio", "/chapters/07-parser", "/chapters/08-terminal-state", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/history", "/source"];
   for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
     const page = await newPage(browser, width, theme);
     await page.goto(base + route, { waitUntil: "networkidle0" });
@@ -208,11 +208,25 @@ try {
     states: document.querySelectorAll(".parser-map__states > div").length,
     history: document.querySelectorAll(".evolution-strip li").length,
     output: document.querySelector(".output-preview")?.textContent?.includes("[parser sgr] 32"),
-    next: Boolean(document.querySelector('a[rel="next"]')),
+    next: document.querySelector('a[rel="next"]')?.getAttribute("href") ?? "",
   }));
   check(parserState.states === 4 && parserState.history === 3 && parserState.output, "Chapter 07 is missing parser states, history, or output");
-  check(!parserState.next, "Chapter 07 should stop at the current published frontier");
+  check(parserState.next.includes("/chapters/08-terminal-state"), "Chapter 07 does not advance to Chapter 08");
   await parser.close();
+
+  const terminal = await newPage(browser, 1280, "dark");
+  await terminal.goto(base + "/chapters/08-terminal-state", { waitUntil: "networkidle0" });
+  const terminalState = await terminal.evaluate(() => ({
+    rows: document.querySelectorAll(".terminal-grid .row").length,
+    cells: document.querySelectorAll(".terminal-grid .row i").length,
+    green: document.querySelectorAll(".terminal-grid .row i.green").length,
+    history: document.querySelectorAll(".evolution-strip li").length,
+    output: document.querySelector(".output-preview")?.textContent?.includes("[terminal cursor] row=2 col=0"),
+    next: Boolean(document.querySelector('a[rel="next"]')),
+  }));
+  check(terminalState.rows === 3 && terminalState.cells === 72 && terminalState.green === 11 && terminalState.history === 3 && terminalState.output, "Chapter 08 is missing terminal cells, styles, history, or output");
+  check(!terminalState.next, "Chapter 08 should stop at the current published frontier");
+  await terminal.close();
 
   const history = await newPage(browser, 1280, "dark");
   await history.goto(base + "/history", { waitUntil: "networkidle0" });
@@ -265,6 +279,8 @@ try {
   check(termioMarkdown.includes("[termio read reply]") && termioMarkdown.includes("src/termio/Termio.zig") && !/<[A-Z][A-Za-z]+/.test(termioMarkdown), "Chapter 06 AI Markdown is invalid");
   const parserMarkdown = await (await fetch(base + "/ai/lessons/07-parser.md")).text();
   check(parserMarkdown.includes("[parser sgr] 32") && parserMarkdown.includes("src/terminal/Parser.zig") && !/<[A-Z][A-Za-z]+/.test(parserMarkdown), "Chapter 07 AI Markdown is invalid");
+  const terminalMarkdown = await (await fetch(base + "/ai/lessons/08-terminal-state.md")).text();
+  check(terminalMarkdown.includes("[terminal cursor] row=2 col=0") && terminalMarkdown.includes("src/terminal/Terminal.zig") && !/<[A-Z][A-Za-z]+/.test(terminalMarkdown), "Chapter 08 AI Markdown is invalid");
 
   for (const [legacy, expected] of [["/lessons/00-open-ghostty", "/field-guides/run-ls-cat"], ["/lessons/01-codex-tui", "/field-guides/codex-tui"]]) {
     const response = await fetch(base + legacy, { redirect: "follow" });

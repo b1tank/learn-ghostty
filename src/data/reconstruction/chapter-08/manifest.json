@@ -1,0 +1,17 @@
+{
+  "chapter": "08-terminal-state",
+  "title": "Terminal state",
+  "source_repository": "b1tank/ghostty-from-scratch",
+  "source_tag": "chapter-08-terminal-state",
+  "source_commit": "d730e085c760ddaadf654c5c4430f3099932d3c9",
+  "upstream_repository": "ghostty-org/ghostty",
+  "upstream_commit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+  "output_sha256": "1f3ecf0ee11a567823a3326347f285a6964cd3c621b3f3fb9dd23a9823e7090e",
+  "files": [
+    { "path": "src/terminal/main.zig", "status": "adapted", "reason": "Exports Parser and Terminal.", "sha256": "68b92c844354a4f54dc77a5001668953e0d977490b5f90ceb697a25b51ebb3ee" },
+    { "path": "src/terminal/Parser.zig", "status": "adapted", "reason": "Exposes newly emitted action slices.", "sha256": "3a44a1ebac1272c1116449567f3ee4a3c4c33ffe9f2f5564ab6b58a1b22facac" },
+    { "path": "src/terminal/Terminal.zig", "status": "adapted", "reason": "Fixed 3x24 cells, cursor, default/green style, and debug frame.", "sha256": "57f89b5958dbd0c581bb9ad68f58ba8d77dcf7a08dd6ed4e7dbbafa8d3ff4b71" },
+    { "path": "src/termio/Termio.zig", "status": "adapted", "reason": "Applies parser actions after every PTY chunk.", "sha256": "c75addbe0aa1a57b94ec0020b95cce7ca2c2d8c3e3ba1b4f760dfee26fb0d31f" },
+    { "path": "src/Surface.zig", "status": "adapted", "reason": "Traces the durable terminal frame.", "sha256": "2be76321b95cb8f509657282bf612dc56fd14853ff48400d4842da8c4c77cdc4" }
+  ]
+}
