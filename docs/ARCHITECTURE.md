@@ -14,6 +14,12 @@ Learn Ghostty is a static Astro site deployed to GitHub Pages.
 
 No learner-facing server, account, database, CLI, agent, or native runtime is required.
 
+## Implementation and visual provenance
+
+Learn Ghostty chapters are paired with named commits or tags in `b1tank/ghostty-from-scratch`. Code snippets, terminal output, diagrams, screenshots, and recordings identify the reconstruction revision they describe.
+
+Real implementation artifacts live under a predictable chapter path, with capture metadata and scripts when needed. Text output may be rendered directly from committed fixtures; GUI screenshots and recordings must come from the running reconstruction. This keeps the public lesson trustworthy even while the companion repository and upstream Ghostty evolve.
+
 ## Source of truth
 
 Each `src/content/docs/lessons/*.mdx` file defines order, title, description, duration, module, status, and source references. Starlight renders published lessons and owns navigation/search/theme chrome; Astro derives the homepage roadmap and AI Markdown from the same docs collection.

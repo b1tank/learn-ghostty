@@ -36,6 +36,42 @@ Diagrams are teaching artifacts, not decoration. They must have a textual equiva
 
 Animation should reveal causality rather than add motion for its own sake. Animated flows must start only when visible, expose play/pause/replay and manual steps, pause when the learner takes control, preserve the current state in text, and honor `prefers-reduced-motion` by avoiding automatic motion.
 
+## Visual proof for every implementation step
+
+Every tiny reconstruction step must answer **“what will I see when this works?”** The website and `ghostty-from-scratch` implementation evolve together; a code step is not documented as complete until its observable result is represented on the chapter page.
+
+Use this step anatomy:
+
+```text
+Goal
+→ code delta or focused snippet
+→ exact build/run/user action
+→ observable output or state
+→ visual proof
+→ explanation of why it changed
+→ upstream Ghostty comparison
+```
+
+Choose the visual that matches the result:
+
+- **CLI or compiler behavior:** a faithful terminal-output panel with the exact command, stdout/stderr, and exit expectation. A screenshot is optional when the text panel is already exact.
+- **Parser or state behavior:** an input/output trace, state table, grid visualization, memory/ownership diagram, or animated transition.
+- **Timing, concurrency, or I/O behavior:** a sequence diagram or timeline showing owners, thread boundaries, waits, wakeups, and message data.
+- **Native window milestone:** a real screenshot from the running reconstruction, beginning with the first blank GTK window.
+- **GPU/font/interaction milestone:** before/after screenshots or a short real recording that shows the effect, such as the first colored rectangle, first glyph, cursor blink, resize, selection, or redraw.
+- **Failure mode:** the real compiler error, runtime log, broken frame, or incorrect state alongside the corrected result when the failure teaches the boundary.
+
+Visuals must be reproducible and trustworthy:
+
+- capture them from a named `ghostty-from-scratch` commit or chapter tag;
+- record the platform, display/backend, command, window size, and relevant configuration;
+- use descriptive alt text and a prose equivalent;
+- keep source assets and capture scripts version controlled;
+- avoid decorative screenshots that do not teach a state transition;
+- never use a mockup or AI-generated image as proof of implemented behavior.
+
+Each chapter should open with a **“what you will see”** preview and finish with a **“your result should now look/behave like this”** comparison. When the implementation has no GUI yet, exact terminal output and state diagrams provide that visual feedback.
+
 ## Data labels
 
 Name concrete representations: hardware event, platform key event, UTF-8 bytes, command line, argv, filesystem entries, ANSI/ECMA-48 bytes, parser actions, terminal cells, code points, glyphs, atlas textures, GPU buffers, frames, pixels.
