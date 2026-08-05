@@ -40,6 +40,7 @@ try {
       viewport: document.documentElement.clientWidth,
       scroll: document.documentElement.scrollWidth,
       main: Boolean(document.querySelector("main")),
+      localSetup: Boolean(document.querySelector(".local-setup")),
       externalLinksSafe: [...document.querySelectorAll("a[href]")].filter((link) => {
         const url = new URL(link.href, location.href);
         return ["http:", "https:"].includes(url.protocol) && url.origin !== location.origin;
@@ -47,6 +48,7 @@ try {
     }));
     check(state.scroll <= state.viewport, `${theme} ${width}px ${route}: horizontal overflow ${state.scroll - state.viewport}px`);
     check(state.main, `${route}: main missing`);
+    if (route.startsWith("/chapters/")) check(state.localSetup, `${route}: local lesson setup missing`);
     check(state.externalLinksSafe, `${route}: external links must open safely in a new tab`);
     await page.close();
   }

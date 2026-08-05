@@ -1,0 +1,32 @@
+---
+const { chapter } = Astro.props;
+const entries = [
+  ['00','60b3736','chapter-00-bootstrap'],
+  ['01','chapter-00-bootstrap','chapter-01-app-lifecycle'],
+  ['02','chapter-01-app-lifecycle','chapter-02-entry-routing'],
+  ['03','chapter-02-entry-routing','chapter-03-runtime-surface'],
+  ['04','chapter-03-runtime-surface','chapter-04-child-pipes'],
+  ['05','chapter-04-child-pipes','chapter-05-pty'],
+  ['06','chapter-05-pty','chapter-06-termio'],
+  ['07','chapter-06-termio','chapter-07-parser'],
+  ['08','chapter-07-parser','chapter-08-terminal-state'],
+  ['09','chapter-08-terminal-state','chapter-09-first-window'],
+  ['10','chapter-09-first-window','chapter-10-first-rectangle'],
+];
+const entry=entries.find(([number])=>number===String(chapter).padStart(2,'0'));
+if (!entry) throw new Error(`unknown lesson ${chapter}`);
+const [number,start,reference]=entry;
+---
+<aside class="local-setup" aria-labelledby={`local-setup-${number}`}>
+  <header><span>LOCAL CHECKPOINT</span><h2 id={`local-setup-${number}`}>Open this exact lesson in your debugger</h2></header>
+  <p>Run the one-time setup from current <code>main</code>, then choose a mode. The helper refuses to switch a dirty worktree.</p>
+  <pre><code>tools/setup-learning.sh</code></pre>
+  <div class="local-setup__modes">
+    <section><strong>Read and debug the completed code</strong><pre><code>git lesson inspect {number}</code></pre><small>Reference: <code>{reference}</code></small></section>
+    <section><strong>Implement the lesson yourself</strong><pre><code>git lesson start {number}</code></pre><small>Starts from: <code>{start}</code></small></section>
+  </div>
+  <p class="local-setup__next">After debugging a completed checkpoint: <code>git lesson next</code></p>
+</aside>
+<style>
+.local-setup{margin:0 0 2rem;padding:1rem;border:1px solid var(--sl-color-accent);border-radius:var(--course-radius-md);background:var(--sl-color-accent-low)}.local-setup header span{color:var(--sl-color-text-accent);font:700 var(--sl-text-2xs) var(--__sl-font-mono);letter-spacing:.06em}.local-setup h2{margin:.25rem 0 0;font-size:var(--sl-text-xl)}.local-setup>p{margin:.65rem 0;color:var(--sl-color-text);font-size:var(--sl-text-sm)}.local-setup pre{margin:.5rem 0!important}.local-setup__modes{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.65rem}.local-setup__modes section{min-width:0;padding:.75rem;border:1px solid var(--course-border);border-radius:.5rem;background:var(--course-surface)}.local-setup__modes strong,.local-setup__modes small{display:block}.local-setup__modes strong{font-size:var(--sl-text-sm)}.local-setup__modes small{color:var(--course-muted);font-size:var(--sl-text-xs)}.local-setup__next{margin-bottom:0!important}@media(max-width:40rem){.local-setup__modes{grid-template-columns:1fr}}
+</style>
