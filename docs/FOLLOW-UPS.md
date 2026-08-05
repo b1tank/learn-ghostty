@@ -1,34 +1,29 @@
 # Follow-ups
 
-The Astro migration is deployed and has no launch blockers. These are the remaining product and content follow-ups, ordered by learner value.
+The reconstruction foundation and Chapter 00 are the current release boundary.
 
-## Content
+## Next learner-driven work
 
-1. Build the seven planned deep dives while learning:
-   - VT parsing
-   - terminal state and scrollback
-   - threads and I/O
-   - Unicode, fonts, glyph atlases, and GPU rendering
-   - input, IME, GTK, Wayland, and X11
-   - SwiftUI, AppKit, CoreText, and Metal
-   - debugging and responsible contribution
-2. Work through every published scenario as a new learner and record confusing terminology, missing data boundaries, incorrect assumptions, pacing problems, weak analogies, and source excerpts that are too broad or too narrow.
-3. Seek technical review for platform-specific and protocol-specific claims as the relevant deep dives are built.
+1. Use Chapter 00 from a fresh learner perspective.
+2. Record confusing Zig/build terminology, missing commands, and source comparisons that are too broad.
+3. Correct Chapter 00 before adding code to the implementation frontier.
+4. Recheck current Ghostty `main` for relevant upstream changes.
+5. Build Chapter 01 App lifecycle with its own tagged checkpoint and exact output.
 
-## Product
+Do not prewrite later chapters merely to fill the roadmap.
 
-1. Upgrade metadata-only lesson search to full-text static search after enough content exists to justify the index.
-2. Replace temporary text glyphs used for header actions with a consistent accessible icon set.
-3. Add a clipboard-denied fallback that presents selectable AI context and explicit recovery instructions.
-4. Bundle referenced source excerpts at build time so the inline source viewer does not depend on `raw.githubusercontent.com`; retain pinned GitHub links as the authoritative remote reference.
-5. Consider migration from obsolete experimental browser-progress keys only if real learners report losing useful progress. The current store intentionally starts clean rather than carrying forward mission/evidence concepts that no longer exist.
+## Product follow-ups
 
-## Quality gates
+1. Add an explicit local sync command for allowlisted companion-repository snapshots.
+2. Verify exact files byte-for-byte against the upstream lock and generate adapted-file diffs.
+3. Add screenshot/recording metadata validation before the first native-window chapter.
+4. Bundle pinned source excerpts if remote raw-source loading becomes unreliable.
 
-For every release:
+## Release gates
 
-- run content/source validation;
-- run browser audits across themes and responsive widths;
+- validate the Ghostty source pin and reconstruction snapshot hashes;
+- build the companion checkpoint in CI;
+- audit both themes at mobile, tablet, and desktop widths;
 - build with the GitHub Pages base path;
-- verify production dependencies;
-- confirm the public deployment serves Astro assets, lesson routes, and AI Markdown routes.
+- verify legacy redirects, AI Markdown, search, and public assets;
+- never publish mock visual evidence.

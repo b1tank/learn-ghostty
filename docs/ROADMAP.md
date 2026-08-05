@@ -1,20 +1,19 @@
-# Roadmap
+# Reconstruction roadmap
 
-## Published scenario module
+Only Chapter 00 is currently published. A chapter becomes public after its code checkpoint, exact command, observable result, provenance, source comparison, and responsive browser audit are complete.
 
-1. Open Ghostty, run `ls`, compare `cat`
-2. Codex as a long-running TUI
-3. tmux panes, sessions, and nested terminal emulation
-4. SSH, remote shells, and remote tmux
+1. **A process exists** — one Zig executable and one visible line
+2. **App lifecycle** — create, run, cleanup, destroy
+3. **Entrypoint routing** — generated build configuration and Ghostty-shaped entry selection
+4. **Runtime and Surface** — shared core versus a temporary headless platform runtime
+5. **Child process and PTY** — first pipes, demonstrated limitation, terminal semantics
+6. **Termio and parser** — I/O ownership and VT actions
+7. **Terminal state** — cells, styles, cursor, modes, screens, deterministic debug rendering
+8. **First native window and GPU frame** — GTK, blank surface, first rectangle
+9. **Fonts, input, and production architecture** — first glyph, resize, keyboard input, threads, and mailboxes
 
-## Planned deep dives
+The roadmap describes dependency order, not prewritten content. Build only the next chapter after using the current one.
 
-5. Terminal bytes and VT parsing
-6. Terminal state, grid, and scrollback
-7. Threads, PTY I/O, and frame snapshots
-8. Unicode, fonts, glyph atlases, and GPU rendering
-9. Input, IME, GTK, Wayland, and X11
-10. SwiftUI, AppKit, CoreText, and Metal
-11. Debugging, testing, and responsible contribution
+## Field guides
 
-Planned lessons stay visible but unlinked. They are built one complete scenario-backed lesson at a time.
+The `ls`/`cat`, Codex, tmux, and SSH walkthroughs remain published as optional integration references. They do not advance reconstruction progress.

@@ -1,3 +1,78 @@
-import {readdir,readFile} from "node:fs/promises";import {execFileSync} from "node:child_process";import {resolve} from "node:path";import matter from "gray-matter";import {cleanLessonMarkdown} from "../src/lib/cleanMarkdown.js";
-const root=resolve(import.meta.dirname,".."),dir=resolve(root,"src/content/docs/lessons"),errors=[],commit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699";const actual=execFileSync("git",["-C",resolve(root,"ghostty"),"rev-parse","HEAD"],{encoding:"utf8"}).trim();if(actual!==commit)errors.push(`Ghostty commit ${actual} does not match ${commit}`);const files=(await readdir(dir)).filter(x=>x.endsWith('.mdx')).sort(),lessons=[];for(const file of files){const id=file.slice(0,-4),raw=await readFile(resolve(dir,file),"utf8"),parsed=matter(raw),data=parsed.data;lessons.push({id,...data});for(const key of ['order','title','description','duration','module','status'])if(data[key]===undefined)errors.push(`${id}: missing ${key}`);for(const ref of data.sourceRefs||[]){try{const path=resolve(root,'ghostty',ref.path),lines=(await readFile(path,'utf8')).split('\n').length;if(ref.line<1||ref.line>lines)errors.push(`${id}: ${ref.path}:${ref.line} outside 1..${lines}`);if(ref.end&&ref.end>lines)errors.push(`${id}: ${ref.path}:${ref.end} outside 1..${lines}`)}catch{errors.push(`${id}: missing source ${ref.path}`)}}if(data.status==='published'){const clean=cleanLessonMarkdown(raw,{id,summary:data.description,...data},commit);if(/<(?:script|[A-Z][A-Za-z]+)\b/.test(clean))errors.push(`${id}: AI Markdown contains implementation markup`);if(!clean.includes('~/learn-ghostty/')||!clean.includes('source_commit:'))errors.push(`${id}: AI Markdown missing local/pinned context`)}}
-const orders=lessons.map(x=>x.order);if(new Set(orders).size!==orders.length)errors.push('lesson order values must be unique');if(lessons.length!==11)errors.push(`expected 11 lessons, found ${lessons.length}`);if(lessons.filter(x=>x.status==='published').length!==4)errors.push('expected four published scenario lessons');if(errors.length){console.error('Course validation failed:\n'+errors.map(x=>`  ✗ ${x}`).join('\n'));process.exit(1)}console.log(`✓ Ghostty source pin ${actual.slice(0,12)}`);console.log(`✓ ${lessons.length} Astro lessons (${lessons.filter(x=>x.status==='published').length} published)`);console.log(`✓ ${lessons.flatMap(x=>x.sourceRefs||[]).length} pinned source references and clean AI Markdown`);
+import { createHash } from "node:crypto";
+import { readdir, readFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { resolve } from "node:path";
+import matter from "gray-matter";
+import { cleanLessonMarkdown } from "../src/lib/cleanMarkdown.js";
+
+const root = resolve(import.meta.dirname, "..");
+const docsRoot = resolve(root, "src/content/docs");
+const errors = [];
+const upstreamCommit = "6ad1fe7d8cbda36c77b337a96c9bea8a77883699";
+const actualCommit = execFileSync("git", ["-C", resolve(root, "ghostty"), "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+if (actualCommit !== upstreamCommit) errors.push(`Ghostty commit ${actualCommit} does not match ${upstreamCommit}`);
+
+async function walk(dir) {
+  const result = [];
+  for (const entry of await readdir(dir, { withFileTypes: true })) {
+    const path = resolve(dir, entry.name);
+    if (entry.isDirectory()) result.push(...await walk(path));
+    else if (entry.name.endsWith(".mdx")) result.push(path);
+  }
+  return result;
+}
+
+const contentFiles = (await walk(docsRoot)).filter((path) => path.includes("/chapters/") || path.includes("/field-guides/"));
+const lessons = [];
+for (const path of contentFiles) {
+  const raw = await readFile(path, "utf8");
+  const parsed = matter(raw);
+  const data = parsed.data;
+  const contentId = path.slice(docsRoot.length + 1, -4);
+  const id = contentId.split("/").at(-1);
+  lessons.push({ id, contentId, href: `/${contentId}`, summary: data.description, ...data });
+  for (const key of ["order", "title", "description", "duration", "module", "status"]) {
+    if (data[key] === undefined) errors.push(`${contentId}: missing ${key}`);
+  }
+  for (const ref of data.sourceRefs ?? []) {
+    try {
+      const sourcePath = resolve(root, "ghostty", ref.path);
+      const lineCount = (await readFile(sourcePath, "utf8")).split("\n").length;
+      if (ref.line < 1 || ref.line > lineCount) errors.push(`${contentId}: ${ref.path}:${ref.line} outside 1..${lineCount}`);
+      if (ref.end && ref.end > lineCount) errors.push(`${contentId}: ${ref.path}:${ref.end} outside 1..${lineCount}`);
+    } catch {
+      errors.push(`${contentId}: missing source ${ref.path}`);
+    }
+  }
+  if (data.status === "published") {
+    const clean = cleanLessonMarkdown(raw, { id, contentId, href: `/${contentId}`, summary: data.description, ...data }, upstreamCommit);
+    if (/<(?:script|[A-Z][A-Za-z]+)\b/.test(clean)) errors.push(`${contentId}: AI Markdown contains implementation markup`);
+    if (!clean.includes("~/learn-ghostty/") || !clean.includes("source_commit:")) errors.push(`${contentId}: AI Markdown missing local/pinned context`);
+  }
+}
+
+const orders = lessons.map((lesson) => lesson.order);
+if (new Set(orders).size !== orders.length) errors.push("lesson order values must be unique");
+if (lessons.length !== 13) errors.push(`expected 13 reconstruction/field-guide entries, found ${lessons.length}`);
+if (lessons.filter((lesson) => lesson.status === "published").length !== 5) errors.push("expected Chapter 00 plus four published field guides");
+
+const snapshotRoot = resolve(root, "src/data/reconstruction/chapter-00");
+const snapshot = JSON.parse(await readFile(resolve(snapshotRoot, "manifest.json"), "utf8"));
+if (snapshot.upstream_commit !== upstreamCommit) errors.push("Chapter 00 snapshot uses the wrong upstream commit");
+for (const file of snapshot.files) {
+  const snapshotPath = file.path === "src/main.zig" ? "main.zig" : file.path === "build.zig" ? "build.zig" : null;
+  if (!snapshotPath) continue;
+  const hash = createHash("sha256").update(await readFile(resolve(snapshotRoot, snapshotPath))).digest("hex");
+  if (hash !== file.sha256) errors.push(`Chapter 00 snapshot hash mismatch for ${file.path}`);
+}
+const outputHash = createHash("sha256").update(await readFile(resolve(snapshotRoot, "output.txt"))).digest("hex");
+if (outputHash !== snapshot.output_sha256) errors.push("Chapter 00 output hash mismatch");
+
+if (errors.length) {
+  console.error("Course validation failed:\n" + errors.map((error) => `  ✗ ${error}`).join("\n"));
+  process.exit(1);
+}
+console.log(`✓ Ghostty source pin ${actualCommit.slice(0, 12)}`);
+console.log(`✓ ${lessons.length} course entries (${lessons.filter((lesson) => lesson.status === "published").length} published)`);
+console.log(`✓ ${lessons.flatMap((lesson) => lesson.sourceRefs ?? []).length} pinned source references and clean AI Markdown`);
+console.log(`✓ Chapter 00 reconstruction snapshots and output match their provenance hashes`);

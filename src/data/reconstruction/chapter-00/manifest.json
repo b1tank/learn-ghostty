@@ -1,0 +1,24 @@
+{
+  "chapter": "00-process-exists",
+  "title": "A process exists",
+  "source_repository": "b1tank/ghostty-from-scratch",
+  "source_tag": "chapter-00-bootstrap",
+  "source_commit": "00b751fbfd354a645a178542ba47bafb64e7b6df",
+  "upstream_repository": "ghostty-org/ghostty",
+  "upstream_commit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+  "output_sha256": "54df939de10b39ec660f41a4c8add0bf0772cb5e437f91aee1b92824df1dfa84",
+  "files": [
+    {
+      "path": "src/main.zig",
+      "status": "temporary",
+      "reason": "Minimal process bootstrap before reconstructing Ghostty's current entrypoint routing.",
+      "sha256": "7a929b44b6edce0589c73ccf5618553a4efee61399faa3d059596dfc11681ded"
+    },
+    {
+      "path": "build.zig",
+      "status": "adapted",
+      "reason": "Minimal executable build graph; production artifacts and generated configuration are beyond the frontier.",
+      "sha256": "eddf0fa7f1156adcc2ef977cc9255295a3645b41c20646eff2ff62e64edfce2b"
+    }
+  ]
+}

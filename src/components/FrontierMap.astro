@@ -1,0 +1,27 @@
+---
+const { current = 'Process entry' } = Astro.props;
+const stages = [
+  ['Process entry', 'current'],
+  ['App lifecycle', 'next'],
+  ['Runtime + Surface', 'future'],
+  ['Child process + PTY', 'future'],
+  ['I/O + parser', 'future'],
+  ['Terminal state', 'future'],
+  ['Window + GPU + fonts', 'future'],
+];
+---
+<section class="frontier-map" aria-labelledby="frontier-title">
+  <header>
+    <p>DEPENDENCY FRONTIER</p>
+    <h2 id="frontier-title">Build only what the current result needs</h2>
+  </header>
+  <ol>
+    {stages.map(([label, state], index) => (
+      <li class:list={[`is-${state}`, { 'is-current': label === current }]}>
+        <span>{String(index).padStart(2, '0')}</span>
+        <strong>{label}</strong>
+        <small>{state === 'current' ? 'You are here' : state === 'next' ? 'Next limitation' : 'Not introduced'}</small>
+      </li>
+    ))}
+  </ol>
+</section>

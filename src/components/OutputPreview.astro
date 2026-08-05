@@ -1,0 +1,11 @@
+---
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+const { file, title = 'What you will see', caption, tag } = Astro.props;
+const output = await readFile(resolve(file), 'utf8');
+---
+<figure class="output-preview">
+  <figcaption><div><span>VISIBLE RESULT</span><strong>{title}</strong></div>{tag && <code>{tag}</code>}</figcaption>
+  <pre><code>{output.trimEnd()}</code></pre>
+  {caption && <p>{caption}</p>}
+</figure>

@@ -1,0 +1,2 @@
+$ zig build run
+ghostty-from-scratch: hello

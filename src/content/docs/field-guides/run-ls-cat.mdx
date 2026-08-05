@@ -1,9 +1,9 @@
 ---
-order: 0
-title: Open Ghostty, run ls, see pixels
+order: 100
+title: What happens when you open Ghostty and run ls or cat
 description: Follow one ordinary terminal session from app launch to shell prompt, keyboard input, command execution, colored output, glyphs, GPU work, and visible pixels.
 duration: 45–60 minutes
-module: Scenarios
+module: Field guides
 status: published
 sourceRefs:
   - path: src/main_ghostty.zig
@@ -28,13 +28,14 @@ sourceRefs:
     label: Updating a render frame
     purpose: Locate the handoff from terminal state to renderable frame data.
 sidebar:
-  order: 0
+  order: 100
 ---
 import DataFlowWalkthrough from '../../../components/DataFlowWalkthrough.vue';
 import SourceLink from '../../../components/SourceLink.vue';
 import LessonActions from '../../../components/LessonActions.astro';
 
-<LessonActions id="00-open-ghostty" />
+<LessonActions entryId="field-guides/run-ls-cat" />
+
 
 This lesson follows something deliberately ordinary:
 

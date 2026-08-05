@@ -1,9 +1,9 @@
 ---
-order: 2
+order: 102
 title: tmux panes, sessions, and nested terminals
 description: See why tmux is both a terminal client and a terminal emulator, how every pane gets a PTY, and how many streams become one Ghostty screen.
 duration: 40–55 minutes
-module: Scenarios
+module: Field guides
 status: published
 sourceRefs:
   - path: src/terminal/Terminal.zig
@@ -22,13 +22,14 @@ sourceRefs:
     label: Input encoding before tmux
     purpose: Locate the bytes tmux receives from Ghostty before routing them to a pane.
 sidebar:
-  order: 2
+  order: 102
 ---
 import DataFlowWalkthrough from '../../../components/DataFlowWalkthrough.vue';
 import SourceLink from '../../../components/SourceLink.vue';
 import LessonActions from '../../../components/LessonActions.astro';
 
-<LessonActions id="02-tmux" />
+<LessonActions entryId="field-guides/tmux" />
+
 
 Run:
 

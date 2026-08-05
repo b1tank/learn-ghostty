@@ -1,6 +1,0 @@
----
-import HomeExperience from "./HomeExperience.vue";
-import { getLessons, groupedLessons } from "../lib/course.js";
-const lessons=await getLessons();const modules=groupedLessons(lessons);const base=import.meta.env.BASE_URL;
----
-<HomeExperience client:load lessons={lessons} modules={modules} base={base}/>

@@ -11,7 +11,7 @@ const docs = defineCollection({
   loader: docsLoader(),
   schema: docsSchema({ extend: z.object({
     order: z.number().int().nonnegative().optional(),
-    module: z.enum(["Scenarios", "Core pipeline", "Native product", "Maintainer practice"]).optional(),
+    module: z.enum(["Reconstruction", "Field guides"]).optional(),
     status: z.enum(["published", "planned"]).optional(),
     duration: z.string().optional(),
     sourceRefs: z.array(sourceRef).default([])

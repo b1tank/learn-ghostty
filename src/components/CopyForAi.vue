@@ -13,7 +13,7 @@ const popupStyle = ref({ left: "12px", top: "12px", width: "320px" });
 const lesson = props.lesson;
 const sectionId = computed(() => progressState.value?.lastSections?.[lesson.id] || (progressState.value?.currentLesson === lesson.id ? progressState.value.currentSection : "welcome") || "welcome");
 const pageUrl = computed(() => {
-  const path = `${props.base}lessons/${lesson.id}`;
+  const path = `${props.base}${lesson.href.replace(/^\//, "")}`;
   if (typeof window === "undefined") return `https://b1tank.github.io${path}#${sectionId.value}`;
   return `${window.location.origin}${path}#${sectionId.value}`;
 });
@@ -49,7 +49,7 @@ function sourceBlock() {
   return (lesson.sourceRefs ?? []).map((source) => `- ${source.label}\n  - remote: https://github.com/ghostty-org/ghostty/blob/${props.sourceCommit}/${source.path}#L${source.line}\n  - local: ~/ghostty/${source.path}:${source.line}`).join("\n");
 }
 function context(section) {
-  return `---\ncourse: Learn Ghostty\nlesson: "${String(lesson.order).padStart(2, "0")} · ${lesson.title}"\nsection: "${sectionId.value}"\npage_url: "${pageUrl.value}"\nlesson_markdown_url: "${new URL(markdownUrl.value, window.location.origin)}"\nlocal_course_path: "~/learn-ghostty/src/content/docs/lessons/${lesson.id}.mdx"\nlocal_ghostty_root: "~/ghostty"\nghostty_commit: "${props.sourceCommit}"\nprogress:\n${progressBlock().split("\n").map((line) => `  ${line}`).join("\n")}\n---\n\n# Current section\n\n${section}\n\n# Referenced Ghostty source\n\n${sourceBlock() || "No production source references in this section."}\n\n# My question\n\n`;
+  return `---\ncourse: Learn Ghostty\nlesson: "${String(lesson.order).padStart(2, "0")} · ${lesson.title}"\nsection: "${sectionId.value}"\npage_url: "${pageUrl.value}"\nlesson_markdown_url: "${new URL(markdownUrl.value, window.location.origin)}"\nlocal_course_path: "~/learn-ghostty/src/content/docs/${lesson.contentId}.mdx"\nlocal_ghostty_root: "~/ghostty"\nghostty_commit: "${props.sourceCommit}"\nprogress:\n${progressBlock().split("\n").map((line) => `  ${line}`).join("\n")}\n---\n\n# Current section\n\n${section}\n\n# Referenced Ghostty source\n\n${sourceBlock() || "No production source references in this section."}\n\n# My question\n\n`;
 }
 async function copy(value, message) {
   await navigator.clipboard.writeText(value);
@@ -60,7 +60,7 @@ async function copy(value, message) {
 async function copySection() { await copy(context(currentSection(markdown.value)), "Current section copied for AI"); }
 async function copyFull() { await copy(`${markdown.value.trim()}\n\n---\n\n## Learning context\n\n${progressBlock()}\n`, "Full lesson copied as Markdown"); }
 async function copyUrl() { await copy(pageUrl.value, "Page URL copied"); }
-async function copyLocalPath() { await copy(`~/learn-ghostty/src/content/docs/lessons/${lesson.id}.mdx`, "Local course path copied"); }
+async function copyLocalPath() { await copy(`~/learn-ghostty/src/content/docs/${lesson.contentId}.mdx`, "Local course path copied"); }
 
 async function positionPopup() {
   if (!open.value || !trigger.value) return;

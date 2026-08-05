@@ -1,9 +1,9 @@
 ---
-order: 3
+order: 103
 title: SSH, remote shells, and remote tmux
 description: Trace terminal data across two kernels, an encrypted network channel, a remote PTY, and optionally another terminal multiplexer.
 duration: 45–60 minutes
-module: Scenarios
+module: Field guides
 status: published
 sourceRefs:
   - path: src/termio/Exec.zig
@@ -22,13 +22,14 @@ sourceRefs:
     label: Ghostty's SSH helper command
     purpose: See the boundary between Ghostty CLI integration and the external SSH process.
 sidebar:
-  order: 3
+  order: 103
 ---
 import DataFlowWalkthrough from '../../../components/DataFlowWalkthrough.vue';
 import SourceLink from '../../../components/SourceLink.vue';
 import LessonActions from '../../../components/LessonActions.astro';
 
-<LessonActions id="03-ssh-remote" />
+<LessonActions entryId="field-guides/ssh-remote" />
+
 
 Run:
 

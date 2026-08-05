@@ -1,0 +1,14 @@
+---
+import { Code } from 'astro:components';
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+const { file, label, status = 'temporary', reason } = Astro.props;
+const code = await readFile(resolve(file), 'utf8');
+---
+<figure class="code-snapshot">
+  <figcaption>
+    <div><span class={`fidelity-badge is-${status}`}>{status}</span><strong>{label}</strong></div>
+    {reason && <p>{reason}</p>}
+  </figcaption>
+  <Code code={code.trimEnd()} lang="zig" theme="github-dark" />
+</figure>

@@ -1,0 +1,27 @@
+---
+import FrontierMap from './FrontierMap.astro';
+import ReconstructionResume from './ReconstructionResume.vue';
+import { getLessons } from '../lib/course.js';
+const lessons = (await getLessons()).filter((lesson) => lesson.module === 'Reconstruction' && lesson.status === 'published');
+---
+<section class="reconstruction-home">
+  <ReconstructionResume client:load lessons={lessons} base={import.meta.env.BASE_URL} />
+  <p class="reconstruction-kicker" id="how-this-works">HOW IT WORKS</p>
+  <div class="reconstruction-promise">
+    <div><span>01</span><h2>Write it</h2><p>Add only the code needed for the next observable behavior.</p></div>
+    <div><span>02</span><h2>See it</h2><p>Run the exact command and compare your result with a real captured artifact.</p></div>
+    <div><span>03</span><h2>Compare it</h2><p>Read the narrow historical and current Ghostty source that solves the production version.</p></div>
+  </div>
+  <FrontierMap />
+  <section class="reconstruction-next">
+    <p>CHAPTER 00</p>
+    <h2>A process exists</h2>
+    <p>Start with one Zig file, one build command, and one line of output. Understand every character before adding an App, PTY, parser, or window.</p>
+    <a href="./chapters/00-process-exists/">Begin Chapter 00</a>
+  </section>
+  <section class="field-guides-preview">
+    <h2>Field guides remain available</h2>
+    <p>The existing <code>ls</code>, Codex, tmux, and SSH walkthroughs are retained as integration references. They are no longer the primary learning sequence.</p>
+    <a href="./field-guides/run-ls-cat/">Browse the field guides</a>
+  </section>
+</section>

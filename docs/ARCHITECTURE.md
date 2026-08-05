@@ -1,51 +1,46 @@
 # Architecture
 
-Learn Ghostty is a static Astro site deployed to GitHub Pages.
+Learn Ghostty is a static Astro Starlight site deployed to GitHub Pages. `b1tank/ghostty-from-scratch` is the implementation companion.
 
 ## Stack
 
-- Astro static output with Starlight as the standard documentation/learning shell and visual design system
-- Starlight docs loader, Pagefind search, navigation, sidebar, table of contents, theme, typography, and accessibility defaults
-- MDX content collections for lessons
-- Vue islands only for interactive walkthroughs, browser progress, search, and Copy for AI
-- Browser localStorage for last section and completed lessons
-- Pinned public Ghostty source
-- Puppeteer browser audit
+- Starlight owns documentation chrome, navigation, Pagefind search, themes, typography, and accessibility defaults.
+- MDX content collections define reconstruction chapters and optional field guides.
+- Small Astro components render provenance, code snapshots, output, and dependency-frontier diagrams.
+- Vue islands provide browser progress, interactive walkthroughs, and Copy for AI.
+- Puppeteer audits responsive layouts, themes, progress, copy output, redirects, and interactions.
 
-No learner-facing server, account, database, CLI, agent, or native runtime is required.
+No learner-facing server, account, database, CLI, or AI is required.
 
-## Implementation and visual provenance
+## Reconstruction provenance
 
-Learn Ghostty chapters are paired with named commits or tags in `b1tank/ghostty-from-scratch`. Code snippets, terminal output, diagrams, screenshots, and recordings identify the reconstruction revision they describe.
+A published chapter is paired with a named tag or commit in `ghostty-from-scratch`. Public snapshots live under `src/data/reconstruction/<chapter>/` with a manifest containing reconstruction revision, pinned upstream revision, fidelity status, and hashes.
 
-Real implementation artifacts live under a predictable chapter path, with capture metadata and scripts when needed. Text output may be rendered directly from committed fixtures; GUI screenshots and recordings must come from the running reconstruction. This keeps the public lesson trustworthy even while the companion repository and upstream Ghostty evolve.
+Text output is rendered from committed fixtures. GUI screenshots and recordings must come from the tagged running reconstruction and include capture metadata. Mockups are not implementation evidence.
 
 ## Source of truth
 
-Each `src/content/docs/lessons/*.mdx` file defines order, title, description, duration, module, status, and source references. Starlight renders published lessons and owns navigation/search/theme chrome; Astro derives the homepage roadmap and AI Markdown from the same docs collection.
+- `src/content/docs/chapters/*.mdx` — reconstruction curriculum;
+- `src/content/docs/field-guides/*.mdx` — optional integration stories;
+- `src/data/reconstruction/` — allowlisted public snapshots and artifacts;
+- `src/content.config.ts` — shared metadata schema.
+
+Draft chapters remain unbuilt and unlinked until their implementation checkpoint and visual proof exist.
 
 ## Routes
 
 - `/`
+- `/chapters/<id>`
+- `/field-guides/<id>`
 - `/course-map`
 - `/source`
-- `/lessons/<id>`
 - `/ai/lessons/<id>.md`
+
+Legacy `/lessons/*` paths redirect to the appropriate chapter or field guide.
 
 ## Browser progress
 
-`src/lib/progressStore.js` records only:
-
-- current lesson and section
-- last section per lesson
-- explicitly completed lessons
-- timestamps
-
-Restart offers export before deletion. No grading or evidence model exists.
-
-## Copy for AI
-
-The Vue island uses a body-level Teleport and collision-aware fixed popup. It produces neutral current-section context with clean Markdown, URLs, progress, pinned source, `~/learn-ghostty`, `~/ghostty`, and an empty question field.
+`src/lib/progressStore.js` stores the current chapter and section, last section per entry, explicitly completed entries, and timestamps. Progress is local to the browser; there is no grading or evidence gate.
 
 ## Publishing
 

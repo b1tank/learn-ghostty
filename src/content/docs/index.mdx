@@ -1,21 +1,19 @@
 ---
 title: Learn Ghostty
-description: Understand Ghostty from PTY bytes to GPU pixels through complete user scenarios.
+description: Reconstruct Ghostty one understandable subsystem at a time.
 template: splash
 pagefind: false
 hero:
-  title: Understand Ghostty, from PTY bytes to GPU pixels.
-  tagline: A scenario-driven course for experienced engineers who are new to terminal internals. Start with commands you already use, follow the data through hardware and software, then connect each boundary to Ghostty source.
+  title: Rebuild Ghostty. Understand every piece.
+  tagline: Start with one Zig process. Add the App, PTY, parser, terminal state, native window, fonts, and GPU only when the previous version reaches a limitation.
   actions:
-    - text: Start learning
-      link: ./lessons/00-open-ghostty/
+    - text: Start Chapter 00
+      link: ./chapters/00-process-exists/
       icon: right-arrow
-    - text: See the roadmap
-      link: "#roadmap"
+    - text: See the method
+      link: "#how-this-works"
       variant: minimal
 ---
-import HomePage from '../../components/HomePage.astro';
-import SystemMap from '../../components/SystemMap.astro';
+import ReconstructionHome from '../../components/ReconstructionHome.astro';
 
-<SystemMap />
-<HomePage />
+<ReconstructionHome />

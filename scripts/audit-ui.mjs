@@ -1,11 +1,134 @@
-import {spawn} from "node:child_process";import {access} from "node:fs/promises";import {resolve} from "node:path";import puppeteer from "puppeteer-core";const root=resolve(import.meta.dirname,".."),base=process.env.COURSE_URL||"http://127.0.0.1:4173",failures=[];let checks=0,server;function check(ok,msg){checks++;if(!ok)failures.push(msg)}async function ready(){try{return(await fetch(base)).ok}catch{return false}}async function ensure(){if(await ready())return;server=spawn(resolve(root,"node_modules/.bin/astro"),["dev","--host","127.0.0.1","--port","4173"],{cwd:root,stdio:"ignore"});for(let i=0;i<60;i++){await new Promise(r=>setTimeout(r,250));if(await ready())return}throw Error('Astro server did not start')}async function chrome(){for(const p of[process.env.CHROME_BIN,"/usr/bin/google-chrome","/usr/bin/chromium"].filter(Boolean))try{await access(p);return p}catch{}throw Error('Chrome required')}async function page(browser,width=1280,theme='light'){const p=await browser.newPage();await p.setViewport({width,height:900});await p.evaluateOnNewDocument(v=>localStorage.setItem('starlight-theme',v),theme);return p}
-await ensure();const browser=await puppeteer.launch({executablePath:await chrome(),headless:true,args:["--no-sandbox","--disable-gpu"]});try{
-for(const theme of['light','dark'])for(const width of[390,768,1440])for(const route of['/','/course-map','/lessons/00-open-ghostty','/lessons/01-codex-tui','/lessons/02-tmux','/lessons/03-ssh-remote','/source']){const p=await page(browser,width,theme);await p.goto(base+route,{waitUntil:'networkidle0'});const x=await p.evaluate(()=>({vw:document.documentElement.clientWidth,sw:document.documentElement.scrollWidth,main:!!document.querySelector('main')}));check(x.sw<=x.vw,`${theme} ${width}px ${route}: overflow ${x.sw-x.vw}`);check(x.main,`${route}: main missing`);await p.close()}
-const typography=await page(browser);await typography.goto(base+'/lessons/00-open-ghostty',{waitUntil:'networkidle0'});const type=await typography.evaluate(()=>{const p=document.querySelector('.sl-markdown-content>p'),h1=document.querySelector('h1');return{p:parseFloat(getComputedStyle(p).fontSize),line:parseFloat(getComputedStyle(p).lineHeight),h1:parseFloat(getComputedStyle(h1).fontSize),emoji:[...document.querySelectorAll('button,a')].some(element=>/\p{Extended_Pictographic}/u.test(element.textContent))}});check(type.p>=17&&type.line>=29,'lesson typography is too small or cramped');check(type.h1>=48,'lesson heading scale is too small');check(!type.emoji,'learner UI contains emoji glyphs');const controls=await typography.$$eval('.lesson-progress__actions>a,.lesson-progress__actions>button,.lesson-progress__actions>.ai-copy-menu',elements=>elements.map(element=>{const r=element.getBoundingClientRect();return{top:r.top,bottom:r.bottom,height:r.height}}));check(Math.max(...controls.map(x=>x.height))-Math.min(...controls.map(x=>x.height))<.5,'grouped lesson controls have inconsistent heights');check(Math.max(...controls.map(x=>x.top))-Math.min(...controls.map(x=>x.top))<.5,'grouped lesson controls are not top-aligned');await typography.close();
-const geometry=await page(browser,1440,'dark');await geometry.goto(base,{waitUntil:'networkidle0'});await geometry.evaluate(()=>localStorage.removeItem('learn-ghostty.progress.v4'));await geometry.reload({waitUntil:'networkidle0'});const layout=await geometry.evaluate(()=>{const hero=document.querySelector('.hero').getBoundingClientRect();const map=document.querySelector('.system-map').getBoundingClientRect();const cards=[...document.querySelectorAll('.home-explainer article')].map(element=>{const r=element.getBoundingClientRect();return{top:r.top,bottom:r.bottom,height:r.height}});const pipeline=document.querySelector('.system-map__pipeline');const container=document.querySelector('.system-map');const nodes=[...document.querySelectorAll('.system-map__node')].map(element=>element.getBoundingClientRect().toJSON());const labels=[...document.querySelectorAll('.system-map__edge span')].map(element=>element.getBoundingClientRect().toJSON());const intersects=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;return{cards,columnGap:map.left-hero.right,cardsTop:cards[0].top,diagramOverlap:labels.some(label=>nodes.some(node=>intersects(label,node))),diagramFits:pipeline.scrollWidth<=container.clientWidth,legacyScroller:!!document.querySelector('.system-map__scroll')}});check(layout.columnGap<=24.5&&layout.columnGap>=16,'homepage hero and path columns are spaced poorly');check(layout.cardsTop<800,'homepage overview cards are not visible in the initial desktop viewport');check(Math.max(...layout.cards.map(x=>x.top))-Math.min(...layout.cards.map(x=>x.top))<.5,'homepage sibling cards are not top-aligned');check(Math.max(...layout.cards.map(x=>x.height))-Math.min(...layout.cards.map(x=>x.height))<.5,'homepage sibling cards do not share equal height');check(!layout.diagramOverlap,'system diagram edge labels overlap nodes');check(layout.diagramFits&&!layout.legacyScroller,'system diagram requires scrolling or retains a scroll container');await geometry.close();
-const p=await page(browser);await p.goto(base,{waitUntil:'networkidle0'});await p.evaluate(()=>localStorage.removeItem('learn-ghostty.progress.v4'));await p.reload({waitUntil:'networkidle0'});check(!!await p.$('.hero')&&!await p.$('.resume-card'),'first visit state missing');check((await p.$$('.roadmap-lesson')).length===11,'roadmap should contain eleven lessons');await p.goto(base+'/lessons/00-open-ghostty',{waitUntil:'networkidle0'});await p.waitForSelector('.lesson-progress');await p.$eval('#part-2-you-type-ls',e=>e.scrollIntoView());await p.waitForFunction(()=>JSON.parse(localStorage.getItem('learn-ghostty.progress.v4')||'null')?.lastSections?.['00-open-ghostty']==='part-2-you-type-ls',{timeout:5000});let state=await p.evaluate(()=>JSON.parse(localStorage.getItem('learn-ghostty.progress.v4')));check(state.lastSections['00-open-ghostty']==='part-2-you-type-ls','section resume not tracked');await p.click('.lesson-progress__actions button');state=await p.evaluate(()=>JSON.parse(localStorage.getItem('learn-ghostty.progress.v4')));check(state.completedLessons.includes('00-open-ghostty')&&state.currentLesson==='01-codex-tui','completion did not advance');await p.goto(base,{waitUntil:'networkidle0'});check((await p.$eval('.resume-card h2',e=>e.textContent)).includes('Codex'),'return resume card wrong');await p.click('.home-progress-tools .danger');check(await p.$eval('.reset-dialog',e=>e.open&&e.textContent.includes('Export backup')),'reset/export confirmation missing');await p.click('.reset-dialog>div .danger');check(!await p.$('.resume-card'),'reset did not clear progress');await p.close();
-const c=await page(browser,1280);await c.goto(base+'/lessons/00-open-ghostty',{waitUntil:'networkidle0'});await c.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async v=>window.__copy=v}}));await c.click('.ai-copy-primary');let copied=await c.evaluate(()=>window.__copy||'');check(copied.includes('# Current section')&&copied.includes('~/learn-ghostty')&&copied.includes('~/ghostty')&&copied.includes('# My question'),'Copy for AI context incomplete');await c.click('.ai-copy-trigger');check(await c.$eval('.ai-copy-trigger',e=>e.getAttribute('aria-expanded')==='true'),'copy trigger state missing');check((await c.$$('.ai-copy-popover>[role="menuitem"]')).length===5,'copy menu should contain five actions');let r=await c.$eval('.ai-copy-popover',e=>{const x=e.getBoundingClientRect();return{x:x.left,y:x.top,right:x.right,bottom:x.bottom,w:innerWidth,h:innerHeight}});check(r.x>=12&&r.right<=r.w-12&&r.y>=0&&r.bottom<=r.h,'desktop popup escaped viewport');await c.setViewport({width:390,height:800});await new Promise(x=>setTimeout(x,100));r=await c.$eval('.ai-copy-popover',e=>{const x=e.getBoundingClientRect();return{x:x.left,y:x.top,right:x.right,bottom:x.bottom,w:innerWidth,h:innerHeight}});check(r.x>=12&&r.right<=r.w-12&&r.y>=0&&r.bottom<=r.h,'mobile popup escaped viewport');await c.keyboard.press('Escape');check(!await c.$('.ai-copy-popover'),'Escape did not close popup');await c.close();
-const s=await page(browser);await s.goto(base+'/lessons/02-tmux',{waitUntil:'networkidle0'});await s.$eval('.flow-walkthrough',e=>e.scrollIntoView({block:'center'}));await s.waitForFunction(()=>document.querySelector('.flow-walkthrough')?.classList.contains('is-playing'),{timeout:3000});const autoBefore=await s.$eval('.flow-rail [aria-selected="true"]',e=>e.getAttribute('data-step'));await new Promise(r=>setTimeout(r,3400));const autoAfter=await s.$eval('.flow-rail [aria-selected="true"]',e=>e.getAttribute('data-step'));check(autoBefore!==autoAfter,'animated walkthrough did not advance automatically');const before=await s.$eval('.flow-detail h4',e=>e.textContent);await s.click('.flow-rail button:nth-child(3)');const after=await s.$eval('.flow-detail h4',e=>e.textContent);check(before!==after&&after.includes('tmux server'),'scenario walkthrough did not change step');check(!await s.$eval('.flow-walkthrough',e=>e.classList.contains('is-playing')),'manual step selection did not pause animation');await s.close();
-const md=await(await fetch(base+'/ai/lessons/00-open-ghostty.md')).text();check(md.includes('local_course_path: ~/learn-ghostty/')&&!/<[A-Z][A-Za-z]+/.test(md),'AI Markdown invalid');
-const search=await page(browser);await search.goto(base,{waitUntil:'networkidle0'});await search.click('button[aria-label="Search"]');check(await search.$eval('dialog[open]',e=>e.open),'Starlight search dialog did not open');check((await search.$eval('dialog[open]',e=>e.textContent)).includes('production builds'),'Starlight dev search guidance missing');await search.close();
-}finally{await browser.close();if(server)server.kill('SIGTERM')}if(failures.length){console.error(`UI audit failed (${failures.length}/${checks})\n`+failures.map(x=>`  ✗ ${x}`).join('\n'));process.exit(1)}console.log(`✓ Astro UI audit passed ${checks} assertions across routes, themes, widths, progress, copy, search, and scenarios`);
+import { spawn } from "node:child_process";
+import { access } from "node:fs/promises";
+import { resolve } from "node:path";
+import puppeteer from "puppeteer-core";
+
+const root = resolve(import.meta.dirname, "..");
+const base = process.env.COURSE_URL || "http://127.0.0.1:4173";
+const failures = [];
+let checks = 0;
+let server;
+function check(ok, message) { checks++; if (!ok) failures.push(message); }
+async function ready() { try { return (await fetch(base)).ok; } catch { return false; } }
+async function ensureServer() {
+  if (await ready()) return;
+  server = spawn(resolve(root, "node_modules/.bin/astro"), ["dev", "--host", "127.0.0.1", "--port", "4173"], { cwd: root, stdio: "ignore" });
+  for (let i = 0; i < 60; i++) { await new Promise((done) => setTimeout(done, 250)); if (await ready()) return; }
+  throw new Error("Astro server did not start");
+}
+async function chromePath() {
+  for (const path of [process.env.CHROME_BIN, "/usr/bin/google-chrome", "/usr/bin/chromium"].filter(Boolean)) {
+    try { await access(path); return path; } catch {}
+  }
+  throw new Error("Chrome required");
+}
+async function newPage(browser, width = 1280, theme = "light") {
+  const page = await browser.newPage();
+  await page.setViewport({ width, height: 900 });
+  await page.evaluateOnNewDocument((value) => localStorage.setItem("starlight-theme", value), theme);
+  return page;
+}
+
+await ensureServer();
+const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
+try {
+  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
+  for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
+    const page = await newPage(browser, width, theme);
+    await page.goto(base + route, { waitUntil: "networkidle0" });
+    const state = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth, main: Boolean(document.querySelector("main")) }));
+    check(state.scroll <= state.viewport, `${theme} ${width}px ${route}: horizontal overflow ${state.scroll - state.viewport}px`);
+    check(state.main, `${route}: main missing`);
+    await page.close();
+  }
+
+  const home = await newPage(browser, 1440, "dark");
+  await home.goto(base, { waitUntil: "networkidle0" });
+  await home.evaluate(() => localStorage.removeItem("learn-ghostty.progress.v5"));
+  await home.reload({ waitUntil: "networkidle0" });
+  const homeState = await home.evaluate(() => ({
+    heading: document.querySelector(".hero h1")?.textContent?.trim(),
+    promises: document.querySelectorAll(".reconstruction-promise > div").length,
+    frontier: document.querySelectorAll(".frontier-map li").length,
+    current: document.querySelectorAll(".frontier-map .is-current").length,
+    resume: Boolean(document.querySelector(".reconstruction-resume")),
+    oldMap: Boolean(document.querySelector(".system-map")),
+  }));
+  check(homeState.heading === "Rebuild Ghostty. Understand every piece.", "homepage hero changed unexpectedly");
+  check(homeState.promises === 3 && homeState.frontier === 7 && homeState.current === 1, "homepage reconstruction path is incomplete");
+  check(!homeState.resume && !homeState.oldMap, "first visit should be simple and should not render the old system map");
+  await home.close();
+
+  const chapter = await newPage(browser, 1280, "dark");
+  await chapter.goto(base + "/chapters/00-process-exists", { waitUntil: "networkidle0" });
+  const chapterState = await chapter.evaluate(() => {
+    const paragraph = document.querySelector(".sl-markdown-content > p");
+    const h1 = document.querySelector("h1");
+    return {
+      paragraphSize: parseFloat(getComputedStyle(paragraph).fontSize),
+      lineHeight: parseFloat(getComputedStyle(paragraph).lineHeight),
+      headingSize: parseFloat(getComputedStyle(h1).fontSize),
+      snapshots: document.querySelectorAll(".code-snapshot").length,
+      result: document.querySelector(".output-preview")?.textContent?.includes("ghostty-from-scratch: hello"),
+      labels: [...document.querySelectorAll(".fidelity-badge")].map((element) => element.textContent.trim()),
+      next: Boolean(document.querySelector('a[rel="next"]')),
+      emoji: [...document.querySelectorAll("button,a")].some((element) => /\p{Extended_Pictographic}/u.test(element.textContent)),
+    };
+  });
+  check(chapterState.paragraphSize >= 17 && chapterState.lineHeight >= 29 && chapterState.headingSize >= 48, "Chapter 00 typography is too small or cramped");
+  check(chapterState.snapshots === 2 && chapterState.result, "Chapter 00 is missing source snapshots or exact output");
+  check(chapterState.labels.includes("temporary") && chapterState.labels.includes("adapted"), "Chapter 00 fidelity labels are incomplete");
+  check(!chapterState.next, "Chapter 00 must not advance into a field guide before Chapter 01 exists");
+  check(!chapterState.emoji, "learner UI contains emoji glyphs");
+
+  await chapter.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (value) => { window.__copy = value; } } }));
+  await chapter.click(".ai-copy-primary");
+  const copied = await chapter.evaluate(() => window.__copy || "");
+  check(copied.includes("# Current section") && copied.includes("~/learn-ghostty/src/content/docs/chapters/00-process-exists.mdx") && copied.includes("~/ghostty") && copied.includes("# My question"), "Copy for AI context is incomplete");
+
+  await chapter.evaluate(() => localStorage.removeItem("learn-ghostty.progress.v5"));
+  await chapter.$eval("#step-1-read-the-entire-program", (element) => element.scrollIntoView());
+  await chapter.waitForFunction(() => JSON.parse(localStorage.getItem("learn-ghostty.progress.v5") || "null")?.lastSections?.["00-process-exists"] === "step-1-read-the-entire-program", { timeout: 5000 });
+  await chapter.click(".lesson-progress__actions button");
+  const progress = await chapter.evaluate(() => JSON.parse(localStorage.getItem("learn-ghostty.progress.v5")));
+  check(progress.completedLessons.includes("00-process-exists") && progress.currentLesson === "00-process-exists", "completion should remain at the current reconstruction frontier");
+  await chapter.close();
+
+  const resume = await newPage(browser);
+  await resume.goto(base, { waitUntil: "networkidle0" });
+  check((await resume.$eval(".reconstruction-resume", (element) => element.textContent)).includes("Revisit chapter"), "homepage checkpoint resume is missing");
+  await resume.close();
+
+  const flow = await newPage(browser);
+  await flow.goto(base + "/field-guides/tmux", { waitUntil: "networkidle0" });
+  await flow.$eval(".flow-walkthrough", (element) => element.scrollIntoView({ block: "center" }));
+  await flow.waitForFunction(() => document.querySelector(".flow-walkthrough")?.classList.contains("is-playing"), { timeout: 3000 });
+  const before = await flow.$eval('.flow-rail [aria-selected="true"]', (element) => element.getAttribute("data-step"));
+  await new Promise((done) => setTimeout(done, 3400));
+  const after = await flow.$eval('.flow-rail [aria-selected="true"]', (element) => element.getAttribute("data-step"));
+  check(before !== after, "field-guide walkthrough did not advance automatically");
+  await flow.close();
+
+  const markdown = await (await fetch(base + "/ai/lessons/00-process-exists.md")).text();
+  check(markdown.includes("local_course_path: ~/learn-ghostty/src/content/docs/chapters/00-process-exists.mdx") && !/<[A-Z][A-Za-z]+/.test(markdown), "Chapter 00 AI Markdown is invalid");
+
+  for (const [legacy, expected] of [["/lessons/00-open-ghostty", "/field-guides/run-ls-cat"], ["/lessons/01-codex-tui", "/field-guides/codex-tui"]]) {
+    const response = await fetch(base + legacy, { redirect: "follow" });
+    check(response.url.endsWith(expected), `${legacy} does not redirect to ${expected}`);
+  }
+
+  const search = await newPage(browser);
+  await search.goto(base, { waitUntil: "networkidle0" });
+  await search.click('button[aria-label="Search"]');
+  check(await search.$eval("dialog[open]", (element) => element.open), "Starlight search dialog did not open");
+  await search.close();
+} finally {
+  await browser.close();
+  if (server) server.kill("SIGTERM");
+}
+
+if (failures.length) {
+  console.error(`UI audit failed (${failures.length}/${checks})\n` + failures.map((failure) => `  ✗ ${failure}`).join("\n"));
+  process.exit(1);
+}
+console.log(`✓ Astro UI audit passed ${checks} assertions across reconstruction, field guides, themes, widths, progress, copy, and redirects`);

@@ -1,0 +1,256 @@
+---
+title: "Chapter 00: A process exists"
+description: Build one Zig executable, understand every line, and produce the first visible output before introducing any terminal-emulator machinery.
+order: 0
+module: Reconstruction
+status: published
+duration: 15–25 minutes
+sidebar:
+  order: 0
+next: false
+sourceRefs:
+  - path: src/main.zig
+    line: 1
+    end: 28
+    label: Current Ghostty entrypoint router
+    purpose: See how the production executable selects a generated entrypoint after the simple process bootstrap is understood.
+  - path: src/main_ghostty.zig
+    line: 25
+    end: 112
+    label: Current Ghostty application startup
+    purpose: Preview the application, runtime, and event-loop responsibilities that later chapters reconstruct one at a time.
+---
+import CodeSnapshot from '../../../components/CodeSnapshot.astro';
+import FidelityLegend from '../../../components/FidelityLegend.astro';
+import FrontierMap from '../../../components/FrontierMap.astro';
+import OutputPreview from '../../../components/OutputPreview.astro';
+import ProcessBirthDiagram from '../../../components/ProcessBirthDiagram.astro';
+import SourceLink from '../../../components/SourceLink.vue';
+import LessonActions from '../../../components/LessonActions.astro';
+
+<LessonActions entryId="chapters/00-process-exists" />
+
+## What you will see
+
+The first result is intentionally tiny. You will compile a Zig executable, start a process, reach `main`, and write one visible line.
+
+<OutputPreview
+  file="src/data/reconstruction/chapter-00/output.txt"
+  title="The first observable result"
+  tag="chapter-00-bootstrap"
+  caption="Captured from the tagged reconstruction with Zig 0.16.0 on GitHub Actions Ubuntu. A decorative screenshot would add no information yet, so the exact output is the visual proof."
+/>
+
+No shell, PTY, parser, terminal state, native window, font system, or GPU renderer has been added. Those omissions are the point.
+
+<ProcessBirthDiagram />
+
+## The dependency frontier
+
+A dependency frontier separates code you can explain today from systems that do not exist yet.
+
+<FrontierMap current="Process entry" />
+
+Do not solve future problems early. Chapter 01 introduces an App lifecycle only after one function has become an obvious ownership bottleneck.
+
+## The repository at this checkpoint
+
+```text
+ghostty-from-scratch/
+├── build.zig
+├── build.zig.zon
+└── src/
+    └── main.zig
+```
+
+The checkpoint is the annotated tag:
+
+```text
+chapter-00-bootstrap
+```
+
+The public chapter is pinned to reconstruction commit:
+
+```text
+00b751fbfd354a645a178542ba47bafb64e7b6df
+```
+
+## Step 1: read the entire program
+
+<CodeSnapshot
+  file="src/data/reconstruction/chapter-00/main.zig"
+  label="src/main.zig"
+  status="temporary"
+  reason="A minimal process bootstrap. Chapter 02 replaces it with Ghostty-shaped entrypoint routing."
+/>
+
+There are only five meaningful ideas.
+
+### Import the Zig standard library
+
+```zig
+const std = @import("std");
+```
+
+`@import` makes another Zig module available at compile time. `std` is only a local name. No runtime file loading occurs here.
+
+### Declare the process entrypoint
+
+```zig
+pub fn main() !void {
+```
+
+- `pub` makes the declaration visible as the executable entrypoint.
+- `fn` declares a function.
+- `main` is the entry function Zig uses for this executable.
+- `!void` means the function returns no value when successful but may return an error.
+
+We do not need the error capability yet, but retaining it gives later startup operations a natural way to fail.
+
+### Write bytes to standard error
+
+```zig
+std.debug.print("ghostty-from-scratch: hello\n", .{});
+```
+
+`std.debug.print` formats bytes and writes them to standard error. The empty tuple, `.{}`, means there are no formatting arguments.
+
+The newline is one byte:
+
+```text
+\n → 0A hexadecimal → line feed
+```
+
+Your existing terminal emulator—not this program—interprets and displays those bytes.
+
+## Step 2: understand the build graph
+
+<CodeSnapshot
+  file="src/data/reconstruction/chapter-00/build.zig"
+  label="build.zig"
+  status="adapted"
+  reason="It uses Ghostty's current minimum Zig version and modern Build API, but omits every production artifact and dependency beyond one executable."
+/>
+
+Read this file as a graph rather than line-by-line syntax:
+
+```text
+standard target + optimization
+            ↓
+       root Zig module
+            ↓
+         executable
+       ↙            ↘
+ install            run
+                      ↓
+                zig build run
+```
+
+The test step exists even though no tests have been introduced. It establishes the command shape later pure modules will use.
+
+## Step 3: run exactly one behavior
+
+From the reconstruction repository:
+
+```console
+cd ~/ghostty-from-scratch
+zig build run
+```
+
+Expected output:
+
+```text
+ghostty-from-scratch: hello
+```
+
+If Zig is missing or not version `0.16.0`, fix the toolchain first. Do not interpret a toolchain error as a terminal-emulator lesson.
+
+## Fidelity labels
+
+<FidelityLegend />
+
+For this chapter:
+
+| File | Status | Why |
+|---|---|---|
+| `src/main.zig` | temporary | Simpler than any production Ghostty entrypoint; removed after entry routing is reconstructed |
+| `build.zig` | adapted | Current Zig Build API, but only one artifact and no generated configuration |
+| `build.zig.zon` | adapted | Correct package metadata and Zig version, without Ghostty’s production dependency set |
+
+Nothing is labeled exact yet.
+
+## How Ghostty began historically
+
+Ghostty’s earliest repository commit did not yet contain `src/main.zig`. A few commits later, the first main function initialized GLFW:
+
+```zig
+const std = @import("std");
+const c = @import("glfw/c.zig");
+
+pub fn main() !void {
+    if (c.glfwInit() != c.GLFW_TRUE) return error.GlfwInitFailed;
+    defer c.glfwTerminate();
+}
+```
+
+Historical source:
+
+- [`b8cee0a: src/main.zig`](https://github.com/ghostty-org/ghostty/blob/b8cee0a39eaeda11622d4e2ced44fccfcd702203/src/main.zig)
+- [`cc4d378: first window loop`](https://github.com/ghostty-org/ghostty/blob/cc4d37804f7a5298551acaffe361ceced83cc323/src/main.zig)
+
+The historical project moved toward a native window very quickly. Our reconstruction starts one step earlier so the process/build boundary is explicit before adding a windowing dependency.
+
+## Compare with current Ghostty
+
+Current Ghostty’s `main.zig` is mostly an entrypoint router selected by generated build configuration.
+
+<SourceLink
+  client:load
+  base={import.meta.env.BASE_URL}
+  sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699"
+  path="src/main.zig"
+  line={1}
+  end={28}
+  label="Current Ghostty entrypoint routing"
+  note="Read only the entrypoint switch and exported main. Ignore generated configuration details until Chapter 02."
+/>
+
+Then `main_ghostty.zig` initializes global state, creates the shared App, creates the selected runtime, and enters the GUI event loop.
+
+<SourceLink
+  client:load
+  base={import.meta.env.BASE_URL}
+  sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699"
+  path="src/main_ghostty.zig"
+  line={80}
+  end={112}
+  label="Current App and runtime startup"
+  note="Preview the nouns only: App, runtime App, startQuitTimer, and run. Later chapters earn each one."
+/>
+
+The production code is not “better Hello World.” It solves many problems we have not encountered yet. We will reconstruct those responsibilities when each becomes necessary.
+
+## Your checkpoint
+
+After you can explain the program and build graph, make your own commit. The reference checkpoint is:
+
+```console
+git tag chapter-00-bootstrap
+```
+
+Your commit message can use your own words. The tag matters because future website snippets and visuals need a stable implementation revision.
+
+## The next limitation
+
+`main` currently owns the entire lifetime of the program. As soon as startup, state, and cleanup grow, one function becomes a poor owner.
+
+Chapter 01 will introduce the smallest App lifecycle:
+
+```text
+main
+→ App.create
+→ App.run
+→ App.destroy
+```
+
+It will remain headless. No PTY, parser, or window will be introduced yet.

@@ -1,8 +1,6 @@
 export const moduleInfo = {
-  "Scenarios": "Begin with complete user journeys before zooming into individual layers.",
-  "Core pipeline": "Understand the machinery already encountered in the scenarios.",
-  "Native product": "Follow input and platform behavior around the shared Ghostty core.",
-  "Maintainer practice": "Turn traces into tests, fixes, benchmarks, and responsible contributions."
+  "Reconstruction": "Rebuild Ghostty from a single process, moving the dependency frontier only when the previous version reaches a limitation.",
+  "Field guides": "Complete integration stories for ls, Codex, tmux, and SSH. Useful references, but no longer the primary sequence."
 };
 
-export const moduleOrder = ["Scenarios", "Core pipeline", "Native product", "Maintainer practice"];
+export const moduleOrder = ["Reconstruction", "Field guides"];

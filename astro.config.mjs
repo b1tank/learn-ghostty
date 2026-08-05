@@ -19,7 +19,8 @@ export default defineConfig({
       tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
       editLink: { baseUrl: "https://github.com/b1tank/learn-ghostty/edit/main/src/content/docs/" },
       sidebar: [
-        { label: "Scenarios", items: ["lessons/00-open-ghostty", "lessons/01-codex-tui", "lessons/02-tmux", "lessons/03-ssh-remote"] },
+        { label: "Rebuild Ghostty", items: ["chapters/00-process-exists"] },
+        { label: "Field guides", items: ["field-guides/run-ls-cat", "field-guides/codex-tui", "field-guides/tmux", "field-guides/ssh-remote"] },
         { label: "Course", items: ["course-map"] },
         { label: "Tools", items: ["source"] }
       ]

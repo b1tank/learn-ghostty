@@ -1,9 +1,9 @@
 import { ref } from "vue";
 
-const key = "learn-ghostty.progress.v4";
+const key = "learn-ghostty.progress.v5";
 export const progressState = ref(null);
 
-function empty() { return { version: 4, currentLesson: null, currentSection: "welcome", lastSections: {}, completedLessons: [], startedAt: null, updatedAt: null }; }
+function empty() { return { version: 5, currentLesson: null, currentSection: "welcome", lastSections: {}, completedLessons: [], startedAt: null, updatedAt: null }; }
 export function loadProgress() {
   if (progressState.value) return progressState.value;
   try { progressState.value = { ...empty(), ...JSON.parse(localStorage.getItem(key) || "null") }; }
@@ -26,7 +26,7 @@ export function completeLesson(lessonId, lessons) {
   const state = loadProgress();
   if (!state.completedLessons.includes(lessonId)) state.completedLessons.push(lessonId);
   const current = lessons.find((item) => item.id === lessonId);
-  const next = lessons.find((item) => item.status === "published" && item.order > current.order);
+  const next = lessons.find((item) => item.status === "published" && item.module === current.module && item.order > current.order);
   if (next) { state.currentLesson = next.id; state.currentSection = state.lastSections[next.id] || "welcome"; }
   persist();
 }

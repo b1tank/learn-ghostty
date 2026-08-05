@@ -4,20 +4,21 @@
 
 Write for an experienced engineer with no assumed knowledge of terminal hardware, PTYs, VT protocols, Zig, font shaping, GPU rendering, GTK, SwiftUI, tmux, or SSH internals.
 
-## Lesson sequence
+## Chapter sequence
 
 ```text
-user action
-→ visible result
-→ data moving at each boundary
-→ component responsible
-→ necessary technical term
-→ analogy and its limit
-→ narrow Ghostty source read
-→ optional deeper detail
+visible result
+→ limitation in the previous checkpoint
+→ smallest code delta
+→ exact command or action
+→ captured output, state, screenshot, or recording
+→ explanation of each new boundary
+→ historical Ghostty comparison
+→ current pinned Ghostty comparison
+→ stable chapter tag
 ```
 
-Do not begin with a glossary or architecture inventory.
+Do not begin with a glossary, architecture inventory, or finished production implementation. Introduce a subsystem only after the learner can see why the previous version needs it.
 
 ## Diagrams and graphs
 
@@ -78,11 +79,11 @@ Name concrete representations: hardware event, platform key event, UTF-8 bytes, 
 
 ## Analogy
 
-The primary scalable analogy is a live sports broadcast: producers, remote feeds, control rooms, graphics rundown, compositor, and viewer. Use it for roles and routing. Always explain that software follows deterministic byte protocols rather than human semantic intent.
+Use an analogy only when it makes one unfamiliar boundary easier to predict. State where it stops matching the software. Do not force one course-wide metaphor onto process startup, PTYs, parser state, GPU rendering, and native runtimes when concrete bytes and owners are clearer.
 
 ## Source references
 
-Every excerpt states what to read, what to ignore, and the architectural question it answers. Include immutable GitHub and `~/ghostty` paths. Link official Ghostty documentation for authoritative behavior and policy.
+Every excerpt states what to read, what to ignore, and the architectural question it answers. Include immutable GitHub and `~/ghostty` paths. When useful, show both the early commit where the responsibility first appeared and the pinned current implementation. Link official Ghostty documentation for authoritative behavior and policy.
 
 ## Visual design
 
