@@ -6,23 +6,23 @@ Make consecutive buttons, links, and cards align predictably across every Learn 
 
 ## Prioritized tasks
 
-- [ ] **1. Normalize consecutive control and card geometry**
+- [x] **1. Normalize consecutive control and card geometry**
   - Audit every component-owned action row and repeated card/grid sequence.
   - Give sibling controls one shared height, inline alignment, wrapping behavior, and icon-safe spacing.
   - Stretch cards within each grid row and keep card content anchored consistently without crushing text at narrow article widths.
 
-- [ ] **2. Add recognizable icons to repeated actions and navigation**
+- [x] **2. Add recognizable icons to repeated actions and navigation**
   - Add decorative, accessible SVG icons to source actions, lesson actions, chapter navigation, reconstruction resume actions, and data-flow previous/next controls.
   - Preserve visible labels and existing accessible names; icons supplement rather than replace text.
   - Keep icon sizing and alignment shared instead of introducing component-specific drift.
 
-- [ ] **3. Add regression coverage for alignment and icon affordances**
+- [x] **3. Add regression coverage for alignment and icon affordances**
   - Extend the browser audit to check action-control heights, top alignment, repeated-card geometry, icon presence, and narrow-width wrapping on representative routes.
   - Cover desktop, constrained desktop article width, and mobile behavior.
 
 - [ ] **4. Run publication gates and deploy**
-  - Run `npm run check`, `npm run audit:ui`, and `npm run build`.
-  - Push the focused commits to the current branch so the existing GitHub Pages workflow deploys the update.
+  - [x] Run `npm run check`, `npm run audit:ui`, and `npm run build`.
+  - [ ] Push the focused commits to the current branch so the existing GitHub Pages workflow deploys the update.
 
 ## Definition of done
 
@@ -34,4 +34,8 @@ Make consecutive buttons, links, and cards align predictably across every Learn 
 
 ## Hiccups & Notes
 
-- None yet.
+- The first full browser audit exceeded the initial 180-second command timeout because it now checks 18 routes across two themes and three viewport widths. Re-running with a 600-second allowance completed successfully with 709 assertions.
+- Shared control geometry now covers lesson, source, reconstruction, data-flow, and commit-history action rows. Grid cards explicitly stretch within rows and collapse to aligned single-column cards at narrow widths.
+- Functional SVG icons supplement—rather than replace—visible labels in action rows, Copy for AI options, chapter navigation, roadmap states, and the homepage method cards.
+- Final local publication gates pass: `npm run check`, `npm run audit:ui`, and `npm run build`.
+- The deployment push remains pending because repository policy requires explicit confirmation immediately before a public write.
