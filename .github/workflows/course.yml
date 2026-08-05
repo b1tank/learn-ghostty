@@ -24,6 +24,8 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - name: Fetch referenced historical Ghostty commits
+        run: node scripts/fetch-historical-source.mjs
       - run: npm ci
       - run: npm run check
       - run: npm run audit:ui

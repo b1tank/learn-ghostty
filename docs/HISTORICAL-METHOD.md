@@ -48,4 +48,4 @@ Historical code is not automatically the recommended design. Current code is not
 
 ## Validation
 
-`npm run check` verifies that every published reconstruction chapter has at least one historical reference and that each commit/path/range exists in the pinned Ghostty repository.
+`npm run check` verifies that every published reconstruction chapter has at least one historical reference and that each commit/path/range exists in the pinned Ghostty repository. CI runs `npm run fetch:history` first, fetching only referenced commits that are absent from its shallow submodule checkout.
