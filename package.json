@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev --host 127.0.0.1 --port 4173",
-    "build": "astro build",
+    "build": "astro build && node scripts/check-built-links.mjs",
     "preview": "astro preview --host 127.0.0.1 --port 4173",
     "check": "node scripts/check-course.mjs",
     "audit:ui": "node scripts/audit-ui.mjs"
