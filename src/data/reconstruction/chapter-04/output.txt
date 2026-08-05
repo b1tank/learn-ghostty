@@ -1,0 +1,17 @@
+$ zig build run
+[entry] ghostty
+[main] process started
+[app] created
+[runtime] initialized
+[surface 1] created
+[runtime] tick
+[child stdout]
+child: hello
+stdin_tty=no
+stdout_tty=no
+stderr_tty=no
+[child] exited 0
+[surface 1] destroyed
+[runtime] terminated
+[app] destroyed
+[main] process exiting

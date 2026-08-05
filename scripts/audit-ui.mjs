@@ -32,7 +32,7 @@ async function newPage(browser, width = 1280, theme = "light") {
 await ensureServer();
 const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
 try {
-  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
+  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
   for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
     const page = await newPage(browser, width, theme);
     await page.goto(base + route, { waitUntil: "networkidle0" });
@@ -159,11 +159,23 @@ try {
     lifetimes: document.querySelectorAll(".runtime-map li").length,
     history: document.querySelectorAll(".evolution-strip li").length,
     output: document.querySelector(".output-preview")?.textContent?.includes("[runtime] terminated"),
-    next: Boolean(document.querySelector('a[rel="next"]')),
+    next: document.querySelector('a[rel="next"]')?.getAttribute("href") ?? "",
   }));
   check(runtimeState.lifetimes === 4 && runtimeState.history === 3 && runtimeState.output, "Chapter 03 is missing runtime lifetimes, history, or output");
-  check(!runtimeState.next, "Chapter 03 should stop at the current published frontier");
+  check(runtimeState.next.includes("/chapters/04-child-process-pipes"), "Chapter 03 does not advance to Chapter 04");
   await runtime.close();
+
+  const pipes = await newPage(browser, 1280, "dark");
+  await pipes.goto(base + "/chapters/04-child-process-pipes", { waitUntil: "networkidle0" });
+  const pipesState = await pipes.evaluate(() => ({
+    streams: document.querySelectorAll(".pipe-test dl > div").length,
+    history: document.querySelectorAll(".evolution-strip li").length,
+    output: document.querySelector(".output-preview")?.textContent?.includes("stdout_tty=no"),
+    next: Boolean(document.querySelector('a[rel="next"]')),
+  }));
+  check(pipesState.streams === 3 && pipesState.history === 3 && pipesState.output, "Chapter 04 is missing the pipe experiment, history, or output");
+  check(!pipesState.next, "Chapter 04 should stop at the current published frontier");
+  await pipes.close();
 
   const flow = await newPage(browser);
   await flow.goto(base + "/field-guides/tmux", { waitUntil: "networkidle0" });
@@ -183,6 +195,8 @@ try {
   check(routingMarkdown.includes("[entry] ghostty") && routingMarkdown.includes("src/main_ghostty.zig") && !/<[A-Z][A-Za-z]+/.test(routingMarkdown), "Chapter 02 AI Markdown is invalid");
   const runtimeMarkdown = await (await fetch(base + "/ai/lessons/03-runtime-surface.md")).text();
   check(runtimeMarkdown.includes("[runtime] terminated") && runtimeMarkdown.includes("src/Surface.zig") && !/<[A-Z][A-Za-z]+/.test(runtimeMarkdown), "Chapter 03 AI Markdown is invalid");
+  const pipesMarkdown = await (await fetch(base + "/ai/lessons/04-child-process-pipes.md")).text();
+  check(pipesMarkdown.includes("stdout_tty=no") && pipesMarkdown.includes("src/Command.zig") && !/<[A-Z][A-Za-z]+/.test(pipesMarkdown), "Chapter 04 AI Markdown is invalid");
 
   for (const [legacy, expected] of [["/lessons/00-open-ghostty", "/field-guides/run-ls-cat"], ["/lessons/01-codex-tui", "/field-guides/codex-tui"]]) {
     const response = await fetch(base + legacy, { redirect: "follow" });

@@ -1,0 +1,17 @@
+{
+  "chapter": "04-child-process-pipes",
+  "title": "Child process through pipes",
+  "source_repository": "b1tank/ghostty-from-scratch",
+  "source_tag": "chapter-04-child-pipes",
+  "source_commit": "04e405b359961783f19875babf3f3ac05c12814a",
+  "upstream_repository": "ghostty-org/ghostty",
+  "upstream_commit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+  "output_sha256": "2276050b38b3e949203a36f28af01135d25203738269f30d2d3fa83592f42c34",
+  "files": [
+    { "path": "src/App.zig", "status": "adapted", "reason": "Carries allocator and std.Io into Surface ownership.", "sha256": "dd2f51855b04c41fef3d15165da61695239f2e8753cab8a808d42cadb085897c" },
+    { "path": "src/Command.zig", "status": "adapted", "reason": "Finite std.process.run wrapper with ordinary pipes.", "sha256": "a695e266a59126e25e70129fb6b997123e636307f49c48b86a6063440fc053d2" },
+    { "path": "src/Surface.zig", "status": "adapted", "reason": "Runs one deterministic child experiment; no PTY or persistent Termio.", "sha256": "272b2223c9b7b5e76cf796b4e520f1f3329a51ef2de10c43238bb26923125745" },
+    { "path": "src/apprt/headless.zig", "status": "temporary", "reason": "Starts the child from a teaching-only runtime tick.", "sha256": "fa92ed8f7e0bbab0d2cb3037abc4d0a274706f696446dcf2d0c42195fae0efef" },
+    { "path": "src/main_ghostty.zig", "status": "adapted", "reason": "Accepts std.process.Init so allocator and I/O capabilities reach the child boundary.", "sha256": "d8ec605d3606946a2e9253a0117f1754b75d3524cb1bc2d16398b35c8d719845" }
+  ]
+}

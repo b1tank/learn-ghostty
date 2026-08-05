@@ -1,0 +1,195 @@
+---
+title: "Chapter 04: Pipes are not a terminal"
+description: Launch a real child process from Surface, capture its output, and measure the terminal semantics ordinary pipes do not provide.
+order: 4
+module: Reconstruction
+status: published
+duration: 35–50 minutes
+sidebar:
+  order: 4
+next: false
+historyRefs:
+  - commit: 992d52fe81a3c8c6bbaff18273db15bce6941499
+    date: "2022-04-16"
+    path: src/Command.zig
+    line: 1
+    end: 121
+    label: First Ghostty Command
+    purpose: Read why standard ChildProcess was insufficient for attaching a shell to a PTY and why pre-exec control mattered.
+    context: Ghostty introduced custom subprocess control immediately after basic PTY opening because terminal setup required work between fork and exec.
+  - commit: 2cd51f0cc450fc05848201edbd777629a3c310ed
+    date: "2022-04-15"
+    path: src/Pty.zig
+    line: 1
+    end: 76
+    label: Basic PTY opening
+    purpose: See that Ghostty encountered the terminal-device boundary before its custom Command abstraction.
+    context: The initial PTY commit opened master and slave descriptors but did not yet execute the child command.
+sourceRefs:
+  - path: src/Command.zig
+    line: 1
+    end: 105
+    label: Current Command contract
+    purpose: Read the documented gaps in standard child spawning and the stream/pre-exec fields required by PTY setup.
+  - path: src/termio/Exec.zig
+    line: 1
+    end: 42
+    label: Current PTY subprocess backend
+    purpose: Preview where long-lived subprocess, PTY, and read-thread ownership accumulates after this finite experiment.
+---
+import CodeSnapshot from '../../../components/CodeSnapshot.astro';
+import EvolutionStrip from '../../../components/EvolutionStrip.astro';
+import FidelityLegend from '../../../components/FidelityLegend.astro';
+import FrontierMap from '../../../components/FrontierMap.astro';
+import LessonActions from '../../../components/LessonActions.astro';
+import OutputPreview from '../../../components/OutputPreview.astro';
+import PipeExperimentDiagram from '../../../components/PipeExperimentDiagram.astro';
+import SourceLink from '../../../components/SourceLink.vue';
+
+<LessonActions entryId="chapters/04-child-process-pipes" />
+
+## What you will see
+
+For the first time, the reconstruction launches another real process:
+
+<OutputPreview file="src/data/reconstruction/chapter-04/output.txt" title="A child runs, but none of its streams is a terminal" tag="chapter-04-child-pipes" caption="The shell itself evaluates -t for file descriptors 0, 1, and 2. All three results are measured behavior from the tagged checkpoint." />
+
+This is a successful process launch and a deliberately unsuccessful terminal session.
+
+## The question we must answer first
+
+Why not connect a shell with three ordinary pipes and call that a terminal?
+
+<PipeExperimentDiagram />
+
+A pipe is excellent byte transport. A terminal device additionally participates in kernel-managed terminal behavior: terminal modes, window size, sessions, controlling-terminal ownership, and foreground process groups.
+
+Until we measure the difference, adding a PTY would be unexplained machinery.
+
+<FrontierMap current="Child process + PTY" />
+
+The frontier marker names the problem area. This checkpoint stops on the pipe side; Chapter 05 crosses into the PTY side.
+
+## What Ghostty encountered historically
+
+Ghostty opened a basic PTY on April 15, 2022. The next day it introduced a custom `Command` because Zig's standard child abstraction did not expose the post-fork/pre-exec control required to attach a shell correctly.
+
+<EvolutionStrip moments={[
+  { kind:'then', eyebrow:'THEN · 2022-04-16', title:'Control fork and exec', description:'The first Command redirected standard descriptors and provided a pre-exec hook for setsid, terminal attachment, signals, and related setup.', revision:'992d52f', href:'https://github.com/ghostty-org/ghostty/blob/992d52fe81a3c8c6bbaff18273db15bce6941499/src/Command.zig', linkLabel:'Open first Command' },
+  { kind:'reconstruction', eyebrow:'RECONSTRUCTION · CHAPTER 04', title:'Prove pipes are insufficient', description:'std.process.run is enough for a finite child and makes the missing isatty behavior explicit before custom process control exists.', revision:'chapter-04-child-pipes' },
+  { kind:'now', eyebrow:'NOW · PINNED MAIN', title:'Own every launch constraint', description:'Current Command handles environment, cwd, stream descriptors, platform pre-exec, runtime hooks, process IDs, and Windows pseudoconsoles.', revision:'6ad1fe7', href:'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/Command.zig', linkLabel:'Open current Command' },
+]} />
+
+Our use of `std.process.run` is not an attempted replacement for production Command. It is the smallest experiment that reaches the limitation production Command exists to solve.
+
+## Step 1: pass process capabilities explicitly
+
+Zig 0.16 supplies allocator and I/O capabilities through `std.process.Init`. `main_ghostty` now accepts that value and passes `init.gpa` and `init.io` into core App.
+
+This changed because process spawning needs an initialized I/O implementation. Calling an uninitialized global I/O singleton failed with `OutOfMemory` during the experiment; passing the process-owned capability is both smaller and correct.
+
+The ownership path is:
+
+```text
+Zig process startup
+→ main_ghostty(init)
+→ App { alloc, io }
+→ Surface
+→ Command.run(alloc, io)
+```
+
+## Step 2: wrap one finite command
+
+<CodeSnapshot file="src/data/reconstruction/chapter-04/Command.zig" label="src/Command.zig" status="adapted" reason="Finite standard-library child collection through ordinary pipes; no fork/pre-exec, PTY, environment, cwd, or long-lived process state." />
+
+`std.process.run`:
+
+1. spawns the command;
+2. ignores stdin;
+3. creates pipes for stdout and stderr;
+4. drains both pipes;
+5. waits for exit;
+6. returns owned output buffers.
+
+The wrapper's `Result.deinit` makes buffer ownership explicit.
+
+## Step 3: let Surface start its session experiment
+
+<CodeSnapshot file="src/data/reconstruction/chapter-04/Surface.zig" label="src/Surface.zig" status="adapted" reason="Runs one deterministic shell probe; it does not yet own a persistent child or PTY." />
+
+The shell script asks the kernel-backed descriptors directly:
+
+```sh
+if [ -t 0 ]; then echo 'stdin_tty=yes'; else echo 'stdin_tty=no'; fi
+if [ -t 1 ]; then echo 'stdout_tty=yes'; else echo 'stdout_tty=no'; fi
+if [ -t 2 ]; then echo 'stderr_tty=yes'; else echo 'stderr_tty=no'; fi
+```
+
+`-t` is not an environment-variable guess. The shell checks whether the descriptor refers to a terminal device.
+
+The parent prints collected stdout and the child's exit status. Exit code zero proves launch succeeded; the three `no` results prove terminal semantics are absent.
+
+## Step 4: start from the runtime tick
+
+The teaching-only headless runtime calls `runChild` after creating the core Surface. That keeps session ownership where production will eventually put it without inventing Termio yet.
+
+The child is finite and fully collected. A real terminal child is long-lived, receives input incrementally, changes terminal modes, resizes, and exits asynchronously. Those responsibilities are intentionally absent.
+
+## Build and run
+
+```console
+zig fmt --check .
+zig build
+zig build test
+zig build run
+```
+
+The critical lines are:
+
+```text
+stdin_tty=no
+stdout_tty=no
+stderr_tty=no
+[child] exited 0
+```
+
+If the child failed to launch, this would not be a PTY lesson. Here launch succeeds and terminal identity alone is missing.
+
+## Fidelity
+
+<FidelityLegend />
+
+| File | Status | Frontier-related difference |
+|---|---|---|
+| `src/Command.zig` | adapted | finite `std.process.run`; no production fork/pre-exec or platform handling |
+| `src/Surface.zig` | adapted | owns one synchronous experiment rather than persistent Termio |
+| `src/App.zig` | adapted | carries process allocator and I/O capability |
+| `src/apprt/headless.zig` | temporary | invokes the probe from one synthetic tick |
+
+## Compare with current Ghostty
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/Command.zig" line={1} end={105} label="Current Command launch contract" note="Read the opening rationale and fields for streams, environment, cwd, and pre-exec hooks. Ignore platform implementation details." />
+
+The current file still documents why generic child spawning may not provide enough control for PTY attachment. It also notes Zig 0.16 may justify reevaluation—an example of production source recording evolving constraints rather than eternal rules.
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/termio/Exec.zig" line={1} end={42} label="Current PTY subprocess backend" note="Preview the ownership nouns only: Command, Pty, Termio, subprocess. Do not read the thread machinery yet." />
+
+## Checkpoint
+
+```text
+commit  04e405b359961783f19875babf3f3ac05c12814a
+tag     chapter-04-child-pipes
+```
+
+## The next limitation
+
+Pipes cannot make the shell interactive. Chapter 05 must provide:
+
+```text
+PTY master ↔ parent terminal emulator
+PTY slave  ↔ child stdin/stdout/stderr
+child session + controlling terminal + foreground process group
+window size + terminal modes
+```
+
+The acceptance result is concrete: the child must report terminal identity, and the trace must expose the PTY and process-session relationships.
