@@ -212,9 +212,12 @@ try {
     files: document.querySelectorAll(".diff-files details").length,
     additions: document.querySelectorAll(".diff-line.is-add").length,
     layoutFits: document.querySelector(".commit-explorer").getBoundingClientRect().right <= document.documentElement.clientWidth,
+    panelTopDelta: Math.abs(document.querySelector(".commit-browser").getBoundingClientRect().top - document.querySelector(".commit-detail").getBoundingClientRect().top),
+    controlHeights: [...document.querySelectorAll(".commit-actions :is(button, a), .commit-nav button")].map((element) => element.getBoundingClientRect().height),
   }));
   check(historyState.count === 80 && historyState.firstSha === "f8b0000444663ade13d75e1e703bbad3cfdd1ce2" && historyState.firstSubject === "Initial", "history viewer does not begin at Ghostty's first commit");
   check(historyState.files === 9 && historyState.additions === 196 && historyState.layoutFits, "history viewer did not render the complete initial diff or fit its container");
+  check(historyState.panelTopDelta < 1 && Math.max(...historyState.controlHeights) - Math.min(...historyState.controlHeights) < 1, "history panels or controls are visibly misaligned");
   await history.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (value) => { window.__historyCopy = value; } } }));
   await history.click(".commit-copy-ai");
   const historyCopy = await history.evaluate(() => window.__historyCopy || "");

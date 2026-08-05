@@ -565,7 +565,7 @@
 }
 .commit-explorer :where(button, a, input, summary):focus-visible { outline: 3px solid var(--lg-focus); outline-offset: 2px; }
 .commit-browser,
-.commit-detail { min-width: 0; border: 1px solid var(--course-border); border-radius: var(--course-radius-md); background: var(--course-surface); }
+.commit-detail { min-width: 0; margin: 0 !important; border: 1px solid var(--course-border); border-radius: var(--course-radius-md); background: var(--course-surface); }
 .commit-browser { align-self: start; overflow: hidden; }
 .commit-browser > header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: 1rem; border-bottom: 1px solid var(--course-border); }
 .commit-browser h2 { margin: .2rem 0 0; font-size: var(--sl-text-lg); }
@@ -595,7 +595,7 @@
 .commit-nav { display: flex; flex: 0 0 auto; gap: .35rem; }
 .commit-nav button,
 .commit-actions :where(button, a),
-.commit-error :where(button, a) { min-height: 2.4rem; padding: .5rem .7rem; border: 1px solid var(--course-border); border-radius: var(--course-radius-sm); color: var(--sl-color-text); background: var(--course-surface-soft); font: 650 var(--sl-text-xs) var(--__sl-font); text-decoration: none; cursor: pointer; }
+.commit-error :where(button, a) { display: inline-flex; height: 2.5rem; min-height: 2.5rem; align-items: center; justify-content: center; margin: 0 !important; padding: 0 .75rem; border: 1px solid var(--course-border); border-radius: var(--course-radius-sm); color: var(--sl-color-text); background: var(--course-surface-soft); font: 650 var(--sl-text-xs)/1 var(--__sl-font); text-decoration: none; white-space: nowrap; cursor: pointer; }
 .commit-nav button:disabled,
 .commit-actions button:disabled { opacity: .45; cursor: default; }
 .commit-actions { display: flex; flex-wrap: wrap; gap: .45rem; padding: .8rem 1.25rem .5rem; }

@@ -145,7 +145,7 @@ onBeforeUnmount(() => request?.abort());
 </script>
 
 <template>
-  <section class="commit-explorer" aria-label="Ghostty commit history viewer">
+  <section class="commit-explorer not-content" aria-label="Ghostty commit history viewer">
     <aside class="commit-browser">
       <header>
         <div><span class="commit-kicker">SOURCE ARCHAEOLOGY</span><h2>Commit history</h2></div>
