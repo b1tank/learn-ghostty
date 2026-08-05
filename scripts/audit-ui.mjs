@@ -32,7 +32,7 @@ async function newPage(browser, width = 1280, theme = "light") {
 await ensureServer();
 const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
 try {
-  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/chapters/05-pty", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/history", "/source"];
+  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/chapters/05-pty", "/chapters/06-termio", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/history", "/source"];
   for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
     const page = await newPage(browser, width, theme);
     await page.goto(base + route, { waitUntil: "networkidle0" });
@@ -184,11 +184,23 @@ try {
     facts: document.querySelectorAll(".pty-map dl > div").length,
     history: document.querySelectorAll(".evolution-strip li").length,
     output: document.querySelector(".output-preview")?.textContent?.includes("pgrp_equals_foreground=yes"),
-    next: Boolean(document.querySelector('a[rel="next"]')),
+    next: document.querySelector('a[rel="next"]')?.getAttribute("href") ?? "",
   }));
   check(ptyState.actors === 4 && ptyState.facts === 4 && ptyState.history === 3 && ptyState.output, "Chapter 05 is missing PTY relationships, history, or output");
-  check(!ptyState.next, "Chapter 05 should stop at the current published frontier");
+  check(ptyState.next.includes("/chapters/06-termio"), "Chapter 05 does not advance to Chapter 06");
   await pty.close();
+
+  const termio = await newPage(browser, 1280, "dark");
+  await termio.goto(base + "/chapters/06-termio", { waitUntil: "networkidle0" });
+  const termioState = await termio.evaluate(() => ({
+    stages: document.querySelectorAll(".termio-map li").length,
+    history: document.querySelectorAll(".evolution-strip li").length,
+    output: document.querySelector(".output-preview")?.textContent?.includes("[termio read reply]"),
+    next: Boolean(document.querySelector('a[rel="next"]')),
+  }));
+  check(termioState.stages === 6 && termioState.history === 3 && termioState.output, "Chapter 06 is missing Termio ownership, history, or output");
+  check(!termioState.next, "Chapter 06 should stop at the current published frontier");
+  await termio.close();
 
   const history = await newPage(browser, 1280, "dark");
   await history.goto(base + "/history", { waitUntil: "networkidle0" });
@@ -234,6 +246,8 @@ try {
   check(pipesMarkdown.includes("stdout_tty=no") && pipesMarkdown.includes("src/Command.zig") && !/<[A-Z][A-Za-z]+/.test(pipesMarkdown), "Chapter 04 AI Markdown is invalid");
   const ptyMarkdown = await (await fetch(base + "/ai/lessons/05-pty.md")).text();
   check(ptyMarkdown.includes("stdin_tty=yes") && ptyMarkdown.includes("src/pty.zig") && !/<[A-Z][A-Za-z]+/.test(ptyMarkdown), "Chapter 05 AI Markdown is invalid");
+  const termioMarkdown = await (await fetch(base + "/ai/lessons/06-termio.md")).text();
+  check(termioMarkdown.includes("[termio read reply]") && termioMarkdown.includes("src/termio/Termio.zig") && !/<[A-Z][A-Za-z]+/.test(termioMarkdown), "Chapter 06 AI Markdown is invalid");
 
   for (const [legacy, expected] of [["/lessons/00-open-ghostty", "/field-guides/run-ls-cat"], ["/lessons/01-codex-tui", "/field-guides/codex-tui"]]) {
     const response = await fetch(base + legacy, { redirect: "follow" });

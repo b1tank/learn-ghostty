@@ -1,0 +1,18 @@
+{
+  "chapter": "06-termio",
+  "title": "Termio owns PTY bytes",
+  "source_repository": "b1tank/ghostty-from-scratch",
+  "source_tag": "chapter-06-termio",
+  "source_commit": "6b3b663fc7620877060684ebc7be26459edb0390",
+  "upstream_repository": "ghostty-org/ghostty",
+  "upstream_commit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+  "output_sha256": "205d80ccbfbb89ea00ccdbe72d02dcdb945918e35d6980dd333fb7f9efc27c94",
+  "files": [
+    { "path": "src/termio.zig", "status": "adapted", "reason": "Exports one PTY Termio implementation.", "sha256": "f09778a9fa40e40617fbc0d464ccbe052b26c21ca2a6136065eef95c4b72bca5" },
+    { "path": "src/termio/Termio.zig", "status": "adapted", "reason": "Owns PTY, child, incremental reads, writes, and exit synchronously.", "sha256": "b08c026fd41fbc093e8698ff0da3f44c92d36dc72c2b4a5545330377e4ba8cf4" },
+    { "path": "src/Command.zig", "status": "adapted", "reason": "Separates PTY child start from wait.", "sha256": "929a01a881116104a61da983ac56abfc885c908675f714d80b552e91ce3b9d8d" },
+    { "path": "src/pty.zig", "status": "adapted", "reason": "Adds incremental master reads and writes.", "sha256": "3643303656bec6d0f2789e0597187fde2d43da8959a6d606202a89c380925899" },
+    { "path": "src/Surface.zig", "status": "adapted", "reason": "Delegates interactive PTY byte ownership to Termio.", "sha256": "e7800c25e4626d0abec3b7366715ad1b954d10ec0a0f61ec0c4faaa279cbabf0" },
+    { "path": "src/apprt/headless.zig", "status": "temporary", "reason": "Runs the deterministic Termio interaction from one tick.", "sha256": "c9071447049550c6939462b6603bc453f5ccfb38b4441d2015f4d953a0cc7bf6" }
+  ]
+}

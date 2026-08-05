@@ -1,0 +1,15 @@
+---
+title: "Chapter 07: Incremental VT parser"
+description: Consume arbitrary PTY chunks and emit printable, control, and SGR actions without depending on read boundaries.
+order: 7
+module: Reconstruction
+status: planned
+duration: Built after Termio byte ownership is understood
+sidebar:
+  order: 7
+draft: true
+sourceRefs: []
+historyRefs: []
+---
+
+Termio now exposes real escape bytes. This chapter remains unpublished until a tagged parser checkpoint proves that splitting every escape sequence across input chunks produces the same ordered actions.

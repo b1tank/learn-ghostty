@@ -1,0 +1,14 @@
+<figure class="termio-map" aria-labelledby="termio-map-title">
+  <figcaption id="termio-map-title"><span>BYTE OWNERSHIP</span><strong>Termio keeps syscall chunks out of the protocol contract</strong></figcaption>
+  <ol>
+    <li><b>Child shell</b><code>ready&gt;</code><span>blocks waiting for input</span></li>
+    <li><b>PTY master</b><code>3 bytes · 3 bytes</code><span>read boundaries are arbitrary</span></li>
+    <li class="owner"><b>Termio</b><code>readUntil("ready&gt;")</code><span>owns PTY + child + phase buffer</span></li>
+    <li class="owner"><b>Termio</b><code>writeAll("hello\n")</code><span>writes while session remains alive</span></li>
+    <li><b>PTY master</b><code>echo + ESC [ 32 m …</code><span>opaque bytes, not styled text yet</span></li>
+    <li><b>Child exit</b><code>wait → 0</code><span>Termio closes the session</span></li>
+  </ol>
+</figure>
+<style>
+.termio-map{margin:1.5rem 0;padding:1.25rem;border:1px solid var(--course-border);border-radius:var(--course-radius-md);background:var(--course-surface);container:termio/inline-size}.termio-map figcaption span,.termio-map figcaption strong,.termio-map li b,.termio-map li code,.termio-map li span{display:block}.termio-map figcaption span{color:var(--sl-color-text-accent);font:700 var(--sl-text-2xs) var(--__sl-font-mono);letter-spacing:.06em}.termio-map figcaption strong{margin-top:.3rem;font-size:var(--sl-text-xl)}.termio-map ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem;margin:1rem 0 0;padding:0;list-style:none}.termio-map li{position:relative;min-width:0;margin:0!important;padding:.8rem;border:1px solid var(--course-border);border-radius:.5rem;background:var(--course-surface-soft)}.termio-map li.owner{border-color:var(--sl-color-accent);background:var(--sl-color-accent-low)}.termio-map li b{font-size:var(--sl-text-sm)}.termio-map li code{width:fit-content;max-width:100%;margin-top:.5rem;overflow-wrap:anywhere;font-size:var(--sl-text-xs);white-space:normal}.termio-map li span{margin-top:.45rem;color:var(--sl-color-text);font-size:var(--sl-text-xs);line-height:1.45}@container termio (max-width:38rem){.termio-map ol{grid-template-columns:1fr}}
+</style>

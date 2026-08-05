@@ -1,0 +1,198 @@
+---
+title: "Chapter 06: Termio owns PTY bytes"
+description: Replace finite PTY collection with one owner for the live child, incremental reads, writes, exit, and teardown.
+order: 6
+module: Reconstruction
+status: published
+duration: 40–55 minutes
+sidebar:
+  order: 6
+next: false
+historyRefs:
+  - commit: 35c1decd58af93efcd693d195ce5010706a6bf5a
+    date: "2022-11-03"
+    path: src/termio/Exec.zig
+    line: 1
+    end: 100
+    label: First extracted Termio backend
+    purpose: See PTY, Command, terminal state, and child teardown move behind an I/O implementation boundary.
+    context: Ghostty began pulling child I/O and its thread out of the window/surface owner after those responsibilities had accumulated together.
+  - commit: a8e7c520414be26a1ee424c3fd77561cd5ec8dc7
+    date: "2022-11-03"
+    path: src/termio/Exec.zig
+    line: 109
+    end: 194
+    label: First read/write stream ownership
+    purpose: See PTY reads, parser stream state, render wakeups, and write pools become explicit I/O-owned resources.
+    context: Later the same day the I/O backend started continuous reads and gained write-request ownership.
+sourceRefs:
+  - path: src/termio/Termio.zig
+    line: 1
+    end: 75
+    label: Current primary Termio state
+    purpose: Read the owned backend, terminal state, parser stream, renderer handles, Surface mailbox, and writer mailbox as an ownership inventory.
+  - path: src/termio/Thread.zig
+    line: 1
+    end: 35
+    label: Current writer-thread contract
+    purpose: See why reads and writes eventually have different hot-path and scheduling constraints.
+---
+import CodeSnapshot from '../../../components/CodeSnapshot.astro';
+import EvolutionStrip from '../../../components/EvolutionStrip.astro';
+import FidelityLegend from '../../../components/FidelityLegend.astro';
+import FrontierMap from '../../../components/FrontierMap.astro';
+import LessonActions from '../../../components/LessonActions.astro';
+import OutputPreview from '../../../components/OutputPreview.astro';
+import SourceLink from '../../../components/SourceLink.vue';
+import TermioOwnershipDiagram from '../../../components/TermioOwnershipDiagram.astro';
+
+<LessonActions entryId="chapters/06-termio" />
+
+## What you will see
+
+The child now pauses, receives parent input, replies with real SGR escape bytes, and exits while one Termio object owns the session:
+
+<OutputPreview file="src/data/reconstruction/chapter-06/output.txt" title="Incremental reads and writes across one live PTY session" tag="chapter-06-termio" caption="Every byte is rendered as hexadecimal. ESC, CR, and LF remain data rather than being interpreted by the browser or the terminal showing this lesson." />
+
+The green reply is not green yet. Termio owns transport; it does not interpret VT syntax.
+
+## The limitation after the first PTY
+
+Chapter 05 blocked until a finite child exited and collected its entire output into one fixed buffer. An interactive terminal must read and write during the same child lifetime.
+
+<TermioOwnershipDiagram />
+
+Termio becomes the owner of:
+
+```text
+PTY master
++ live child handle
++ incremental read buffers
++ writes
++ child exit
++ shutdown order
+```
+
+<FrontierMap current="I/O + parser" />
+
+This chapter stops before the parser half of that frontier.
+
+## How Termio emerged historically
+
+By November 2022 Ghostty's window/surface code had accumulated PTY, child, read, write, terminal-state, and rendering wakeup responsibilities. Commit `35c1decd` began extracting an I/O backend and thread. Later the same day, `a8e7c520` started continuous PTY reads and explicit write-request ownership.
+
+<EvolutionStrip moments={[
+  { kind:'then', eyebrow:'THEN · 2022-11-03', title:'Extract the I/O owner', description:'Exec owned PTY, Command, terminal state, and process teardown while a new thread boundary prepared continuous reads and writes.', revision:'35c1decd', href:'https://github.com/ghostty-org/ghostty/blob/35c1decd58af93efcd693d195ce5010706a6bf5a/src/termio/Exec.zig', linkLabel:'Open first backend' },
+  { kind:'reconstruction', eyebrow:'RECONSTRUCTION · CHAPTER 06', title:'Keep one live session', description:'Termio owns a finite interactive exchange and proves protocol phases do not align with three-byte read buffers.', revision:'chapter-06-termio' },
+  { kind:'now', eyebrow:'NOW · PINNED MAIN', title:'Coordinate every byte consumer', description:'Current Termio owns backend, terminal, parser stream, renderer state, Surface mailbox, writer mailbox, config, and thread-enter state.', revision:'6ad1fe7', href:'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/termio/Termio.zig', linkLabel:'Open current Termio' },
+]} />
+
+The historical extraction happened after real concurrency pressure existed. Our reconstruction does not add a thread yet; it first makes the ownership and incremental API concrete synchronously.
+
+## Step 1: separate child start from wait
+
+`Command.startPty` now returns immediately with a child handle instead of reading until exit. `Child.wait` is a later explicit operation.
+
+That separation lets Termio perform work between:
+
+```text
+fork/exec ───────────────────────────── wait
+          read → write → read → ...
+```
+
+## Step 2: give PTY incremental operations
+
+The PTY wrapper now exposes:
+
+```zig
+pub fn read(self: *Pty, buffer: []u8) !usize
+pub fn writeAll(self: *Pty, bytes: []const u8) !void
+```
+
+`read` treats Linux `EIO` after slave closure as end-of-stream. `writeAll` handles partial writes and interrupted syscalls. Neither method knows what bytes mean.
+
+## Step 3: create the Termio owner
+
+<CodeSnapshot file="src/data/reconstruction/chapter-06/termio/Termio.zig" label="src/termio/Termio.zig" status="adapted" reason="Synchronous deterministic owner for PTY, child, read phases, writes, exit, and teardown; production parser/state/mailbox/thread responsibilities are deferred." />
+
+Initialization opens the PTY and starts the child. Deinitialization closes the PTY and ensures an unwaited child is reaped.
+
+The child program deliberately pauses:
+
+```sh
+printf 'ready>'
+IFS= read -r line
+printf '\033[32mreply:%s\033[0m\n' "$line"
+```
+
+Termio reads until `ready>`, writes `hello\n`, then reads until the slave closes.
+
+## Step 4: refuse to depend on read boundaries
+
+Both read methods use a three-byte scratch buffer. `ready>` is six bytes; the SGR sequences and reply are longer. The API aggregates until a semantic condition or end-of-stream rather than treating one `read` call as one message.
+
+This is the essential stream invariant:
+
+```text
+read chunks are transport accidents
+VT actions are protocol structure
+```
+
+The parser in Chapter 07 must preserve state between calls for exactly this reason.
+
+## Step 5: keep bytes visible and unparsed
+
+`traceHex` prints two-digit hexadecimal bytes:
+
+```text
+1B 5B 33 32 6D = ESC [ 3 2 m
+1B 5B 30 6D    = ESC [ 0 m
+```
+
+The reply also begins with `68 65 6C 6C 6F 0D 0A`: the PTY's local echo of parent input followed by CRLF. Termio preserves it all.
+
+<CodeSnapshot file="src/data/reconstruction/chapter-06/Surface.zig" label="src/Surface.zig" status="adapted" reason="Surface delegates the interactive session to Termio and only orchestrates the deterministic probe." />
+
+## Build and run
+
+```console
+zig fmt --check .
+zig build
+zig build test
+zig build run
+```
+
+The test uses the testing allocator and testing I/O capability, starts a real PTY child, reads readiness, writes input, drains the reply, and waits for exit.
+
+## Fidelity
+
+<FidelityLegend />
+
+| File | Status | Frontier-related difference |
+|---|---|---|
+| `src/termio.zig` | adapted | one implementation; no backend union or mailbox/thread exports |
+| `src/termio/Termio.zig` | adapted | synchronous fixed session; no parser, Terminal, renderer state, mailboxes, config, or threads |
+| `src/Command.zig` | adapted | startable/waitable Linux child subset |
+| `src/pty.zig` | adapted | incremental master read/write subset |
+| `src/Surface.zig` | adapted | orchestrates one Termio probe |
+
+## Compare with current Ghostty
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/termio/Termio.zig" line={1} end={75} label="Current Termio ownership inventory" note="Read the fields and their owners. Ignore detailed configuration types and methods until those jobs enter the frontier." />
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/termio/Thread.zig" line={1} end={35} label="Current writer-thread contract" note="Read why writes and control messages move off the read/parser hot path. Do not inspect event-loop details yet." />
+
+Current Ghostty handles PTY reads continuously, parses on the hot path, and moves writes and control messages through a dedicated thread/mailbox. We have earned those pressures but not yet concurrent behavior.
+
+## Checkpoint
+
+```text
+commit  6b3b663fc7620877060684ebc7be26459edb0390
+tag     chapter-06-termio
+```
+
+## The next limitation
+
+Termio can identify a phase marker only by searching raw bytes. It cannot explain printable text, carriage return, line feed, or SGR.
+
+Chapter 07 introduces a stateful parser whose output is invariant under every possible input chunk split.
