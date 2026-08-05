@@ -1,0 +1,30 @@
+{
+  "chapter": "02-entry-routing",
+  "title": "Entrypoint routing",
+  "source_repository": "b1tank/ghostty-from-scratch",
+  "source_tag": "chapter-02-entry-routing",
+  "source_commit": "4a3538b7f6b569ae5749031387f22136d74fa220",
+  "upstream_repository": "ghostty-org/ghostty",
+  "upstream_commit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+  "output_sha256": "0cc2b651260d18a03c5e06470309d91f75520e96a5d81ce4749136423fb00df2",
+  "files": [
+    {
+      "path": "src/main.zig",
+      "status": "adapted",
+      "reason": "Preserves current compile-time selection and exported main with only the ghostty branch reconstructed.",
+      "sha256": "a82f83d926ae3b515a3f9500aff470b0c8a582a65c43bf350bd995a034d09ed4"
+    },
+    {
+      "path": "src/main_ghostty.zig",
+      "status": "adapted",
+      "reason": "Owns the current reconstructed App lifecycle before global initialization and platform runtime exist.",
+      "sha256": "15ccf21b31c645130ccd7b2797ef350dc21a89c6798c2a21a86e88f2bc47f97e"
+    },
+    {
+      "path": "src/build_config.zig",
+      "status": "adapted",
+      "reason": "Static one-entry configuration standing in for generated build options.",
+      "sha256": "c4b01936ced473b6dafb90a3800fccd36034449599ff61fd642f6d1624f862ad"
+    }
+  ]
+}

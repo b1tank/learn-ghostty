@@ -1,0 +1,7 @@
+$ zig build run
+[entry] ghostty
+[main] process started
+[app] created
+[app] running
+[app] destroyed
+[main] process exiting

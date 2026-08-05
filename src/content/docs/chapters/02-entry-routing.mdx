@@ -1,16 +1,187 @@
 ---
-title: "Chapter 02: Entrypoint routing and build configuration"
-description: Replace the bootstrap entrypoint with Ghostty-shaped build-selected routing.
+title: "Chapter 02: Route into Ghostty"
+description: Separate the executable root from application startup and select the Ghostty entrypoint at compile time.
 order: 2
 module: Reconstruction
-status: planned
-duration: Built after the previous chapter is learned
+status: published
+duration: 25–35 minutes
 sidebar:
   order: 2
-draft: true
-sourceRefs: []
+next: false
+historyRefs:
+  - commit: f1227a3ebd2c1a48c3ce8135320bb68f07d72f98
+    date: "2024-02-04"
+    path: src/main.zig
+    line: 1
+    end: 10
+    label: First dedicated Ghostty entrypoint module
+    purpose: See main become a compile-time router when benchmark and generator executables shared the build.
+    context: This commit moved 315 lines of application startup into main_ghostty.zig and reduced main.zig to a switch selected by build configuration.
+  - commit: 8bf5c4ed7f8e39ca6dcadd036c8c72924590b200
+    date: "2025-01-07"
+    path: src/main.zig
+    line: 1
+    end: 30
+    label: Modern exported-entrypoint shape
+    purpose: See the router export the selected main and optional std_options instead of using usingnamespace.
+    context: A major build refactor established the shape that current main still follows.
+sourceRefs:
+  - path: src/main.zig
+    line: 1
+    end: 28
+    label: Current executable router
+    purpose: Read the compile-time switch and exported main; ignore helper entrypoint implementations.
+  - path: src/build_config.zig
+    line: 1
+    end: 38
+    label: Current generated configuration boundary
+    purpose: See how build options become typed configuration consumed by source code.
 ---
+import CodeSnapshot from '../../../components/CodeSnapshot.astro';
+import EvolutionStrip from '../../../components/EvolutionStrip.astro';
+import FidelityLegend from '../../../components/FidelityLegend.astro';
+import FrontierMap from '../../../components/FrontierMap.astro';
+import LessonActions from '../../../components/LessonActions.astro';
+import OutputPreview from '../../../components/OutputPreview.astro';
+import RoutingDiagram from '../../../components/RoutingDiagram.astro';
+import SourceLink from '../../../components/SourceLink.vue';
 
-Generated configuration chooses which artifact starts.
+<LessonActions entryId="chapters/02-entry-routing" />
 
-This chapter remains unpublished until its code checkpoint, visual proof, source comparison, and learner walkthrough are complete.
+## What you will see
+
+The App lifecycle is unchanged. One new line proves which application entrypoint the executable selected:
+
+<OutputPreview file="src/data/reconstruction/chapter-02/output.txt" title="The executable routes into Ghostty startup" tag="chapter-02-entry-routing" caption="Captured from commit 4a3538b with Zig 0.16.0. The route is selected at compile time; the trace only makes that otherwise invisible decision observable." />
+
+## The limitation
+
+Chapter 01 put application ownership in `App`, but `src/main.zig` still mixed two roles:
+
+```text
+operating-system entrypoint
++
+Ghostty application startup
+```
+
+Ghostty's build produces more than its graphical application: helper generators and documentation tools also need executable roots. Duplicating the whole build graph for every root would make configuration drift likely.
+
+The next boundary is a tiny router.
+
+<FrontierMap current="App lifecycle" />
+
+The implementation frontier remains headless. Routing is build structure, not a runtime, Surface, or terminal session.
+
+## How the router appeared historically
+
+In February 2024, commit `f1227a3` moved roughly 315 lines from `main.zig` into `main_ghostty.zig`. The former application entrypoint became a ten-line build-selected router. A January 2025 build refactor replaced `usingnamespace` with explicit exports close to today's form.
+
+<EvolutionStrip moments={[
+  { kind:'then', eyebrow:'THEN · 2024-02-04', title:'Extract the application entry', description:'main.zig switched on build configuration while main_ghostty.zig received process and application startup.', revision:'f1227a3', href:'https://github.com/ghostty-org/ghostty/blob/f1227a3ebd2c1a48c3ce8135320bb68f07d72f98/src/main.zig', linkLabel:'Open first router' },
+  { kind:'reconstruction', eyebrow:'RECONSTRUCTION · CHAPTER 02', title:'Route one executable', description:'Only .ghostty exists, but the root/config/application boundaries now have their production names and directions.', revision:'chapter-02-entry-routing' },
+  { kind:'now', eyebrow:'NOW · PINNED MAIN', title:'Route every build tool', description:'Current main selects Ghostty, help and manual generators, and web-data generators while forwarding standard options.', revision:'6ad1fe7', href:'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/main.zig', linkLabel:'Open current router' },
+]} />
+
+The historical pressure was not “main is too long” alone. Multiple artifacts needed one consistent configuration boundary.
+
+## The route
+
+<RoutingDiagram />
+
+`switch` sees a compile-time-known enum value. Only the selected import becomes the executable's `main` implementation.
+
+## Step 1: represent the build choice
+
+<CodeSnapshot file="src/data/reconstruction/chapter-02/build_config.zig" label="src/build_config.zig" status="adapted" reason="A static one-entry substitute for Ghostty's generated typed build options." />
+
+```zig
+pub const ExeEntrypoint = enum { ghostty };
+pub const exe_entrypoint: ExeEntrypoint = .ghostty;
+```
+
+This file is deliberately not generated yet. Generation would add machinery without changing the one available choice. The important boundary is that source code consumes a typed build decision rather than command-line text.
+
+## Step 2: make main only a router
+
+<CodeSnapshot file="src/data/reconstruction/chapter-02/main.zig" label="src/main.zig" status="adapted" reason="The current router reduced to the only reconstructed entrypoint." />
+
+The key line is an exported declaration, not a wrapper function:
+
+```zig
+pub const main = entrypoint.main;
+```
+
+Zig exposes the selected module's function as the root executable entrypoint. There is no extra runtime call frame whose only job is forwarding.
+
+The test block forces semantic analysis of the selected module during `zig build test`.
+
+## Step 3: move application startup
+
+<CodeSnapshot file="src/data/reconstruction/chapter-02/main_ghostty.zig" label="src/main_ghostty.zig" status="adapted" reason="The Chapter 01 lifecycle moved intact; global initialization, CLI actions, and a platform runtime remain omitted." />
+
+The new trace:
+
+```zig
+std.debug.print("[entry] ghostty\n", .{});
+```
+
+is temporary instrumentation. It proves the selected module runs before `App.create` without pretending another subsystem exists.
+
+## Build and run
+
+```console
+zig fmt --check .
+zig build
+zig build test
+zig build run
+```
+
+Expected output begins:
+
+```text
+[entry] ghostty
+[main] process started
+```
+
+Everything after those lines is Chapter 01's unchanged ownership trace.
+
+## Fidelity
+
+<FidelityLegend />
+
+| File | Status | Difference from pinned current Ghostty |
+|---|---|---|
+| `src/main.zig` | adapted | Same selection/export direction; only `.ghostty`; no `std_options` or memset override |
+| `src/main_ghostty.zig` | adapted | Only the reconstructed App lifecycle and trace |
+| `src/build_config.zig` | adapted | Static enum rather than generated options and backend configuration |
+
+Adding empty helper modules merely to copy every switch case would be false fidelity. A branch is introduced when its artifact has a job.
+
+## Compare with current Ghostty
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/main.zig" line={1} end={28} label="Current executable router" note="Read the switch, exported main, and std_options fallback. Ignore each helper implementation." />
+
+Current `main.zig` also force-references a memset override and tunes test logging. Those are accumulated toolchain and platform constraints, not entry-routing fundamentals.
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/build_config.zig" line={1} end={38} label="Current build configuration bridge" note="Read how generated build_options become typed source-level values. Ignore renderer, font, and runtime backend choices for now." />
+
+## Checkpoint
+
+```text
+commit  4a3538b7f6b569ae5749031387f22136d74fa220
+tag     chapter-02-entry-routing
+```
+
+## The next limitation
+
+`main_ghostty` still calls `App.run()`. Current Ghostty does not: a selected platform runtime owns the native event loop and calls into shared App state.
+
+Chapter 03 introduces a headless runtime and one Surface-shaped session boundary:
+
+```text
+main_ghostty → shared App
+             → platform runtime App → run
+                                  ↘ Surface
+```
+
+No native toolkit or PTY is needed to prove that ownership split.

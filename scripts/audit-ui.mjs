@@ -32,7 +32,7 @@ async function newPage(browser, width = 1280, theme = "light") {
 await ensureServer();
 const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
 try {
-  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
+  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
   for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
     const page = await newPage(browser, width, theme);
     await page.goto(base + route, { waitUntil: "networkidle0" });
@@ -129,17 +129,29 @@ try {
       const actions = element.querySelector(".source-card__actions").getBoundingClientRect();
       return actions.top >= copy.bottom;
     }),
-    next: Boolean(document.querySelector('a[rel="next"]')),
+    next: document.querySelector('a[rel="next"]')?.getAttribute("href") ?? "",
   }));
   check(lifecycleState.rows === 7 && lifecycleState.commandsFit && lifecycleState.history === 3 && lifecycleState.output, "Chapter 01 is missing or truncating its ownership trace, historical comparison, or exact output");
   check(lifecycleState.sources.length === 2 && lifecycleState.sources.every(Boolean), "Chapter 01 source actions crush source context");
-  check(!lifecycleState.next, "Chapter 01 should stop at the current published frontier");
+  check(lifecycleState.next.includes("/chapters/02-entry-routing"), "Chapter 01 does not advance to Chapter 02");
   await lifecycle.close();
 
   const lifecycleMobile = await newPage(browser, 390, "dark");
   await lifecycleMobile.goto(base + "/chapters/01-app-lifecycle", { waitUntil: "networkidle0" });
   check(await lifecycleMobile.$$eval(".lifecycle-diagram code", (elements) => elements.every((element) => element.scrollWidth <= element.clientWidth)), "Chapter 01 ownership labels truncate on mobile");
   await lifecycleMobile.close();
+
+  const routing = await newPage(browser, 1280, "dark");
+  await routing.goto(base + "/chapters/02-entry-routing", { waitUntil: "networkidle0" });
+  const routingState = await routing.evaluate(() => ({
+    steps: document.querySelectorAll(".routing li").length,
+    history: document.querySelectorAll(".evolution-strip li").length,
+    output: document.querySelector(".output-preview")?.textContent?.includes("[entry] ghostty"),
+    next: Boolean(document.querySelector('a[rel="next"]')),
+  }));
+  check(routingState.steps === 4 && routingState.history === 3 && routingState.output, "Chapter 02 is missing its route, history, or exact output");
+  check(!routingState.next, "Chapter 02 should stop at the current published frontier");
+  await routing.close();
 
   const flow = await newPage(browser);
   await flow.goto(base + "/field-guides/tmux", { waitUntil: "networkidle0" });
@@ -155,6 +167,8 @@ try {
   check(markdown.includes("local_course_path: ~/learn-ghostty/src/content/docs/chapters/00-process-exists.mdx") && !/<[A-Z][A-Za-z]+/.test(markdown), "Chapter 00 AI Markdown is invalid");
   const lifecycleMarkdown = await (await fetch(base + "/ai/lessons/01-app-lifecycle.md")).text();
   check(lifecycleMarkdown.includes("[app] destroyed") && lifecycleMarkdown.includes("src/App.zig") && !/<[A-Z][A-Za-z]+/.test(lifecycleMarkdown), "Chapter 01 AI Markdown is invalid");
+  const routingMarkdown = await (await fetch(base + "/ai/lessons/02-entry-routing.md")).text();
+  check(routingMarkdown.includes("[entry] ghostty") && routingMarkdown.includes("src/main_ghostty.zig") && !/<[A-Z][A-Za-z]+/.test(routingMarkdown), "Chapter 02 AI Markdown is invalid");
 
   for (const [legacy, expected] of [["/lessons/00-open-ghostty", "/field-guides/run-ls-cat"], ["/lessons/01-codex-tui", "/field-guides/codex-tui"]]) {
     const response = await fetch(base + legacy, { redirect: "follow" });

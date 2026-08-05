@@ -1,0 +1,13 @@
+<figure class="routing" aria-labelledby="routing-title">
+  <figcaption id="routing-title"><span>COMPILE-TIME ROUTE</span><strong>One executable root, one selected application</strong></figcaption>
+  <ol>
+    <li><span>01</span><strong><code>build_config</code></strong><small><code>exe_entrypoint = .ghostty</code></small></li>
+    <li><span>02</span><strong><code>main.zig</code></strong><small>selects a module at compile time</small></li>
+    <li><span>03</span><strong><code>main_ghostty.zig</code></strong><small>exports the selected <code>main</code></small></li>
+    <li><span>04</span><strong><code>App</code></strong><small>runs the existing lifecycle</small></li>
+  </ol>
+  <p>No runtime condition is evaluated. Zig compiles the selected module into the executable and leaves unselected entrypoints out.</p>
+</figure>
+<style>
+.routing{margin:1.5rem 0;padding:1.25rem;border:1px solid var(--course-border);border-radius:var(--course-radius-md);background:var(--course-surface);container:routing/inline-size}.routing figcaption span,.routing figcaption strong,.routing li span,.routing li strong,.routing li small{display:block}.routing figcaption span{color:var(--sl-color-text-accent);font:700 var(--sl-text-2xs) var(--__sl-font-mono);letter-spacing:.06em}.routing figcaption strong{margin-top:.3rem;font-size:var(--sl-text-xl)}.routing ol{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;margin:1rem 0 0;padding:0;list-style:none}.routing li{position:relative;min-width:0;margin:0!important;padding:.85rem;border:1px solid var(--course-border);border-radius:.55rem;background:var(--course-surface-soft)}.routing li:not(:last-child)::after{content:'→';position:absolute;right:-.72rem;top:50%;z-index:1;color:var(--sl-color-text-accent);background:var(--course-surface);font-family:var(--__sl-font-mono);transform:translateY(-50%)}.routing li span{color:var(--sl-color-text-accent);font:700 var(--sl-text-2xs) var(--__sl-font-mono)}.routing li strong{margin-top:.5rem;font-size:var(--sl-text-sm)}.routing li small{margin-top:.4rem;color:var(--sl-color-text);font-size:var(--sl-text-xs);line-height:1.45}.routing>p{margin:1rem 0 0;color:var(--sl-color-text);font-size:var(--sl-text-sm)}@container routing (max-width:40rem){.routing ol{grid-template-columns:1fr}.routing li:not(:last-child)::after{content:'↓';left:50%;right:auto;top:calc(100% + .15rem);transform:translateX(-50%)}}
+</style>
