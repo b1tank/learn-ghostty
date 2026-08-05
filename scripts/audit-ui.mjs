@@ -45,11 +45,44 @@ try {
         const url = new URL(link.href, location.href);
         return ["http:", "https:"].includes(url.protocol) && url.origin !== location.origin;
       }).every((link) => link.target === "_blank" && link.relList.contains("noopener") && link.relList.contains("noreferrer")),
+      actionRowsAligned: [
+        ".lesson-progress__actions", ".source-card__actions", ".source-actions", ".reconstruction-next__actions",
+        ".flow-footer", ".commit-nav", ".commit-actions", ".commit-error > div",
+      ].flatMap((selector) => [...document.querySelectorAll(selector)]).every((group) => {
+        const controls = [...group.children].filter((element) => element.matches("a, button, .ai-copy-menu") && element.getClientRects().length).map((element) => element.getBoundingClientRect());
+        if (controls.length < 2) return true;
+        const sameHeight = Math.max(...controls.map((rect) => rect.height)) - Math.min(...controls.map((rect) => rect.height)) <= 1;
+        const rowTops = controls.reduce((rows, rect) => {
+          const row = rows.find((candidate) => Math.abs(candidate[0].top - rect.top) <= 1);
+          (row || rows[rows.push([]) - 1]).push(rect);
+          return rows;
+        }, []);
+        return sameHeight && rowTops.every((row) => Math.max(...row.map((rect) => rect.top)) - Math.min(...row.map((rect) => rect.top)) <= 1);
+      }),
+      repeatedCardsAligned: [".reconstruction-promise", ".platform-branch", ".process-birth__flow", ".evolution-strip ol"].flatMap((selector) => [...document.querySelectorAll(selector)]).every((grid) => {
+        const cards = [...grid.children].filter((element) => element.getClientRects().length).map((element) => element.getBoundingClientRect());
+        const rows = cards.reduce((groups, rect) => {
+          const row = groups.find((candidate) => Math.abs(candidate[0].top - rect.top) <= 1);
+          (row || groups[groups.push([]) - 1]).push(rect);
+          return groups;
+        }, []);
+        return rows.every((row) => row.length < 2 || (Math.max(...row.map((rect) => rect.top)) - Math.min(...row.map((rect) => rect.top)) <= 1 && Math.max(...row.map((rect) => rect.height)) - Math.min(...row.map((rect) => rect.height)) <= 1));
+      }),
+      repeatedActionsHaveIcons: [
+        ".lesson-progress__actions > a", ".lesson-progress__actions > button", ".ai-copy-menu > button",
+        ".source-card__actions > a", ".source-card__actions > button", ".source-actions > a", ".source-actions > button",
+        ".reconstruction-next__actions > a", ".field-guides-preview__link", ".flow-header__controls > button",
+        ".flow-footer > button", ".commit-nav > button", ".commit-actions > a", ".commit-actions > button",
+        ".evolution-strip li a", ".roadmap-lesson > b",
+      ].flatMap((selector) => [...document.querySelectorAll(selector)]).filter((element) => element.getClientRects().length).every((element) => Boolean(element.querySelector("svg, .ai-copy-icon"))),
     }));
     check(state.scroll <= state.viewport, `${theme} ${width}px ${route}: horizontal overflow ${state.scroll - state.viewport}px`);
     check(state.main, `${route}: main missing`);
     if (route.startsWith("/chapters/")) check(state.localSetup, `${route}: local lesson setup missing`);
     check(state.externalLinksSafe, `${route}: external links must open safely in a new tab`);
+    check(state.actionRowsAligned, `${theme} ${width}px ${route}: consecutive controls are vertically misaligned`);
+    check(state.repeatedCardsAligned, `${theme} ${width}px ${route}: repeated cards do not share row geometry`);
+    check(state.repeatedActionsHaveIcons, `${theme} ${width}px ${route}: a repeated action is missing its functional icon`);
     await page.close();
   }
 
@@ -64,9 +97,11 @@ try {
     current: document.querySelectorAll(".frontier-map .is-current").length,
     resume: Boolean(document.querySelector(".reconstruction-resume")),
     oldMap: Boolean(document.querySelector(".system-map")),
+    promiseIcons: document.querySelectorAll(".reconstruction-promise .sequence-card__icon svg").length,
   }));
   check(homeState.heading === "Rebuild Ghostty. Understand every piece.", "homepage hero changed unexpectedly");
   check(homeState.promises === 3 && homeState.frontier === 7 && homeState.current === 1, "homepage reconstruction path is incomplete");
+  check(homeState.promiseIcons === 3, "homepage sequence cards are missing functional icons");
   check(!homeState.resume && !homeState.oldMap, "first visit should be simple and should not render the old system map");
   await home.close();
 
