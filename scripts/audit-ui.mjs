@@ -32,7 +32,7 @@ async function newPage(browser, width = 1280, theme = "light") {
 await ensureServer();
 const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
 try {
-  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
+  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/chapters/05-pty", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
   for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
     const page = await newPage(browser, width, theme);
     await page.goto(base + route, { waitUntil: "networkidle0" });
@@ -171,11 +171,24 @@ try {
     streams: document.querySelectorAll(".pipe-test dl > div").length,
     history: document.querySelectorAll(".evolution-strip li").length,
     output: document.querySelector(".output-preview")?.textContent?.includes("stdout_tty=no"),
-    next: Boolean(document.querySelector('a[rel="next"]')),
+    next: document.querySelector('a[rel="next"]')?.getAttribute("href") ?? "",
   }));
   check(pipesState.streams === 3 && pipesState.history === 3 && pipesState.output, "Chapter 04 is missing the pipe experiment, history, or output");
-  check(!pipesState.next, "Chapter 04 should stop at the current published frontier");
+  check(pipesState.next.includes("/chapters/05-pty"), "Chapter 04 does not advance to Chapter 05");
   await pipes.close();
+
+  const pty = await newPage(browser, 1280, "dark");
+  await pty.goto(base + "/chapters/05-pty", { waitUntil: "networkidle0" });
+  const ptyState = await pty.evaluate(() => ({
+    actors: document.querySelectorAll(".pty-map__flow > div").length,
+    facts: document.querySelectorAll(".pty-map dl > div").length,
+    history: document.querySelectorAll(".evolution-strip li").length,
+    output: document.querySelector(".output-preview")?.textContent?.includes("pgrp_equals_foreground=yes"),
+    next: Boolean(document.querySelector('a[rel="next"]')),
+  }));
+  check(ptyState.actors === 4 && ptyState.facts === 4 && ptyState.history === 3 && ptyState.output, "Chapter 05 is missing PTY relationships, history, or output");
+  check(!ptyState.next, "Chapter 05 should stop at the current published frontier");
+  await pty.close();
 
   const flow = await newPage(browser);
   await flow.goto(base + "/field-guides/tmux", { waitUntil: "networkidle0" });
@@ -197,6 +210,8 @@ try {
   check(runtimeMarkdown.includes("[runtime] terminated") && runtimeMarkdown.includes("src/Surface.zig") && !/<[A-Z][A-Za-z]+/.test(runtimeMarkdown), "Chapter 03 AI Markdown is invalid");
   const pipesMarkdown = await (await fetch(base + "/ai/lessons/04-child-process-pipes.md")).text();
   check(pipesMarkdown.includes("stdout_tty=no") && pipesMarkdown.includes("src/Command.zig") && !/<[A-Z][A-Za-z]+/.test(pipesMarkdown), "Chapter 04 AI Markdown is invalid");
+  const ptyMarkdown = await (await fetch(base + "/ai/lessons/05-pty.md")).text();
+  check(ptyMarkdown.includes("stdin_tty=yes") && ptyMarkdown.includes("src/pty.zig") && !/<[A-Z][A-Za-z]+/.test(ptyMarkdown), "Chapter 05 AI Markdown is invalid");
 
   for (const [legacy, expected] of [["/lessons/00-open-ghostty", "/field-guides/run-ls-cat"], ["/lessons/01-codex-tui", "/field-guides/codex-tui"]]) {
     const response = await fetch(base + legacy, { redirect: "follow" });

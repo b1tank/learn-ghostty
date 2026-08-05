@@ -1,15 +1,207 @@
 ---
 title: "Chapter 05: A real PTY"
-description: Replace ordinary pipes with a pseudoterminal, controlling session, foreground process group, and terminal window size.
+description: Replace pipe-only child streams with a Linux pseudoterminal, controlling session, foreground process group, and fixed terminal window.
 order: 5
 module: Reconstruction
-status: planned
-duration: Built after the pipes limitation is understood
+status: published
+duration: 50–70 minutes
 sidebar:
   order: 5
-draft: true
-sourceRefs: []
-historyRefs: []
+next: false
+historyRefs:
+  - commit: 2cd51f0cc450fc05848201edbd777629a3c310ed
+    date: "2022-04-15"
+    path: src/Pty.zig
+    line: 1
+    end: 76
+    label: First Ghostty PTY opening
+    purpose: Read the initial master/slave ownership and fixed window-size operations before child execution existed.
+    context: Ghostty introduced a thin Linux PTY wrapper that opened descriptors and could read or change the terminal window size.
+  - commit: 9cc19b055326f19e07b08a8769b438a9fd321d01
+    date: "2022-04-24"
+    path: src/Pty.zig
+    line: 31
+    end: 94
+    label: First child terminal attachment
+    purpose: See setsid, TIOCSCTTY, and descriptor cleanup appear when Ghostty first executed the child command.
+    context: Nine days after basic PTY opening, Ghostty connected the child process and established terminal session ownership.
+sourceRefs:
+  - path: src/pty.zig
+    line: 116
+    end: 260
+    label: Current POSIX PTY lifecycle
+    purpose: Read master/slave opening, close-on-exec handling, terminal modes, and child pre-exec; ignore Windows and process queries.
+  - path: src/Command.zig
+    line: 1
+    end: 105
+    label: Current pre-exec process contract
+    purpose: Connect PTY child setup to the process abstraction that runs after fork and before exec.
 ---
+import CodeSnapshot from '../../../components/CodeSnapshot.astro';
+import EvolutionStrip from '../../../components/EvolutionStrip.astro';
+import FidelityLegend from '../../../components/FidelityLegend.astro';
+import FrontierMap from '../../../components/FrontierMap.astro';
+import LessonActions from '../../../components/LessonActions.astro';
+import OutputPreview from '../../../components/OutputPreview.astro';
+import PtyRelationshipDiagram from '../../../components/PtyRelationshipDiagram.astro';
+import SourceLink from '../../../components/SourceLink.vue';
 
-The child already proved that pipes are not a terminal. This chapter remains unpublished until a tagged PTY checkpoint makes all three standard streams report terminal semantics and records the session/process-group relationships.
+<LessonActions entryId="chapters/05-pty" />
+
+## What you will see
+
+The same shell probe runs twice. Pipes report `no`; the PTY reports `yes` and exposes the additional kernel relationships:
+
+<OutputPreview file="src/data/reconstruction/chapter-05/output.txt" title="Before and after terminal attachment" tag="chapter-05-pty" caption="Captured on Linux with a 24×80 PTY. Dynamic PIDs and /dev/pts numbers are converted into relationship checks so the evidence stays reproducible." />
+
+The PTY result is not inferred from colored output or shell prompts. The child asks the kernel about its descriptors, session, process group, foreground group, and window size.
+
+## The relationship we were missing
+
+<PtyRelationshipDiagram />
+
+The PTY is a pair of connected device endpoints:
+
+- the **master** is owned by the terminal emulator;
+- the **slave** behaves like the terminal device seen by the child;
+- terminal modes and window size live in the kernel PTY state;
+- the child session names the slave as its controlling terminal;
+- one foreground process group receives terminal input and generated signals.
+
+<FrontierMap current="Child process + PTY" />
+
+## How Ghostty reached this boundary
+
+Ghostty first opened a PTY on April 15, 2022. At that point it only proved descriptor and window-size operations. On April 24, `childPreExec` added session creation and controlling-terminal attachment while Command gained the hook needed to call it between fork and exec.
+
+<EvolutionStrip moments={[
+  { kind:'then', eyebrow:'THEN · 2022-04-24', title:'Attach the child session', description:'Pty.childPreExec called setsid, assigned the controlling terminal with TIOCSCTTY, and closed inherited PTY descriptors.', revision:'9cc19b0', href:'https://github.com/ghostty-org/ghostty/blob/9cc19b055326f19e07b08a8769b438a9fd321d01/src/Pty.zig#L31-L94', linkLabel:'Open first attachment' },
+  { kind:'reconstruction', eyebrow:'RECONSTRUCTION · CHAPTER 05', title:'Measure every relationship', description:'A finite Linux probe compares pipes and PTY streams, window size, session leadership, and foreground process-group ownership.', revision:'chapter-05-pty' },
+  { kind:'now', eyebrow:'NOW · PINNED MAIN', title:'Carry platform constraints', description:'Current PTY supports POSIX, Windows pseudoconsoles, modes, resize, UTF-8 input, process queries, and careful descriptor flags.', revision:'6ad1fe7', href:'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/pty.zig', linkLabel:'Open current PTY' },
+]} />
+
+The historical sequence separates opening a device pair from correctly launching a process inside it. Our checkpoint keeps those responsibilities separate in `pty.zig` and `Command.zig` too.
+
+## Step 1: link the platform API honestly
+
+Linux exposes `openpty` through libc headers. The build graph now sets `root_module.link_libc = true` for both executable and tests.
+
+This is not a future dependency framework. It solves one concrete call used by the current chapter. Zig 0.16 moved libc linkage onto the root module; attempting the older `exe.linkLibC()` API failed at build time and was corrected rather than hidden.
+
+<CodeSnapshot file="src/data/reconstruction/chapter-05/build.zig" label="build.zig" status="adapted" reason="The existing graph now links libc solely for the Linux PTY API." />
+
+## Step 2: own master and slave descriptors
+
+<CodeSnapshot file="src/data/reconstruction/chapter-05/pty.zig" label="src/pty.zig" status="adapted" reason="Linux openpty and child-session subset of current Ghostty PTY; no Windows, mode API, resize messages, or process queries." />
+
+`Pty.open` asks the kernel for two file descriptors and initializes a 24×80 window:
+
+```zig
+if (c.openpty(&master, &slave, null, null, &size) < 0)
+    return error.OpenptyFailed;
+```
+
+The parent keeps the master and closes its copy of the slave after forking. The child closes the master and eventually duplicates the slave onto descriptors 0, 1, and 2.
+
+The close rules prevent a subtle hang: an inherited open slave can keep the PTY relationship alive after the intended child exits.
+
+## Step 3: create the child session before exec
+
+`childPreExec` runs only in the forked child:
+
+```text
+close master
+→ setsid()
+→ ioctl(slave, TIOCSCTTY)
+→ dup2(slave, stdin/stdout/stderr)
+→ close extra slave descriptor
+→ exec /bin/sh
+```
+
+`setsid` creates a new session and makes the child its leader. `TIOCSCTTY` assigns the slave as that session's controlling terminal. Connecting all three standard descriptors makes each `isatty` check succeed.
+
+This setup must happen after fork because it changes only the child process, and before exec because the shell should begin life inside the completed terminal relationship.
+
+## Step 4: fork, exec, and read the master
+
+<CodeSnapshot file="src/data/reconstruction/chapter-05/Command.zig" label="src/Command.zig" status="adapted" reason="Finite Linux fork/exec PTY collection added beside the Chapter 04 pipe runner; production process control remains much broader." />
+
+The parent reads from the master until EOF or Linux's `EIO` end-of-slave signal, then waits for the child. Carriage returns generated by the default output mode are removed only when producing the evidence trace; the PTY itself still emitted terminal bytes.
+
+The probe avoids unstable PID and `/dev/pts/N` values. Instead it records facts:
+
+```text
+tty path belongs to /dev/pts
+a configured 24×80 window is visible
+PID equals session ID
+process group equals foreground process group
+```
+
+## Step 5: compare inside one Surface
+
+<CodeSnapshot file="src/data/reconstruction/chapter-05/Surface.zig" label="src/Surface.zig" status="adapted" reason="Runs finite pipe and PTY probes side by side; persistent read/write ownership belongs to the next Termio chapter." />
+
+Running both paths with the same shell script controls the experiment. The changed variable is the descriptor/session setup, not the child command.
+
+## Build and run
+
+```console
+zig fmt --check .
+zig build
+zig build test
+zig build run
+```
+
+The PTY acceptance lines are:
+
+```text
+stdin_tty=yes
+stdout_tty=yes
+stderr_tty=yes
+tty_path=devpts
+rows=24 cols=80
+pid_equals_sid=yes
+pgrp_equals_foreground=yes
+```
+
+The test suite also opens and closes a PTY directly, catching descriptor and libc-link regressions.
+
+## Fidelity
+
+<FidelityLegend />
+
+| File | Status | Frontier-related difference |
+|---|---|---|
+| `src/pty.zig` | adapted | Linux subset; fixed size; no modes, resizing, Windows, or process inspection |
+| `src/Command.zig` | adapted | finite fork/exec probe; no persistent process object, env/cwd, signals, or runtime hooks |
+| `src/Surface.zig` | adapted | synchronous before/after experiment rather than long-lived session |
+| `build.zig` | adapted | links libc; production dependency graph omitted |
+
+The implementation is intentionally Linux-specific because only one platform relationship has been demonstrated. A cross-platform abstraction before a second implementation would be speculative.
+
+## Compare with current Ghostty
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/pty.zig" line={116} end={260} label="Current POSIX PTY" note="Read open, descriptor flags, UTF-8 mode, and childPreExec. Ignore Windows and process-info branches." />
+
+Current Ghostty additionally marks the master close-on-exec, enables `IUTF8`, exposes terminal modes and resizing, and queries foreground process information. Each is an accumulated correctness or product requirement.
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/Command.zig" line={1} end={105} label="Current process pre-exec contract" note="Connect the PTY setup to Command's OS/runtime hooks and stream fields. Ignore platform branches beyond that ownership handoff." />
+
+## Checkpoint
+
+```text
+commit  352764a6c5e3d85b5888aea7d4923950b3ceab24
+tag     chapter-05-pty
+```
+
+## The next limitation
+
+The parent currently blocks until the finite child exits and stores all output in one fixed buffer. A terminal emulator must instead:
+
+- read arbitrary chunks for the whole session;
+- accept writes while reads continue;
+- resize while the process runs;
+- notice asynchronous child exit;
+- forward bytes toward terminal parsing.
+
+Chapter 06 introduces Termio as the owner of that persistent I/O boundary before parsing any escape sequence.

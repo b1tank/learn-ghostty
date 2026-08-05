@@ -1,0 +1,17 @@
+{
+  "chapter": "05-pty",
+  "title": "A real PTY",
+  "source_repository": "b1tank/ghostty-from-scratch",
+  "source_tag": "chapter-05-pty",
+  "source_commit": "352764a6c5e3d85b5888aea7d4923950b3ceab24",
+  "upstream_repository": "ghostty-org/ghostty",
+  "upstream_commit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+  "output_sha256": "8ac7914d319ad560f03e70cfcd8a52bf633c712cce92fc957fdf48e02739adca",
+  "files": [
+    { "path": "build.zig", "status": "adapted", "reason": "Links libc for Linux openpty.", "sha256": "6d42b9cbfe95fb87f1d49374dd4851b5f8d6e74adb59d95a3ced0234ea8f88f6" },
+    { "path": "src/pty.zig", "status": "adapted", "reason": "Linux openpty and controlling-session subset.", "sha256": "a00947144d882157e1397c78b2393d644643c54f69c8822cd3eaebb82a2229a2" },
+    { "path": "src/Command.zig", "status": "adapted", "reason": "Finite fork/exec PTY probe alongside ordinary pipes.", "sha256": "c4028e460ac1443ecedb5a771ff54ec16c3cd60b9ca042e64a1ab64e888e1e5b" },
+    { "path": "src/Surface.zig", "status": "adapted", "reason": "Runs deterministic pipe and PTY probes; no persistent Termio.", "sha256": "20247d5c87355a8578621719d1db968356cb88d2711154f2e620f8d3f99b4b2d" },
+    { "path": "src/apprt/headless.zig", "status": "temporary", "reason": "Runs both probes from one teaching tick.", "sha256": "5428259fb8e1267a53160cc55194ee6bf037ddc0d0eb2826e153c1314669ca33" }
+  ]
+}

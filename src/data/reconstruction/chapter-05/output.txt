@@ -1,0 +1,27 @@
+$ zig build run
+[entry] ghostty
+[main] process started
+[app] created
+[runtime] initialized
+[surface 1] created
+[runtime] tick
+[pipe child stdout]
+child: hello
+stdin_tty=no
+stdout_tty=no
+stderr_tty=no
+[pipe child] exited 0
+[pty child stdout]
+child: hello
+stdin_tty=yes
+stdout_tty=yes
+stderr_tty=yes
+tty_path=devpts
+rows=24 cols=80
+pid_equals_sid=yes
+pgrp_equals_foreground=yes
+[pty child] exited 0
+[surface 1] destroyed
+[runtime] terminated
+[app] destroyed
+[main] process exiting
