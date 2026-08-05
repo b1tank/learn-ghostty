@@ -1,0 +1,22 @@
+{
+  "chapter": "09-first-window",
+  "title": "First native GTK window",
+  "source_repository": "b1tank/ghostty-from-scratch",
+  "source_tag": "chapter-09-first-window",
+  "source_commit": "bc1e2e0143f143c0cf3545d046c68b4c7964cca5",
+  "upstream_repository": "ghostty-org/ghostty",
+  "upstream_commit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+  "output_sha256": "be87266b89180700e24d954a69fb84eeed9d65b8b8708ccd15990aae547a0912",
+  "screenshot_sha256": "5807f293e59a2e08e3089247aa42537afc06dc1f2b8d894023184e8e9f4839f2",
+  "files": [
+    { "path": "build.zig", "status": "adapted", "reason": "Adds opt-in GTK4 pkg-config linkage.", "sha256": "035a8b44a2f6f2307d13b63aacc2299eb605c37283a37ec7f7dded9203b3d26e" },
+    { "path": "src/build_config.zig", "status": "adapted", "reason": "Selects headless or GTK from one build option.", "sha256": "f031df422d3cc8f8eff6c6072495c2d3bc5ef8bebee4d317b46680119a65d02d" },
+    { "path": "src/apprt.zig", "status": "adapted", "reason": "Adds GTK to compile-time runtime selection.", "sha256": "60b73e9387ffa22ddf2f246a707d2ac4b87eaa324d3e27d02351abb6335e88ab" },
+    { "path": "src/apprt/gtk.zig", "status": "adapted", "reason": "GTK4 window and GLib loop without rendering or input.", "sha256": "a7aa0329f36628072b0e5549824b52f167e1b4d8cb8cfbc8da44e83cb63b4237" }
+  ],
+  "capture": {
+    "backend": "GTK 4.6.9 via X11 on Xvfb",
+    "display": "1280x800",
+    "window": "900x600 at 190x100"
+  }
+}

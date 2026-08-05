@@ -1,0 +1,12 @@
+$ GDK_BACKEND=x11 zig build run -Dgtk=true
+[entry] ghostty
+[main] process started
+[app] created
+[gtk] initialized
+[surface 1] created
+[gtk] window presented 900x600
+[gtk] event loop exited
+[surface 1] destroyed
+[gtk] terminated
+[app] destroyed
+[main] process exiting

@@ -1,6 +1,6 @@
 # Reconstruction roadmap
 
-Chapters 00–08 are published. A chapter becomes public after its code checkpoint, exact command, observable result, provenance, historical and current source comparisons, and responsive browser audit are complete.
+Chapters 00–09 are published. A chapter becomes public after its code checkpoint, exact command, observable result, provenance, historical and current source comparisons, and responsive browser audit are complete.
 
 1. **A process exists** — one Zig executable and one visible line *(published)*
 2. **App lifecycle** — stable allocation, initialization, temporary run, cleanup, and destruction *(published)*
@@ -11,8 +11,9 @@ Chapters 00–08 are published. A chapter becomes public after its code checkpoi
 7. **Termio** — live PTY child, incremental reads, writes, exit, and teardown *(published)*
 8. **Parser** — chunk-invariant printable, control, and SGR actions *(published)*
 9. **Terminal state** — cells, styles, cursor, and deterministic debug rendering *(published)*
-10. **First native window and GPU frame** — GTK, blank surface, first rectangle
-11. **Fonts, input, and production architecture** — first glyph, resize, keyboard input, threads, and mailboxes
+10. **First native window** — opt-in GTK4 runtime, blank surface, and real screenshot *(published)*
+11. **First GPU rectangle** — graphics surface and one known color
+12. **Fonts, input, and production architecture** — first glyph, resize, keyboard input, threads, and mailboxes
 
 The roadmap describes dependency order, not prewritten content. Build only the next chapter after using the current one.
 

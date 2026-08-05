@@ -1,16 +1,172 @@
 ---
-title: "Chapter 09: First native window and GPU frame"
-description: Open GTK, render a blank surface, then draw the first real rectangle.
+title: "Chapter 09: First native GTK window"
+description: Select an opt-in GTK4 runtime, present a real 900×600 native window, run its event loop, and capture genuine visual evidence.
 order: 9
 module: Reconstruction
-status: planned
-duration: Built after the previous chapter is learned
+status: published
+duration: 40–55 minutes
 sidebar:
   order: 9
-draft: true
-sourceRefs: []
+next: false
+historyRefs:
+  - commit: f268f3955e4b64fcc201c1aec5a40a390ed35bf5
+    date: "2023-02-21"
+    path: src/apprt/gtk.zig
+    line: 1
+    end: 74
+    label: First GTK application runtime
+    purpose: See GTK application and GLib context ownership established before a terminal surface existed.
+    context: Ghostty's first GTK App initialized GtkApplication and manually controlled the main context while its Window implementation remained empty.
+  - commit: 3d8c62c41ff673a5156388863db8f70680d3e05e
+    date: "2023-02-22"
+    path: src/apprt/gtk.zig
+    line: 98
+    end: 123
+    label: First GTK window and GL area
+    purpose: See a GtkApplicationWindow, title, default size, GLArea, realize/render callbacks, and presentation appear together.
+    context: The runtime refactor created the first concrete GTK window container and graphics surface.
+sourceRefs:
+  - path: src/apprt/gtk/App.zig
+    line: 1
+    end: 60
+    label: Current GTK App lifecycle
+    purpose: Read the runtime App's initialized Application owner, run handoff, and forced termination.
+  - path: src/apprt/gtk/Surface.zig
+    line: 1
+    end: 35
+    label: Current GTK Surface boundary
+    purpose: Preview the native container around a core Surface without reading renderer or input details.
 ---
+import CodeSnapshot from '../../../components/CodeSnapshot.astro';
+import EvolutionStrip from '../../../components/EvolutionStrip.astro';
+import FidelityLegend from '../../../components/FidelityLegend.astro';
+import FrontierMap from '../../../components/FrontierMap.astro';
+import LessonActions from '../../../components/LessonActions.astro';
+import NativeWindowArtifact from '../../../components/NativeWindowArtifact.astro';
+import OutputPreview from '../../../components/OutputPreview.astro';
+import SourceLink from '../../../components/SourceLink.vue';
 
-The first required screenshot milestone.
+<LessonActions entryId="chapters/09-first-window-gpu" />
 
-This chapter remains unpublished until its code checkpoint, visual proof, source comparison, and learner walkthrough are complete.
+## What you will see
+
+<NativeWindowArtifact />
+
+This is the first chapter whose result requires a screenshot. The capture is a real GTK window running on X11 inside Xvfb, produced by the tagged reconstruction—not a design mockup.
+
+<OutputPreview file="src/data/reconstruction/chapter-09/output.txt" title="GTK initialization, presentation, loop, and teardown" tag="chapter-09-first-window" caption="The deterministic timeout exists for reproducible capture. The default headless runtime remains unchanged." />
+
+## The limitation
+
+Chapter 08 can explain every cell but cannot create a native application surface. A GUI runtime introduces a new owner:
+
+```text
+operating-system display connection
+→ GTK initialization
+→ native window
+→ event loop
+→ close/destroy
+```
+
+<FrontierMap current="Window + GPU + fonts" />
+
+This checkpoint crosses only the window part of the frontier. It draws no terminal cells, rectangle, or glyph.
+
+## How Ghostty's GTK runtime appeared
+
+Ghostty added a GTK backend option on February 20, 2023. The next day it initialized `GtkApplication` and a manually controlled GLib context while its Window methods were still placeholders. On February 22 it created a GTK application window and GLArea with realize/render callbacks.
+
+<EvolutionStrip moments={[
+  { kind:'then', eyebrow:'THEN · 2023-02-22', title:'Create a GTK window and GL area', description:'The early runtime set title and size, installed realize/render callbacks, and showed a GtkApplicationWindow.', revision:'3d8c62c', href:'https://github.com/ghostty-org/ghostty/blob/3d8c62c41ff673a5156388863db8f70680d3e05e/src/apprt/gtk.zig#L98-L123', linkLabel:'Open first GTK window' },
+  { kind:'reconstruction', eyebrow:'RECONSTRUCTION · CHAPTER 09', title:'Present a blank native surface', description:'An opt-in GTK4 runtime creates one core Surface and one 900×600 window, runs GLib, then exits for capture.', revision:'chapter-09-first-window' },
+  { kind:'now', eyebrow:'NOW · PINNED MAIN', title:'Own a full native product', description:'Current GTK App and Surface integrate application classes, windows, tabs, actions, input, GLArea rendering, portals, IPC, and platform protocols.', revision:'6ad1fe7', href:'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/apprt/gtk/App.zig', linkLabel:'Open current GTK App' },
+]} />
+
+The first historical GTK window included a GLArea. Our reconstruction stops one step earlier so native lifecycle and graphics initialization remain separate observable milestones.
+
+## Step 1: keep GTK opt-in
+
+The build adds:
+
+```console
+zig build run -Dgtk=true
+```
+
+Without `-Dgtk=true`, the headless runtime and pure tests build exactly as before. With the option, `build_config.app_runtime` selects `.gtk` and the root module asks pkg-config for GTK4.
+
+<CodeSnapshot file="src/data/reconstruction/chapter-09/build.zig" label="build.zig" status="adapted" reason="Adds one opt-in GTK4 pkg-config dependency while preserving headless default builds." />
+
+This prevents a GUI development package from becoming a prerequisite for parser and terminal-state work or CI.
+
+## Step 2: select the native runtime
+
+<CodeSnapshot file="src/data/reconstruction/chapter-09/apprt.zig" label="src/apprt.zig" status="adapted" reason="Compile-time selection now includes headless and GTK runtimes." />
+
+The same `apprt.App` and `apprt.Surface` names resolve to different concrete types at compile time. `main_ghostty` does not change.
+
+## Step 3: initialize GTK and the event loop
+
+<CodeSnapshot file="src/data/reconstruction/chapter-09/apprt/gtk.zig" label="src/apprt/gtk.zig" status="adapted" reason="GTK4 window and GLib loop subset; no application registration, actions, input, graphics area, or terminal-state display." />
+
+The runtime:
+
+1. calls `gtk_init`;
+2. creates a GLib main loop;
+3. creates its runtime/core Surface pair;
+4. creates a GTK window;
+5. assigns title and 900×600 default size;
+6. presents the window;
+7. enters the loop;
+8. exits through a capture timeout;
+9. destroys the window and surfaces.
+
+A direct `@cImport("gtk/gtk.h")` hit thousands of GTK/GLib autocleanup macro translation errors with this Zig 0.16 toolchain. The checkpoint uses narrow manual extern declarations for the nine functions it calls. This is an explicit adaptation, not a hidden compatibility framework.
+
+## Step 4: capture real evidence
+
+The reproducible script is:
+
+```console
+ZIG=/path/to/zig tools/capture/chapter-09-first-window.sh
+```
+
+It:
+
+- starts a 1280×800 Xvfb X11 display;
+- runs the GTK build with `GDK_BACKEND=x11`;
+- finds the real window by title;
+- moves it to 190×100;
+- captures the X root window;
+- waits for clean application exit;
+- writes exact output and screenshot artifacts.
+
+The screenshot's SHA-256 is validated during the course build.
+
+## Fidelity
+
+<FidelityLegend />
+
+| File | Status | Frontier-related difference |
+|---|---|---|
+| `src/apprt/gtk.zig` | adapted | one window and loop; no GtkApplication class, actions, input, GLArea, tabs, IPC, or terminal rendering |
+| `src/apprt.zig` | adapted | headless and GTK only |
+| `src/build_config.zig` | adapted | one boolean rather than generated runtime/backend options |
+| `build.zig` | adapted | optional GTK4 pkg-config linkage |
+| `tools/capture/chapter-09-first-window.sh` | project-owned | reproducible Xvfb screenshot support, not upstream runtime code |
+
+## Compare with current Ghostty
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/apprt/gtk/App.zig" line={1} end={60} label="Current GTK App lifecycle" note="Read initialization, run, and termination. Ignore action/IPC methods until interaction exists." />
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/apprt/gtk/Surface.zig" line={1} end={35} label="Current GTK Surface boundary" note="Preview native Surface ownership only. Do not descend into renderer or input integration yet." />
+
+## Checkpoint
+
+```text
+commit  bc1e2e0143f143c0cf3545d046c68b4c7964cca5
+tag     chapter-09-first-window
+```
+
+## The next limitation
+
+The native window is blank. Chapter 10 must create a graphics surface and draw one known rectangle, with a real before/after screenshot, before fonts or terminal cells enter the renderer.

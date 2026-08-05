@@ -1,0 +1,12 @@
+---
+const base = import.meta.env.BASE_URL;
+---
+<figure class="native-artifact">
+  <figcaption><span>REAL CAPTURE · CHAPTER 09</span><strong>The first native GTK window</strong></figcaption>
+  <img src={`${base}artifacts/chapter-09-first-window.png`} alt="A real 1280 by 800 Xvfb display containing a blank 900 by 600 GTK window positioned at 190 by 100. The white window surface is surrounded by the black root display." width="1280" height="800" loading="eager" />
+  <dl><div><dt>revision</dt><dd><code>chapter-09-first-window</code></dd></div><div><dt>platform</dt><dd>Linux · GTK 4.6.9 · X11/Xvfb</dd></div><div><dt>display</dt><dd>1280×800</dd></div><div><dt>window</dt><dd>900×600 at 190×100</dd></div></dl>
+  <p>The large white rectangle is the actual GTK client area. Xvfb has no window manager, so the capture intentionally has no title bar or decorative frame.</p>
+</figure>
+<style>
+.native-artifact{margin:1.5rem 0;overflow:hidden;border:1px solid var(--course-border);border-radius:var(--course-radius-md);background:var(--course-surface)}.native-artifact figcaption{padding:1rem 1.15rem;border-bottom:1px solid var(--course-border)}.native-artifact figcaption span,.native-artifact figcaption strong{display:block}.native-artifact figcaption span{color:var(--sl-color-text-accent);font:700 var(--sl-text-2xs) var(--__sl-font-mono);letter-spacing:.06em}.native-artifact figcaption strong{margin-top:.3rem;font-size:var(--sl-text-xl)}.native-artifact img{display:block;width:100%;height:auto;background:#000}.native-artifact dl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin:0;background:var(--course-border)}.native-artifact dl div{min-width:0;padding:.75rem;background:var(--course-surface-soft)}.native-artifact dt{font:700 var(--sl-text-2xs) var(--__sl-font-mono);color:var(--sl-color-text-accent)}.native-artifact dd{margin:.3rem 0 0;color:var(--sl-color-text);font-size:var(--sl-text-xs);overflow-wrap:anywhere}.native-artifact>p{margin:0;padding:.8rem 1rem;color:var(--sl-color-text);font-size:var(--sl-text-sm)}@media(max-width:40rem){.native-artifact dl{grid-template-columns:1fr 1fr}}
+</style>
