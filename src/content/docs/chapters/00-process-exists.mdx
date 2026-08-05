@@ -8,6 +8,23 @@ duration: 15–25 minutes
 sidebar:
   order: 0
 next: false
+historyRefs:
+  - commit: b8cee0a39eaeda11622d4e2ced44fccfcd702203
+    date: "2022-03-29"
+    path: src/main.zig
+    line: 1
+    end: 7
+    label: Ghostty's first main function
+    purpose: Identify the earliest commit where the executable owns a concrete runtime responsibility.
+    context: The first main function initialized and cleaned up GLFW but did not create a window.
+  - commit: cc4d37804f7a5298551acaffe361ceced83cc323
+    date: "2022-03-29"
+    path: src/main.zig
+    line: 1
+    end: 20
+    label: Ghostty's first window loop
+    purpose: See the next pressure that expanded main from runtime initialization into window ownership and event processing.
+    context: A later same-day commit created a GLFW window, selected its OpenGL context, and waited for events.
 sourceRefs:
   - path: src/main.zig
     line: 1
@@ -21,6 +38,7 @@ sourceRefs:
     purpose: Preview the application, runtime, and event-loop responsibilities that later chapters reconstruct one at a time.
 ---
 import CodeSnapshot from '../../../components/CodeSnapshot.astro';
+import EvolutionStrip from '../../../components/EvolutionStrip.astro';
 import FidelityLegend from '../../../components/FidelityLegend.astro';
 import FrontierMap from '../../../components/FrontierMap.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
@@ -180,6 +198,34 @@ For this chapter:
 Nothing is labeled exact yet.
 
 ## How Ghostty began historically
+
+<EvolutionStrip moments={[
+  {
+    kind: 'then',
+    eyebrow: 'THEN · 2022-03-29',
+    title: 'Initialize a runtime',
+    description: 'Ghostty’s first main function initialized GLFW and registered cleanup. It did not create a window yet.',
+    revision: 'b8cee0a',
+    href: 'https://github.com/ghostty-org/ghostty/blob/b8cee0a39eaeda11622d4e2ced44fccfcd702203/src/main.zig',
+    linkLabel: 'Open historical source',
+  },
+  {
+    kind: 'reconstruction',
+    eyebrow: 'RECONSTRUCTION · CHAPTER 00',
+    title: 'Prove the process boundary',
+    description: 'We stop one step earlier: compile, enter main, and make one line observable before adding a runtime.',
+    revision: 'chapter-00-bootstrap',
+  },
+  {
+    kind: 'now',
+    eyebrow: 'NOW · PINNED MAIN',
+    title: 'Route into production startup',
+    description: 'Current main selects a generated entrypoint; main_ghostty owns global initialization, App, runtime, and the event loop.',
+    revision: '6ad1fe7',
+    href: 'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/main.zig',
+    linkLabel: 'Open current source',
+  },
+]} />
 
 Ghostty’s earliest repository commit did not yet contain `src/main.zig`. A few commits later, the first main function initialized GLFW:
 

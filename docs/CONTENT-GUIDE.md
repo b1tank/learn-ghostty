@@ -83,7 +83,9 @@ Use an analogy only when it makes one unfamiliar boundary easier to predict. Sta
 
 ## Source references
 
-Every excerpt states what to read, what to ignore, and the architectural question it answers. Include immutable GitHub and `~/ghostty` paths. When useful, show both the early commit where the responsibility first appeared and the pinned current implementation. Link official Ghostty documentation for authoritative behavior and policy.
+Every excerpt states what to read, what to ignore, and the architectural question it answers. Include immutable GitHub and `~/ghostty` paths. Link official Ghostty documentation for authoritative behavior and policy.
+
+Historical source is required for reconstruction chapters, not merely useful context. Follow [the historical reconstruction method](HISTORICAL-METHOD.md): locate the earliest relevant responsibility, validate the exact commit/path/range, explain the pressure behind it, and present **then → reconstruction → now** without projecting current abstractions backward.
 
 ## Visual design
 

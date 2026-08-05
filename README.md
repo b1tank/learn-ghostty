@@ -6,7 +6,7 @@ Open **https://b1tank.github.io/learn-ghostty/**. Reading requires no clone, ser
 
 ## Learning method
 
-Each chapter starts with a visible result, builds only the code required to reach it, explains every introduced boundary, and compares the reconstruction with historical and current Ghostty source. Files are labeled exact, adapted, temporary, or deliberately redesigned.
+Each chapter starts with a visible result, builds only the code required to reach it, explains every introduced boundary, and uses Ghostty's Git history as its causal spine. The learner sees the earliest relevant implementation, the reconstruction checkpoint, and the pinned current design as **then → reconstruction → now**. Files are labeled exact, adapted, temporary, or deliberately redesigned.
 
 The published path currently begins with Chapter 00: one Zig executable and one line of output. Later chapters are written only after the previous checkpoint is learned and validated.
 
@@ -36,5 +36,6 @@ npm run build
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Content guide](docs/CONTENT-GUIDE.md)
+- [Historical method](docs/HISTORICAL-METHOD.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Follow-ups](docs/FOLLOW-UPS.md)

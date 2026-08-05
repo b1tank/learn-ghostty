@@ -14,7 +14,7 @@ No learner-facing server, account, database, CLI, or AI is required.
 
 ## Reconstruction provenance
 
-A published chapter is paired with a named tag or commit in `ghostty-from-scratch`. Public snapshots live under `src/data/reconstruction/<chapter>/` with a manifest containing reconstruction revision, pinned upstream revision, fidelity status, and hashes.
+A published chapter is paired with a named tag or commit in `ghostty-from-scratch`. Its `historyRefs` identify validated earlier Ghostty commits where the taught responsibilities appeared, while `sourceRefs` target the pinned current implementation. Public snapshots live under `src/data/reconstruction/<chapter>/` with a manifest containing reconstruction revision, pinned upstream revision, fidelity status, and hashes.
 
 Text output is rendered from committed fixtures. GUI screenshots and recordings must come from the tagged running reconstruction and include capture metadata. Mockups are not implementation evidence.
 

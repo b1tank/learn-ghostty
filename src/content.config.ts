@@ -7,6 +7,12 @@ const sourceRef = z.object({
   label: z.string(), purpose: z.string(), officialUrl: z.string().url().optional()
 });
 
+const historyRef = sourceRef.extend({
+  commit: z.string().regex(/^[0-9a-f]{40}$/),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  context: z.string()
+});
+
 const docs = defineCollection({
   loader: docsLoader(),
   schema: docsSchema({ extend: z.object({
@@ -14,7 +20,8 @@ const docs = defineCollection({
     module: z.enum(["Reconstruction", "Field guides"]).optional(),
     status: z.enum(["published", "planned"]).optional(),
     duration: z.string().optional(),
-    sourceRefs: z.array(sourceRef).default([])
+    sourceRefs: z.array(sourceRef).default([]),
+    historyRefs: z.array(historyRef).default([])
   }) })
 });
 

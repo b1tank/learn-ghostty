@@ -1,0 +1,22 @@
+---
+const { moments } = Astro.props;
+---
+<figure class="evolution-strip" aria-labelledby="evolution-title">
+  <figcaption id="evolution-title">
+    <span>SOURCE ARCHAEOLOGY</span>
+    <strong>Then, reconstruction, and now solve different-sized problems</strong>
+  </figcaption>
+  <ol>
+    {moments.map((moment, index) => (
+      <li class={`is-${moment.kind}`}>
+        <div class="evolution-strip__marker"><span>{String(index + 1).padStart(2, '0')}</span></div>
+        <div>
+          <small>{moment.eyebrow}</small>
+          <strong>{moment.title}</strong>
+          <p>{moment.description}</p>
+          {moment.href ? <a href={moment.href}><code>{moment.revision}</code><span>{moment.linkLabel}</span></a> : <code>{moment.revision}</code>}
+        </div>
+      </li>
+    ))}
+  </ol>
+</figure>

@@ -1,13 +1,29 @@
 <figure class="process-birth" aria-labelledby="process-birth-title">
-  <figcaption id="process-birth-title">What happens in Chapter 00</figcaption>
-  <div class="process-birth__flow">
-    <div><span>01</span><strong>Zig build</strong><small>source code → executable bytes</small></div>
-    <i aria-hidden="true"></i>
-    <div><span>02</span><strong>Operating system</strong><small>executable → running process</small></div>
-    <i aria-hidden="true"></i>
-    <div><span>03</span><strong><code>main()</code></strong><small>process entry → print call</small></div>
-    <i aria-hidden="true"></i>
-    <div><span>04</span><strong>stderr</strong><small>UTF-8 bytes → visible line</small></div>
-  </div>
-  <p>No terminal emulator exists inside this program yet. Your existing terminal merely displays the bytes written by this new process.</p>
+  <figcaption id="process-birth-title">
+    <span>VISIBLE PIPELINE</span>
+    <strong>One source file becomes one visible line</strong>
+  </figcaption>
+  <ol class="process-birth__flow">
+    <li>
+      <span>01</span>
+      <strong>Zig builds</strong>
+      <small><code>src/main.zig</code> → executable bytes</small>
+    </li>
+    <li>
+      <span>02</span>
+      <strong>The OS starts</strong>
+      <small>executable bytes → running process</small>
+    </li>
+    <li>
+      <span>03</span>
+      <strong><code>main()</code> runs</strong>
+      <small>process entry → print call</small>
+    </li>
+    <li>
+      <span>04</span>
+      <strong><code>stderr</code> receives</strong>
+      <small>UTF-8 bytes → visible line</small>
+    </li>
+  </ol>
+  <p>No terminal emulator exists inside this program yet. Your existing terminal only displays the bytes written by the new process.</p>
 </figure>

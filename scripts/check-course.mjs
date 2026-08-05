@@ -44,6 +44,19 @@ for (const path of contentFiles) {
       errors.push(`${contentId}: missing source ${ref.path}`);
     }
   }
+  for (const ref of data.historyRefs ?? []) {
+    try {
+      const source = execFileSync("git", ["-C", resolve(root, "ghostty"), "show", `${ref.commit}:${ref.path}`], { encoding: "utf8" });
+      const lineCount = source.split("\n").length;
+      if (ref.line < 1 || ref.line > lineCount) errors.push(`${contentId}: historical ${ref.path}:${ref.line} outside 1..${lineCount} at ${ref.commit}`);
+      if (ref.end && ref.end > lineCount) errors.push(`${contentId}: historical ${ref.path}:${ref.end} outside 1..${lineCount} at ${ref.commit}`);
+    } catch {
+      errors.push(`${contentId}: missing historical source ${ref.commit}:${ref.path}`);
+    }
+  }
+  if (contentId.startsWith("chapters/") && data.status === "published" && !(data.historyRefs?.length)) {
+    errors.push(`${contentId}: a published reconstruction chapter requires at least one historical source reference`);
+  }
   if (data.status === "published") {
     const clean = cleanLessonMarkdown(raw, { id, contentId, href: `/${contentId}`, summary: data.description, ...data }, upstreamCommit);
     if (/<(?:script|[A-Z][A-Za-z]+)\b/.test(clean)) errors.push(`${contentId}: AI Markdown contains implementation markup`);
@@ -74,5 +87,6 @@ if (errors.length) {
 }
 console.log(`✓ Ghostty source pin ${actualCommit.slice(0, 12)}`);
 console.log(`✓ ${lessons.length} course entries (${lessons.filter((lesson) => lesson.status === "published").length} published)`);
-console.log(`✓ ${lessons.flatMap((lesson) => lesson.sourceRefs ?? []).length} pinned source references and clean AI Markdown`);
+console.log(`✓ ${lessons.flatMap((lesson) => lesson.sourceRefs ?? []).length} current and ${lessons.flatMap((lesson) => lesson.historyRefs ?? []).length} historical source references`);
+console.log(`✓ Published AI Markdown is clean and carries pinned local/source context`);
 console.log(`✓ Chapter 00 reconstruction snapshots and output match their provenance hashes`);

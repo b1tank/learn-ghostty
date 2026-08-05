@@ -71,6 +71,18 @@ try {
       snapshots: document.querySelectorAll(".code-snapshot").length,
       result: document.querySelector(".output-preview")?.textContent?.includes("ghostty-from-scratch: hello"),
       labels: [...document.querySelectorAll(".fidelity-badge")].map((element) => element.textContent.trim()),
+      processSteps: [...document.querySelectorAll(".process-birth__flow li")].map((element) => {
+        const rect = element.getBoundingClientRect();
+        const title = element.querySelector("strong");
+        return { x: rect.x, y: rect.y, width: rect.width, titleLines: Math.round(title.getBoundingClientRect().height / parseFloat(getComputedStyle(title).lineHeight)) };
+      }),
+      sourceCards: [...document.querySelectorAll(".source-card")].map((element) => {
+        const card = element.getBoundingClientRect();
+        const copy = element.querySelector(".source-card__copy").getBoundingClientRect();
+        const actions = element.querySelector(".source-card__actions").getBoundingClientRect();
+        return { copyRatio: copy.width / card.width, copyBottom: copy.bottom, actionsTop: actions.top };
+      }),
+      historyMoments: document.querySelectorAll(".evolution-strip li").length,
       next: Boolean(document.querySelector('a[rel="next"]')),
       emoji: [...document.querySelectorAll("button,a")].some((element) => /\p{Extended_Pictographic}/u.test(element.textContent)),
     };
@@ -78,6 +90,11 @@ try {
   check(chapterState.paragraphSize >= 17 && chapterState.lineHeight >= 29 && chapterState.headingSize >= 48, "Chapter 00 typography is too small or cramped");
   check(chapterState.snapshots === 2 && chapterState.result, "Chapter 00 is missing source snapshots or exact output");
   check(chapterState.labels.includes("temporary") && chapterState.labels.includes("adapted"), "Chapter 00 fidelity labels are incomplete");
+  const horizontalProcess = Math.max(...chapterState.processSteps.map((step) => step.y)) - Math.min(...chapterState.processSteps.map((step) => step.y)) < 1;
+  const verticalProcess = Math.max(...chapterState.processSteps.map((step) => step.x)) - Math.min(...chapterState.processSteps.map((step) => step.x)) < 1;
+  check(chapterState.processSteps.length === 4 && (horizontalProcess || verticalProcess) && chapterState.processSteps.every((step) => step.width >= 120 && step.titleLines <= 2), "process pipeline is cramped or falls out of flow");
+  check(chapterState.sourceCards.length === 2 && chapterState.sourceCards.every((card) => card.copyRatio >= .78 && card.actionsTop >= card.copyBottom), "source-card actions crush or overlap source context");
+  check(chapterState.historyMoments === 3, "then/reconstruction/now source archaeology is incomplete");
   check(!chapterState.next, "Chapter 00 must not advance into a field guide before Chapter 01 exists");
   check(!chapterState.emoji, "learner UI contains emoji glyphs");
 
