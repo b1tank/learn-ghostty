@@ -36,9 +36,18 @@ try {
   for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
     const page = await newPage(browser, width, theme);
     await page.goto(base + route, { waitUntil: "networkidle0" });
-    const state = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth, main: Boolean(document.querySelector("main")) }));
+    const state = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      scroll: document.documentElement.scrollWidth,
+      main: Boolean(document.querySelector("main")),
+      externalLinksSafe: [...document.querySelectorAll("a[href]")].filter((link) => {
+        const url = new URL(link.href, location.href);
+        return ["http:", "https:"].includes(url.protocol) && url.origin !== location.origin;
+      }).every((link) => link.target === "_blank" && link.relList.contains("noopener") && link.relList.contains("noreferrer")),
+    }));
     check(state.scroll <= state.viewport, `${theme} ${width}px ${route}: horizontal overflow ${state.scroll - state.viewport}px`);
     check(state.main, `${route}: main missing`);
+    check(state.externalLinksSafe, `${route}: external links must open safely in a new tab`);
     await page.close();
   }
 
@@ -264,6 +273,14 @@ try {
   await history.click(".commit-copy-ai");
   const historyCopy = await history.evaluate(() => window.__historyCopy || "");
   check(historyCopy.includes("Every hunk") && historyCopy.includes("Complete diff:") && historyCopy.includes("diff --git a/.envrc b/.envrc") && historyCopy.includes("My question:"), "history Copy for ChatGPT context is incomplete");
+  await history.click(".commit-copy-diff");
+  const rawDiffCopy = await history.evaluate(() => window.__historyCopy || "");
+  check(rawDiffCopy.startsWith("diff --git a/.envrc b/.envrc") && rawDiffCopy.includes("@@ -0,0 +1,5 @@") && !rawDiffCopy.includes("Complete diff:") && !rawDiffCopy.includes("My question:"), "history raw copy is not an unmodified git diff");
+  check(!await history.$(".commit-actions a[href='https://chatgpt.com/']"), "history viewer includes an unnecessary Open ChatGPT action");
+  check((await history.$eval(".commit-copy-ai", (element) => element.textContent.trim())) === "Copy for AI", "history AI copy action has a provider-specific label");
+  check(await history.$eval(".commit-actions a[href$='.diff']", (element) => element.target === "_blank" && element.textContent.includes("Raw .diff")), "history raw diff is not an external new-tab link");
+  check(await history.$eval(".commit-badge.is-api", (element) => /^API \d+\/\d+$/.test(element.textContent.trim()) && element.title.includes("latest network load")), "history API limit is not shown as a concise, current status badge");
+  check(Boolean(await history.$(".commit-badge.is-cached")), "history diff was not reused from the persistent browser cache");
   await history.type(".commit-search input", "remove mach-glfw");
   await history.waitForFunction(() => document.querySelectorAll(".commit-list li").length === 1);
   check((await history.$eval(".commit-list strong", (element) => element.textContent.trim())) === "remove mach-glfw", "history search did not filter commit subjects");

@@ -571,8 +571,9 @@
 .commit-browser h2 { margin: .2rem 0 0; font-size: var(--sl-text-lg); }
 .commit-browser > header > strong { color: var(--course-muted); font: 600 var(--sl-text-xs) var(--__sl-font-mono); }
 .commit-kicker { color: var(--sl-color-text-accent); font: 700 var(--sl-text-2xs) var(--__sl-font-mono); letter-spacing: .06em; }
-.commit-search { display: block; padding: .75rem; border-bottom: 1px solid var(--course-border); }
-.commit-search input { width: 100%; height: 2.5rem; padding: 0 .7rem; border: 1px solid var(--course-border); border-radius: var(--course-radius-sm); color: var(--sl-color-white); background: var(--sl-color-bg); font: var(--sl-text-xs) var(--__sl-font); }
+.commit-search { position: relative; display: block; padding: .75rem; border-bottom: 1px solid var(--course-border); }
+.commit-search > svg { position: absolute; z-index: 1; left: 1.45rem; top: 50%; width: 1rem; height: 1rem; color: var(--course-muted); fill: none; stroke: currentColor; stroke-width: 1.7; transform: translateY(-50%); pointer-events: none; }
+.commit-search input { width: 100%; height: 2.5rem; padding: 0 .7rem 0 2.35rem; border: 1px solid var(--course-border); border-radius: var(--course-radius-sm); color: var(--sl-color-white); background: var(--sl-color-bg); font: var(--sl-text-xs) var(--__sl-font); }
 .commit-search input::placeholder { color: var(--course-muted); }
 .commit-list { max-height: 68rem; overflow-y: auto; margin: 0 !important; padding: 0 !important; list-style: none; scrollbar-width: thin; }
 .commit-list li { margin: 0 !important; border-bottom: 1px solid var(--course-border); }
@@ -595,14 +596,22 @@
 .commit-nav { display: flex; flex: 0 0 auto; gap: .35rem; }
 .commit-nav button,
 .commit-actions :where(button, a),
-.commit-error :where(button, a) { display: inline-flex; height: 2.5rem; min-height: 2.5rem; align-items: center; justify-content: center; margin: 0 !important; padding: 0 .75rem; border: 1px solid var(--course-border); border-radius: var(--course-radius-sm); color: var(--sl-color-text); background: var(--course-surface-soft); font: 650 var(--sl-text-xs)/1 var(--__sl-font); text-decoration: none; white-space: nowrap; cursor: pointer; }
+.commit-error :where(button, a) { display: inline-flex; height: 2.5rem; min-height: 2.5rem; align-items: center; justify-content: center; gap: .45rem; margin: 0 !important; padding: 0 .75rem; border: 1px solid var(--course-border); border-radius: var(--course-radius-sm); color: var(--sl-color-text); background: var(--course-surface-soft); font: 650 var(--sl-text-xs)/1 var(--__sl-font); text-decoration: none; white-space: nowrap; cursor: pointer; }
+.commit-nav svg,
+.commit-actions :where(button, a) > svg,
+.commit-badge svg { width: 1rem; height: 1rem; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+.commit-actions .external-mark { width: .72rem; height: .72rem; margin-left: -.15rem; opacity: .65; }
 .commit-nav button:disabled,
 .commit-actions button:disabled { opacity: .45; cursor: default; }
-.commit-actions { display: flex; flex-wrap: wrap; gap: .45rem; padding: .8rem 1.25rem .5rem; }
+.commit-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; padding: .8rem 1.25rem .5rem; }
 .commit-actions .commit-copy-ai { color: var(--sl-color-text-invert); border-color: var(--sl-color-accent); background: var(--sl-color-bg-accent); }
+.commit-badge { display: inline-flex; min-height: 1.75rem; align-items: center; gap: .35rem; padding: 0 .55rem; border: 1px solid var(--course-border); border-radius: 999px; color: var(--course-muted); background: var(--sl-color-bg); font: 650 var(--sl-text-2xs)/1 var(--__sl-font-mono); white-space: nowrap; }
+.commit-actions > a + .commit-badge { margin-left: auto; }
+.commit-badge.is-cached { color: var(--sl-color-green-high); border-color: color-mix(in srgb, var(--sl-color-green-high) 35%, var(--course-border)); background: var(--sl-color-green-low); }
+.commit-badge.is-low { color: var(--sl-color-orange-high); border-color: color-mix(in srgb, var(--sl-color-orange-high) 35%, var(--course-border)); background: var(--sl-color-orange-low); }
 .commit-copy-note,
-.commit-rate,
-.commit-notice { margin: 0 !important; padding: 0 1.25rem .8rem; color: var(--course-muted); font-size: var(--sl-text-xs); }
+.commit-notice { margin: 0 !important; padding: 0 1.25rem .8rem; color: var(--course-muted); font-size: var(--sl-text-xs); line-height: 1.55; }
+.commit-copy-note code { padding: .1rem .25rem; border-radius: .25rem; background: var(--sl-color-bg-inline-code); font-size: .92em; }
 .commit-notice { color: var(--sl-color-text-accent); }
 .commit-loading { display: flex; align-items: center; gap: .7rem; min-height: 14rem; justify-content: center; border-top: 1px solid var(--course-border); color: var(--course-muted); font-size: var(--sl-text-sm); }
 .commit-loading span { width: 1rem; height: 1rem; border: 2px solid var(--course-border); border-top-color: var(--sl-color-accent); border-radius: 50%; animation: commit-spin .7s linear infinite; }
@@ -636,6 +645,7 @@
   .commit-nav { width: 100%; }
   .commit-nav button { flex: 1; }
   .commit-actions :where(button, a) { flex: 1 1 auto; text-align: center; }
+  .commit-actions > .commit-badge { margin-left: 0; }
   .diff-line { grid-template-columns: 2.5rem 2.5rem minmax(26rem, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {
