@@ -67,19 +67,26 @@ for (const path of contentFiles) {
 const orders = lessons.map((lesson) => lesson.order);
 if (new Set(orders).size !== orders.length) errors.push("lesson order values must be unique");
 if (lessons.length !== 13) errors.push(`expected 13 reconstruction/field-guide entries, found ${lessons.length}`);
-if (lessons.filter((lesson) => lesson.status === "published").length !== 5) errors.push("expected Chapter 00 plus four published field guides");
+if (lessons.filter((lesson) => lesson.status === "published").length !== 6) errors.push("expected two reconstruction chapters plus four published field guides");
 
-const snapshotRoot = resolve(root, "src/data/reconstruction/chapter-00");
-const snapshot = JSON.parse(await readFile(resolve(snapshotRoot, "manifest.json"), "utf8"));
-if (snapshot.upstream_commit !== upstreamCommit) errors.push("Chapter 00 snapshot uses the wrong upstream commit");
-for (const file of snapshot.files) {
-  const snapshotPath = file.path === "src/main.zig" ? "main.zig" : file.path === "build.zig" ? "build.zig" : null;
-  if (!snapshotPath) continue;
-  const hash = createHash("sha256").update(await readFile(resolve(snapshotRoot, snapshotPath))).digest("hex");
-  if (hash !== file.sha256) errors.push(`Chapter 00 snapshot hash mismatch for ${file.path}`);
+const reconstructionRoot = resolve(root, "src/data/reconstruction");
+const snapshotDirs = (await readdir(reconstructionRoot, { withFileTypes: true })).filter((entry) => entry.isDirectory());
+for (const entry of snapshotDirs) {
+  const snapshotRoot = resolve(reconstructionRoot, entry.name);
+  const snapshot = JSON.parse(await readFile(resolve(snapshotRoot, "manifest.json"), "utf8"));
+  if (snapshot.upstream_commit !== upstreamCommit) errors.push(`${snapshot.chapter}: snapshot uses the wrong upstream commit`);
+  for (const file of snapshot.files) {
+    const snapshotPath = file.path.replace(/^src\//, "");
+    try {
+      const hash = createHash("sha256").update(await readFile(resolve(snapshotRoot, snapshotPath))).digest("hex");
+      if (hash !== file.sha256) errors.push(`${snapshot.chapter}: snapshot hash mismatch for ${file.path}`);
+    } catch {
+      errors.push(`${snapshot.chapter}: missing snapshot for ${file.path}`);
+    }
+  }
+  const outputHash = createHash("sha256").update(await readFile(resolve(snapshotRoot, "output.txt"))).digest("hex");
+  if (outputHash !== snapshot.output_sha256) errors.push(`${snapshot.chapter}: output hash mismatch`);
 }
-const outputHash = createHash("sha256").update(await readFile(resolve(snapshotRoot, "output.txt"))).digest("hex");
-if (outputHash !== snapshot.output_sha256) errors.push("Chapter 00 output hash mismatch");
 
 if (errors.length) {
   console.error("Course validation failed:\n" + errors.map((error) => `  ✗ ${error}`).join("\n"));
@@ -89,4 +96,4 @@ console.log(`✓ Ghostty source pin ${actualCommit.slice(0, 12)}`);
 console.log(`✓ ${lessons.length} course entries (${lessons.filter((lesson) => lesson.status === "published").length} published)`);
 console.log(`✓ ${lessons.flatMap((lesson) => lesson.sourceRefs ?? []).length} current and ${lessons.flatMap((lesson) => lesson.historyRefs ?? []).length} historical source references`);
 console.log(`✓ Published AI Markdown is clean and carries pinned local/source context`);
-console.log(`✓ Chapter 00 reconstruction snapshots and output match their provenance hashes`);
+console.log(`✓ ${snapshotDirs.length} reconstruction snapshots and outputs match their provenance hashes`);

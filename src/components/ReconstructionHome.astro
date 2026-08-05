@@ -12,12 +12,15 @@ const lessons = (await getLessons()).filter((lesson) => lesson.module === 'Recon
     <div><span>02</span><h2>See it</h2><p>Run the exact command and compare your result with a real captured artifact.</p></div>
     <div><span>03</span><h2>Compare it</h2><p>Read the narrow historical and current Ghostty source that solves the production version.</p></div>
   </div>
-  <FrontierMap />
+  <FrontierMap current="App lifecycle" />
   <section class="reconstruction-next">
     <p>CHAPTER 00</p>
     <h2>A process exists</h2>
     <p>Start with one Zig file, one build command, and one line of output. Understand every character before adding an App, PTY, parser, or window.</p>
-    <a href="./chapters/00-process-exists/">Begin Chapter 00</a>
+    <div class="reconstruction-next__actions">
+      <a href="./chapters/00-process-exists/">Begin Chapter 00</a>
+      <a class="is-quiet" href="./chapters/01-app-lifecycle/">Continue to Chapter 01</a>
+    </div>
   </section>
   <section class="field-guides-preview">
     <h2>Field guides remain available</h2>

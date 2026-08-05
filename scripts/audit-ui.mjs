@@ -32,7 +32,7 @@ async function newPage(browser, width = 1280, theme = "light") {
 await ensureServer();
 const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
 try {
-  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
+  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/source"];
   for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
     const page = await newPage(browser, width, theme);
     await page.goto(base + route, { waitUntil: "networkidle0" });
@@ -83,7 +83,7 @@ try {
         return { copyRatio: copy.width / card.width, copyBottom: copy.bottom, actionsTop: actions.top };
       }),
       historyMoments: document.querySelectorAll(".evolution-strip li").length,
-      next: Boolean(document.querySelector('a[rel="next"]')),
+      next: document.querySelector('a[rel="next"]')?.getAttribute("href") ?? "",
       emoji: [...document.querySelectorAll("button,a")].some((element) => /\p{Extended_Pictographic}/u.test(element.textContent)),
     };
   });
@@ -95,7 +95,7 @@ try {
   check(chapterState.processSteps.length === 4 && (horizontalProcess || verticalProcess) && chapterState.processSteps.every((step) => step.width >= 120 && step.titleLines <= 2), "process pipeline is cramped or falls out of flow");
   check(chapterState.sourceCards.length === 2 && chapterState.sourceCards.every((card) => card.copyRatio >= .78 && card.actionsTop >= card.copyBottom), "source-card actions crush or overlap source context");
   check(chapterState.historyMoments === 3, "then/reconstruction/now source archaeology is incomplete");
-  check(!chapterState.next, "Chapter 00 must not advance into a field guide before Chapter 01 exists");
+  check(chapterState.next.includes("/chapters/01-app-lifecycle"), "Chapter 00 does not advance to Chapter 01");
   check(!chapterState.emoji, "learner UI contains emoji glyphs");
 
   await chapter.evaluate(() => Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (value) => { window.__copy = value; } } }));
@@ -108,13 +108,38 @@ try {
   await chapter.waitForFunction(() => JSON.parse(localStorage.getItem("learn-ghostty.progress.v5") || "null")?.lastSections?.["00-process-exists"] === "step-1-read-the-entire-program", { timeout: 5000 });
   await chapter.click(".lesson-progress__actions button");
   const progress = await chapter.evaluate(() => JSON.parse(localStorage.getItem("learn-ghostty.progress.v5")));
-  check(progress.completedLessons.includes("00-process-exists") && progress.currentLesson === "00-process-exists", "completion should remain at the current reconstruction frontier");
+  check(progress.completedLessons.includes("00-process-exists") && progress.currentLesson === "01-app-lifecycle", "Chapter 00 completion did not advance to Chapter 01");
   await chapter.close();
 
   const resume = await newPage(browser);
   await resume.goto(base, { waitUntil: "networkidle0" });
-  check((await resume.$eval(".reconstruction-resume", (element) => element.textContent)).includes("Revisit chapter"), "homepage checkpoint resume is missing");
+  const resumeText = await resume.$eval(".reconstruction-resume", (element) => element.textContent);
+  check(resumeText.includes("Continue chapter") && resumeText.includes("App owns the lifetime"), "homepage checkpoint does not resume Chapter 01");
   await resume.close();
+
+  const lifecycle = await newPage(browser, 1280, "dark");
+  await lifecycle.goto(base + "/chapters/01-app-lifecycle", { waitUntil: "networkidle0" });
+  const lifecycleState = await lifecycle.evaluate(() => ({
+    rows: document.querySelectorAll(".lifecycle-diagram li").length,
+    commandsFit: [...document.querySelectorAll(".lifecycle-diagram code")].every((element) => element.scrollWidth <= element.clientWidth),
+    history: document.querySelectorAll(".evolution-strip li").length,
+    output: document.querySelector(".output-preview")?.textContent?.includes("[app] destroyed"),
+    sources: [...document.querySelectorAll(".source-card")].map((element) => {
+      const copy = element.querySelector(".source-card__copy").getBoundingClientRect();
+      const actions = element.querySelector(".source-card__actions").getBoundingClientRect();
+      return actions.top >= copy.bottom;
+    }),
+    next: Boolean(document.querySelector('a[rel="next"]')),
+  }));
+  check(lifecycleState.rows === 7 && lifecycleState.commandsFit && lifecycleState.history === 3 && lifecycleState.output, "Chapter 01 is missing or truncating its ownership trace, historical comparison, or exact output");
+  check(lifecycleState.sources.length === 2 && lifecycleState.sources.every(Boolean), "Chapter 01 source actions crush source context");
+  check(!lifecycleState.next, "Chapter 01 should stop at the current published frontier");
+  await lifecycle.close();
+
+  const lifecycleMobile = await newPage(browser, 390, "dark");
+  await lifecycleMobile.goto(base + "/chapters/01-app-lifecycle", { waitUntil: "networkidle0" });
+  check(await lifecycleMobile.$$eval(".lifecycle-diagram code", (elements) => elements.every((element) => element.scrollWidth <= element.clientWidth)), "Chapter 01 ownership labels truncate on mobile");
+  await lifecycleMobile.close();
 
   const flow = await newPage(browser);
   await flow.goto(base + "/field-guides/tmux", { waitUntil: "networkidle0" });
@@ -128,6 +153,8 @@ try {
 
   const markdown = await (await fetch(base + "/ai/lessons/00-process-exists.md")).text();
   check(markdown.includes("local_course_path: ~/learn-ghostty/src/content/docs/chapters/00-process-exists.mdx") && !/<[A-Z][A-Za-z]+/.test(markdown), "Chapter 00 AI Markdown is invalid");
+  const lifecycleMarkdown = await (await fetch(base + "/ai/lessons/01-app-lifecycle.md")).text();
+  check(lifecycleMarkdown.includes("[app] destroyed") && lifecycleMarkdown.includes("src/App.zig") && !/<[A-Z][A-Za-z]+/.test(lifecycleMarkdown), "Chapter 01 AI Markdown is invalid");
 
   for (const [legacy, expected] of [["/lessons/00-open-ghostty", "/field-guides/run-ls-cat"], ["/lessons/01-codex-tui", "/field-guides/codex-tui"]]) {
     const response = await fetch(base + legacy, { redirect: "follow" });

@@ -1,0 +1,16 @@
+<figure class="lifecycle-diagram" aria-labelledby="lifecycle-title">
+  <figcaption id="lifecycle-title">
+    <span>OWNERSHIP TRACE</span>
+    <strong>One stable pointer, one explicit owner</strong>
+  </figcaption>
+  <ol>
+    <li><b>Main</b><div><code>App.create(allocator)</code><i aria-hidden="true">→</i></div><b>App</b></li>
+    <li><b>App</b><div><code>alloc.create(App)</code><i aria-hidden="true">→</i></div><b>Allocator</b></li>
+    <li class="is-return"><b>Allocator</b><div><code>stable *App</code><i aria-hidden="true">→</i></div><b>App</b></li>
+    <li class="is-return"><b>App</b><div><code>return *App</code><i aria-hidden="true">→</i></div><b>Main</b></li>
+    <li><b>Main</b><div><code>app.run()</code><i aria-hidden="true">→</i></div><b>App</b></li>
+    <li><b>Main</b><div><code>defer app.destroy()</code><i aria-hidden="true">→</i></div><b>App</b></li>
+    <li><b>App</b><div><code>deinit + destroy</code><i aria-hidden="true">→</i></div><b>Allocator</b></li>
+  </ol>
+  <p><strong>Invariant:</strong> `main` owns the returned pointer. The allocator owns its memory. `destroy` is the single operation that closes both lifetimes.</p>
+</figure>

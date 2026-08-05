@@ -1,16 +1,380 @@
 ---
-title: "Chapter 01: App lifecycle"
-description: Move ownership out of main with create, run, cleanup, and destroy.
+title: "Chapter 01: App owns the lifetime"
+description: Move process-wide ownership out of main, allocate one stable App pointer, and make initialization and cleanup order visible.
 order: 1
 module: Reconstruction
-status: planned
-duration: Built after the previous chapter is learned
+status: published
+duration: 30–45 minutes
 sidebar:
   order: 1
-draft: true
-sourceRefs: []
+next: false
+historyRefs:
+  - commit: 3cb5dae9d86c680aaada3be22b9cbdefad505cc6
+    date: "2022-04-03"
+    path: src/main.zig
+    line: 7
+    end: 133
+    label: Before App extraction
+    purpose: See window, OpenGL, resource, and event-loop ownership accumulated directly in main.
+    context: Immediately before App.zig appeared, main owned the window, rendering resources, and loop in one function.
+  - commit: 5bbdd75d70c5108e3e01701cd70424bb24cbb158
+    date: "2022-04-03"
+    path: src/App.zig
+    line: 1
+    end: 107
+    label: First App implementation
+    purpose: See the first init, deinit, and run boundary extracted from main.
+    context: The clean up the main App commit created App.zig and moved window, renderer, and loop ownership behind it.
+  - commit: 5bbdd75d70c5108e3e01701cd70424bb24cbb158
+    date: "2022-04-03"
+    path: src/main.zig
+    line: 7
+    end: 18
+    label: Main after App extraction
+    purpose: Compare the reduced orchestration function with its 126-line predecessor.
+    context: Main retained global GLFW setup but delegated application initialization, running, and cleanup to App.
+sourceRefs:
+  - path: src/App.zig
+    line: 70
+    end: 121
+    label: Current App allocation and cleanup
+    purpose: Read create, init, deinit, and destroy as one ownership contract; ignore surfaces, fonts, and mailboxes for now.
+  - path: src/main_ghostty.zig
+    line: 80
+    end: 108
+    label: Current App and runtime lifetimes
+    purpose: See that shared App state and the platform event loop are now separate owners.
 ---
+import CodeSnapshot from '../../../components/CodeSnapshot.astro';
+import EvolutionStrip from '../../../components/EvolutionStrip.astro';
+import FidelityLegend from '../../../components/FidelityLegend.astro';
+import FrontierMap from '../../../components/FrontierMap.astro';
+import LessonActions from '../../../components/LessonActions.astro';
+import LifecycleDiagram from '../../../components/LifecycleDiagram.astro';
+import OutputPreview from '../../../components/OutputPreview.astro';
+import SourceLink from '../../../components/SourceLink.vue';
 
-Next limitation: one function owns the whole process.
+<LessonActions entryId="chapters/01-app-lifecycle" />
 
-This chapter remains unpublished until its code checkpoint, visual proof, source comparison, and learner walkthrough are complete.
+## What you will see
+
+Chapter 00 proved that the process reaches `main`. Now the trace exposes a second lifetime inside that process:
+
+<OutputPreview
+  file="src/data/reconstruction/chapter-01/output.txt"
+  title="App is created, used, and destroyed before main exits"
+  tag="chapter-01-app-lifecycle"
+  caption="Captured from the tagged reconstruction with Zig 0.16.0 on Linux. The ordered text is the visual proof: App cannot outlive the main scope that owns its pointer."
+/>
+
+This is still a headless program. The new behavior is ownership, not pixels.
+
+## Why one function is no longer enough
+
+Chapter 00 could fit every responsibility in five lines:
+
+```text
+main → print → return
+```
+
+The next responsibilities will have different lifetimes: configuration, surfaces, event queues, fonts, and platform callbacks. If `main` directly creates and cleans up each one, startup order and teardown order become implicit in one growing function.
+
+The smallest useful boundary is an `App` that owns process-wide application state.
+
+<FrontierMap current="App lifecycle" />
+
+A boundary earns its place here because it answers two concrete questions:
+
+1. Who owns application state after initialization?
+2. Which one operation releases that state?
+
+## How App appeared in Ghostty
+
+Ghostty reached this pressure quickly. Immediately before `App.zig`, `main` contained window creation, OpenGL setup, texture and shader resources, vertex buffers, and the event loop. Commit `5bbdd75` moved that responsibility into a file-as-struct `App` and reduced `main` to orchestration.
+
+<EvolutionStrip moments={[
+  {
+    kind: 'then',
+    eyebrow: 'THEN · 2022-04-03',
+    title: 'Extract ownership from main',
+    description: 'App.init created the window and renderer state, App.run owned the event loop, and App.deinit released the window.',
+    revision: '5bbdd75',
+    href: 'https://github.com/ghostty-org/ghostty/blob/5bbdd75d70c5108e3e01701cd70424bb24cbb158/src/App.zig',
+    linkLabel: 'Open first App.zig',
+  },
+  {
+    kind: 'reconstruction',
+    eyebrow: 'RECONSTRUCTION · CHAPTER 01',
+    title: 'Expose only the lifetime',
+    description: 'Our App has no window or renderer. It proves stable allocation, one owner, ordered use, and one destruction path.',
+    revision: 'chapter-01-app-lifecycle',
+  },
+  {
+    kind: 'now',
+    eyebrow: 'NOW · PINNED MAIN',
+    title: 'Separate state from runtime',
+    description: 'Current App owns shared state. A selected platform runtime owns the event loop and calls back into App.',
+    revision: '6ad1fe7',
+    href: 'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/App.zig#L70-L121',
+    linkLabel: 'Open current lifecycle',
+  },
+]} />
+
+The first App boundary looked like this:
+
+```zig
+const App = @This();
+
+window: glfw.Window,
+glprog: gl.Program,
+vao: gl.VertexArray,
+
+pub fn init() !App { /* create window and renderer state */ }
+pub fn deinit(self: *App) void { self.window.destroy(); }
+pub fn run(self: App) !void { /* draw and wait for events */ }
+```
+
+And `main` became:
+
+```zig
+var app = try App.init();
+defer app.deinit();
+try app.run();
+```
+
+That historical App owned both shared state and the event loop. Current Ghostty eventually separated those jobs. Our reconstruction uses the current stable-pointer lifecycle while keeping a temporary `run` method until the runtime boundary exists.
+
+## The ownership contract
+
+<LifecycleDiagram />
+
+Read the diagram as calls and returned ownership, not as threads. Every operation still happens synchronously on one thread.
+
+The stable pointer matters later because native callbacks and surfaces need an address that does not change when a local variable moves or a container grows. We introduce the pointer now because it is part of the current App contract—not because callbacks already exist.
+
+## Files changed
+
+```text
+ghostty-from-scratch/
+└── src/
+    ├── App.zig     new process-wide owner
+    └── main.zig    reduced to orchestration
+```
+
+Both files remain smaller than production because no resources beyond App’s own allocation exist.
+
+## Step 1: make App a file-as-struct
+
+At the top of `src/App.zig`:
+
+```zig
+const App = @This();
+```
+
+In Zig, a source file is a struct namespace. `@This()` names that struct from inside the file. Importing the file gives callers the type directly:
+
+```zig
+const App = @import("App.zig");
+```
+
+This matches Ghostty’s established naming and path without creating a wrapper module.
+
+## Step 2: allocate one stable App
+
+The complete checkpoint file is short enough to inspect:
+
+<CodeSnapshot
+  file="src/data/reconstruction/chapter-01/App.zig"
+  label="src/App.zig"
+  status="adapted"
+  reason="The create/init/deinit/destroy shape follows current Ghostty. Trace output and App.run are temporary; surfaces, fonts, and mailboxes do not exist yet."
+/>
+
+Focus first on `create`:
+
+```zig
+pub fn create(alloc: Allocator) CreateError!*App {
+    const app = try alloc.create(App);
+    errdefer alloc.destroy(app);
+
+    app.init(alloc);
+    std.debug.print("[app] created\n", .{});
+    return app;
+}
+```
+
+`alloc.create(App)` reserves correctly aligned memory for one `App` and returns `*App`.
+
+The production-shaped `errdefer` says: if a later initialization operation fails after allocation, release the allocation while unwinding the error. In this checkpoint `init` cannot fail yet, so the cleanup path is intentionally dormant. It becomes meaningful as soon as App initializes a fallible owned resource.
+
+`init` writes a complete value into the uninitialized allocation:
+
+```zig
+pub fn init(self: *App, alloc: Allocator) void {
+    self.* = .{ .alloc = alloc };
+}
+```
+
+After this assignment, the pointer refers to a valid `App`.
+
+## Step 3: close the lifetime in one place
+
+```zig
+pub fn destroy(self: *App) void {
+    const alloc = self.alloc;
+    self.deinit();
+    std.debug.print("[app] destroyed\n", .{});
+    alloc.destroy(self);
+}
+```
+
+The order is deliberate:
+
+```text
+read allocator needed for final free
+→ release resources owned by App
+→ emit temporary trace
+→ free the App allocation
+```
+
+Nothing may read `self` after `alloc.destroy(self)`.
+
+`deinit` is empty today because App owns no nested resources. Keeping it separate from `destroy` distinguishes two operations that production needs:
+
+- `deinit`: release resources stored inside an initialized value;
+- `destroy`: deinitialize, then free the value’s own allocation.
+
+## Step 4: keep run visibly temporary
+
+```zig
+pub fn run(self: *App) void {
+    _ = self;
+    std.debug.print("[app] running\n", .{});
+}
+```
+
+This method does not pretend to be an event loop. It makes the middle of the lifecycle observable. Chapter 03 removes this responsibility from `App` when a runtime exists.
+
+The `_ = self` line explicitly acknowledges that this checkpoint does not read App state yet.
+
+## Step 5: let main orchestrate
+
+<CodeSnapshot
+  file="src/data/reconstruction/chapter-01/main.zig"
+  label="src/main.zig"
+  status="temporary"
+  reason="It proves lifecycle ordering but still bypasses Ghostty’s generated entrypoint routing and process-wide global allocator."
+/>
+
+The nested scope is part of the demonstration:
+
+```zig
+{
+    const app = try App.create(std.heap.page_allocator);
+    defer app.destroy();
+    app.run();
+}
+```
+
+`defer` runs when control leaves the surrounding scope. The closing brace therefore forces `app.destroy()` before the final `[main] process exiting` trace.
+
+`std.heap.page_allocator` is sufficient for one allocation. It is not Ghostty’s final allocator strategy; process-wide initialization belongs to a later boundary.
+
+## Build and run
+
+```console
+cd ~/ghostty-from-scratch
+zig fmt --check .
+zig build
+zig build test
+zig build run
+```
+
+Expected run output:
+
+```text
+[main] process started
+[app] created
+[app] running
+[app] destroyed
+[main] process exiting
+```
+
+The test creates and destroys App with `std.testing.allocator`. Zig’s testing allocator reports leaked allocations, so forgetting `destroy` makes the narrow lifecycle test fail for the right reason.
+
+## Fidelity labels
+
+<FidelityLegend />
+
+| File | Status | Why |
+|---|---|---|
+| `src/App.zig` | adapted | Current stable-pointer lifecycle and names; temporary trace and `run`; production resources omitted |
+| `src/main.zig` | temporary | Direct import and page allocator before generated routing and global initialization |
+| `build.zig` | adapted | Existing minimal executable and test graph remain sufficient |
+
+Nothing is exact yet. Copying production `App.zig` would pull in surfaces, fonts, mailboxes, configuration, renderer state, and runtime messages before any of them has a job.
+
+## Compare with current Ghostty
+
+Current App preserves the lifecycle shape reconstructed here:
+
+<SourceLink
+  client:load
+  base={import.meta.env.BASE_URL}
+  sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699"
+  path="src/App.zig"
+  line={70}
+  end={121}
+  label="Current App allocation and cleanup"
+  note="Read create, init, deinit, and destroy as one ownership contract. Ignore surfaces, font caches, configuration, and mailboxes until they enter the frontier."
+/>
+
+Production `create` needs `errdefer` because `init` creates a fallible shared font grid set. Production `deinit` closes surfaces and font caches before freeing App itself.
+
+The larger architectural change is where `run` lives:
+
+<SourceLink
+  client:load
+  base={import.meta.env.BASE_URL}
+  sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699"
+  path="src/main_ghostty.zig"
+  line={80}
+  end={108}
+  label="Current shared App and platform runtime"
+  note="Read the two adjacent lifetimes: App.create/destroy owns shared state; apprt.App.init/terminate/run owns platform integration and the event loop."
+/>
+
+Current startup is conceptually:
+
+```text
+shared App state:       create ───────────────────── destroy
+platform runtime App:          init ─ run ─ terminate
+```
+
+That split allows GTK and macOS to provide different native event loops while sharing terminal application state.
+
+## Checkpoint
+
+The reference checkpoint is:
+
+```text
+commit  02c9bedd6c193105b50be2c3d074094c2a3a21f3
+tag     chapter-01-app-lifecycle
+```
+
+The output fixture was generated from that implementation with Zig 0.16.0, not typed from memory.
+
+## The next limitation
+
+`main.zig` now has a useful orchestration role, but it is still a hand-written direct entrypoint. Current Ghostty selects entry behavior through generated build configuration and routes the graphical executable into `main_ghostty.zig`.
+
+Chapter 02 will reconstruct only that routing boundary:
+
+```text
+executable main
+→ generated build choice
+→ Ghostty application entry
+→ App lifecycle
+```
+
+The program will remain headless. A native runtime, Surface, PTY, parser, and renderer are still beyond the frontier.

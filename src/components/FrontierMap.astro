@@ -1,14 +1,17 @@
 ---
 const { current = 'Process entry' } = Astro.props;
 const stages = [
-  ['Process entry', 'current'],
-  ['App lifecycle', 'next'],
-  ['Runtime + Surface', 'future'],
-  ['Child process + PTY', 'future'],
-  ['I/O + parser', 'future'],
-  ['Terminal state', 'future'],
-  ['Window + GPU + fonts', 'future'],
+  'Process entry',
+  'App lifecycle',
+  'Runtime + Surface',
+  'Child process + PTY',
+  'I/O + parser',
+  'Terminal state',
+  'Window + GPU + fonts',
 ];
+const currentIndex = Math.max(0, stages.indexOf(current));
+const stateFor = (index) => index < currentIndex ? 'complete' : index === currentIndex ? 'current' : index === currentIndex + 1 ? 'next' : 'future';
+const captionFor = (state) => ({ complete: 'Reconstructed', current: 'You are here', next: 'Next limitation', future: 'Not introduced' })[state];
 ---
 <section class="frontier-map" aria-labelledby="frontier-title">
   <header>
@@ -16,12 +19,13 @@ const stages = [
     <h2 id="frontier-title">Build only what the current result needs</h2>
   </header>
   <ol>
-    {stages.map(([label, state], index) => (
-      <li class:list={[`is-${state}`, { 'is-current': label === current }]}>
+    {stages.map((label, index) => {
+      const state = stateFor(index);
+      return <li class={`is-${state}`}>
         <span>{String(index).padStart(2, '0')}</span>
         <strong>{label}</strong>
-        <small>{state === 'current' ? 'You are here' : state === 'next' ? 'Next limitation' : 'Not introduced'}</small>
-      </li>
-    ))}
+        <small>{captionFor(state)}</small>
+      </li>;
+    })}
   </ol>
 </section>

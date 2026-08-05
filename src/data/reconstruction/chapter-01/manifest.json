@@ -1,0 +1,33 @@
+{
+  "chapter": "01-app-lifecycle",
+  "title": "App lifecycle",
+  "source_repository": "b1tank/ghostty-from-scratch",
+  "source_tag": "chapter-01-app-lifecycle",
+  "source_commit": "02c9bedd6c193105b50be2c3d074094c2a3a21f3",
+  "upstream_repository": "ghostty-org/ghostty",
+  "upstream_commit": "6ad1fe7d8cbda36c77b337a96c9bea8a77883699",
+  "output_sha256": "3e750517a05e32a813a1588f5100a78efaf150885ca20497a43a1121a447bef1",
+  "files": [
+    {
+      "path": "src/App.zig",
+      "status": "adapted",
+      "reason": "Preserves current create/init/deinit/destroy names and stable allocation; tracing and App.run are temporary until the platform runtime exists.",
+      "sha256": "813148a0ff3e2ce27e95d65b2b5e01fd11b766ab4d536ef37cbcba6426effc14"
+    },
+    {
+      "path": "src/main.zig",
+      "status": "temporary",
+      "reason": "Temporary entrypoint with lifecycle tracing before generated entrypoint routing is reconstructed.",
+      "sha256": "18212a875a96efd6333f5f2c684760cafc67d1ee302e5ef8f3e85dd8c0745df5"
+    }
+  ],
+  "history": [
+    {
+      "commit": "5bbdd75d70c5108e3e01701cd70424bb24cbb158",
+      "date": "2022-04-03",
+      "path": "src/App.zig",
+      "range": "1-107",
+      "responsibility": "Extract window, renderer, and event-loop ownership from main into App."
+    }
+  ]
+}

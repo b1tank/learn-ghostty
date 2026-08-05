@@ -1,14 +1,14 @@
 # Follow-ups
 
-The reconstruction foundation and Chapter 00 are the current release boundary.
+The reconstruction foundation and Chapters 00–01 are the current release boundary.
 
 ## Next learner-driven work
 
-1. Use Chapter 00 from a fresh learner perspective.
-2. Record confusing Zig/build terminology, missing commands, and source comparisons that are too broad.
-3. Correct Chapter 00 before adding code to the implementation frontier.
-4. Recheck current Ghostty `main` for relevant upstream changes.
-5. Build Chapter 01 App lifecycle with its own tagged checkpoint and exact output.
+1. Use Chapter 01 from a fresh learner perspective.
+2. Record confusing allocator, stable-pointer, `defer`, and ownership explanations.
+3. Correct Chapter 01 before moving the implementation frontier.
+4. Recheck current Ghostty entry routing and its history for relevant upstream changes.
+5. Build Chapter 02 entry routing with its own tagged checkpoint and exact output.
 
 Do not prewrite later chapters merely to fill the roadmap.
 

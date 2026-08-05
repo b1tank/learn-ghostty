@@ -1,0 +1,6 @@
+$ zig build run
+[main] process started
+[app] created
+[app] running
+[app] destroyed
+[main] process exiting

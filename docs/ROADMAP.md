@@ -1,9 +1,9 @@
 # Reconstruction roadmap
 
-Only Chapter 00 is currently published. A chapter becomes public after its code checkpoint, exact command, observable result, provenance, source comparison, and responsive browser audit are complete.
+Chapters 00 and 01 are published. A chapter becomes public after its code checkpoint, exact command, observable result, provenance, historical and current source comparisons, and responsive browser audit are complete.
 
-1. **A process exists** — one Zig executable and one visible line
-2. **App lifecycle** — create, run, cleanup, destroy
+1. **A process exists** — one Zig executable and one visible line *(published)*
+2. **App lifecycle** — stable allocation, initialization, temporary run, cleanup, and destruction *(published)*
 3. **Entrypoint routing** — generated build configuration and Ghostty-shaped entry selection
 4. **Runtime and Surface** — shared core versus a temporary headless platform runtime
 5. **Child process and PTY** — first pipes, demonstrated limitation, terminal semantics
