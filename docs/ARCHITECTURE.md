@@ -18,6 +18,8 @@ A published chapter is paired with a named tag or commit in `ghostty-from-scratc
 
 Text output is rendered from committed fixtures. GUI screenshots and recordings must come from the tagged running reconstruction and include capture metadata. Mockups are not implementation evidence.
 
+A published checkpoint proves only its named fixture and recorded environment. Chapters 00–09 have been replayed from their tags, but current implementation CI exercises only the Linux headless path. GTK4/X11/Xvfb capture is locally reproducible; native CI, Wayland, hardware OpenGL, and ordinary terminal applications are not yet acceptance evidence.
+
 ## Source of truth
 
 - `src/content/docs/chapters/*.mdx` — reconstruction curriculum;
@@ -33,6 +35,7 @@ Draft chapters remain unbuilt and unlinked until their implementation checkpoint
 - `/chapters/<id>`
 - `/field-guides/<id>`
 - `/course-map`
+- `/history`
 - `/source`
 - `/ai/lessons/<id>.md`
 
