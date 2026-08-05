@@ -286,6 +286,37 @@ try {
   check((await history.$eval(".commit-list strong", (element) => element.textContent.trim())) === "remove mach-glfw", "history search did not filter commit subjects");
   await history.close();
 
+  const historyLight = await newPage(browser, 1280, "light");
+  await historyLight.goto(base + "/history?commit=ca11c63c", { waitUntil: "networkidle0" });
+  await historyLight.waitForSelector(".diff-line.is-remove");
+  const lightDiff = await historyLight.evaluate(() => {
+    const rgb = (value) => value.match(/[\d.]+/g).slice(0, 4).map(Number);
+    const luminance = (value) => {
+      const channels = rgb(value).slice(0, 3).map((channel) => channel / 255).map((channel) => channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4);
+      return .2126 * channels[0] + .7152 * channels[1] + .0722 * channels[2];
+    };
+    const background = (element) => {
+      for (let current = element; current; current = current.parentElement) {
+        const value = getComputedStyle(current).backgroundColor;
+        const channels = rgb(value);
+        if (channels.length < 4 || channels[3] !== 0) return value;
+      }
+      return "rgb(255, 255, 255)";
+    };
+    const contrast = (selector) => {
+      const element = document.querySelector(selector);
+      const foreground = luminance(getComputedStyle(element).color);
+      const behind = luminance(background(element));
+      return (Math.max(foreground, behind) + .05) / (Math.min(foreground, behind) + .05);
+    };
+    return {
+      surfaceLuminance: luminance(getComputedStyle(document.querySelector(".diff-files")).backgroundColor),
+      contrasts: [".diff-line.is-context", ".diff-line.is-add", ".diff-line.is-remove", ".diff-line.is-hunk", ".diff-line.is-meta"].map(contrast),
+    };
+  });
+  check(lightDiff.surfaceLuminance >= .85 && lightDiff.contrasts.every((ratio) => ratio >= 4.5), "light theme diff colors do not meet readable contrast");
+  await historyLight.close();
+
   const flow = await newPage(browser);
   await flow.goto(base + "/field-guides/tmux", { waitUntil: "networkidle0" });
   await flow.$eval(".flow-walkthrough", (element) => element.scrollIntoView({ block: "center" }));
