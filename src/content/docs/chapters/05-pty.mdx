@@ -51,19 +51,19 @@ import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LocalLessonSetup chapter="05" />
 
-## What you will see
+## Let's replace the pipes with a real terminal device
 
-The same shell probe runs twice. Pipes report `no`; the PTY reports `yes` and exposes the additional kernel relationships:
+We will run the exact same shell probe twice. With pipes it says `no`. With a PTY it says `yes`. Keeping the child command the same lets us see that the setup—not the shell script—caused the change.
 
 <OutputPreview file="src/data/reconstruction/chapter-05/output.txt" title="Before and after terminal attachment" tag="chapter-05-pty" caption="Captured on Linux with a 24×80 PTY. Dynamic PIDs and /dev/pts numbers are converted into relationship checks so the evidence stays reproducible." />
 
 The PTY result is not inferred from colored output or shell prompts. The child asks the kernel about its descriptors, session, process group, foreground group, and window size.
 
-## The relationship we were missing
+## What did the pipes fail to create?
 
 <PtyRelationshipDiagram />
 
-The PTY is a pair of connected device endpoints:
+A PTY sounds mysterious, but start with two connected file descriptors:
 
 - the **master** is owned by the terminal emulator;
 - the **slave** behaves like the terminal device seen by the child;
@@ -73,7 +73,7 @@ The PTY is a pair of connected device endpoints:
 
 <FrontierMap current="Child process + PTY" />
 
-## How Ghostty reached this boundary
+## Real Ghostty added this in two steps
 
 Ghostty first opened a PTY on April 15, 2022. At that point it only proved descriptor and window-size operations. On April 24, `childPreExec` added session creation and controlling-terminal attachment while Command gained the hook needed to call it between fork and exec.
 
@@ -85,7 +85,7 @@ Ghostty first opened a PTY on April 15, 2022. At that point it only proved descr
 
 The historical sequence separates opening a device pair from correctly launching a process inside it. Our checkpoint keeps those responsibilities separate in `pty.zig` and `Command.zig` too.
 
-## Step 1: link the platform API honestly
+## Start in `build.zig`: we need a C library function
 
 <SyntaxBridge client:load reference="c-abi-boundaries" title="Cross the POSIX C ABI without hiding it" code={[
   'pub const c = @cImport({ @cInclude("pty.h"); });',
@@ -108,17 +108,17 @@ The historical sequence separates opening a device pair from correctly launching
 
 > **Text version:** `@cImport` translates POSIX header declarations. `extern struct` preserves C field layout. `openpty` writes kernel file descriptors through pointer arguments; `@ptrCast` makes an ABI pointer conversion explicit. A negative C return becomes a typed Zig error, and the resulting descriptors must be closed exactly once.
 
-Linux exposes `openpty` through libc headers. The build graph now sets `root_module.link_libc = true` for both executable and tests.
+Linux gives us `openpty` through libc. So the build file must link libc for both the program and its tests. If you have used `-l` flags in C, this is the Zig build-graph version.
 
 This is not a future dependency framework. It solves one concrete call used by the current chapter. Zig 0.16 moved libc linkage onto the root module; attempting the older `exe.linkLibC()` API failed at build time and was corrected rather than hidden.
 
 <CodeSnapshot file="src/data/reconstruction/chapter-05/build.zig" label="build.zig" status="adapted" reason="The existing graph now links libc solely for the Linux PTY API." />
 
-## Step 2: own master and slave descriptors
+## Follow `openpty` into `pty.zig`
 
 <CodeSnapshot file="src/data/reconstruction/chapter-05/pty.zig" label="src/pty.zig" status="adapted" reason="Linux openpty and child-session subset of current Ghostty PTY; no Windows, mode API, resize messages, or process queries." />
 
-`Pty.open` asks the kernel for two file descriptors and initializes a 24×80 window:
+`Pty.open` asks the kernel for the master/slave pair and starts it with a simple 24×80 size:
 
 ```zig
 if (c.openpty(&master, &slave, null, null, &size) < 0)
@@ -129,9 +129,9 @@ The parent keeps the master and closes its copy of the slave after forking. The 
 
 The close rules prevent a subtle hang: an inherited open slave can keep the PTY relationship alive after the intended child exits.
 
-## Step 3: create the child session before exec
+## Now set up the child between `fork` and `exec`
 
-`childPreExec` runs only in the forked child:
+This part should feel familiar if you have written Unix C. After `fork` but before `exec`, the child changes its own session and descriptors:
 
 ```text
 close master
@@ -146,7 +146,7 @@ close master
 
 This setup must happen after fork because it changes only the child process, and before exec because the shell should begin life inside the completed terminal relationship.
 
-## Step 4: fork, exec, and read the master
+## Return to `Command.zig`: parent and child split jobs
 
 <CodeSnapshot file="src/data/reconstruction/chapter-05/Command.zig" label="src/Command.zig" status="adapted" reason="Finite Linux fork/exec PTY collection added beside the Chapter 04 pipe runner; production process control remains much broader." />
 
@@ -161,11 +161,11 @@ PID equals session ID
 process group equals foreground process group
 ```
 
-## Step 5: compare inside one Surface
+## Put both experiments next to each other in Surface
 
 <CodeSnapshot file="src/data/reconstruction/chapter-05/Surface.zig" label="src/Surface.zig" status="adapted" reason="Runs finite pipe and PTY probes side by side; persistent read/write ownership belongs to the next Termio chapter." />
 
-Running both paths with the same shell script controls the experiment. The changed variable is the descriptor/session setup, not the child command.
+This is just a controlled experiment: same shell, same checks, different descriptor setup. Now the `yes` answers actually mean something.
 
 ## Build and run
 
@@ -203,7 +203,7 @@ The test suite also opens and closes a PTY directly, catching descriptor and lib
 
 The implementation is intentionally Linux-specific because only one platform relationship has been demonstrated. A cross-platform abstraction before a second implementation would be speculative.
 
-## Compare with current Ghostty
+## How much more does today's PTY handle?
 
 <SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/pty.zig" line={116} end={260} label="Current POSIX PTY" note="Read open, descriptor flags, UTF-8 mode, and childPreExec. Ignore Windows and process-info branches." />
 
@@ -218,7 +218,7 @@ commit  352764a6c5e3d85b5888aea7d4923950b3ceab24
 tag     chapter-05-pty
 ```
 
-## The next limitation
+## What still isn't interactive enough?
 
 The parent currently blocks until the finite child exits and stores all output in one fixed buffer. A terminal emulator must instead:
 
