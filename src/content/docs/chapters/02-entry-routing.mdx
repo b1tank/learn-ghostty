@@ -49,16 +49,14 @@ import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LocalLessonSetup chapter="02" />
 
-## What are we trying to do?
+## Okay, what are we looking at now?
 
-Chapter 01 put application ownership in `App`. But `src/main.zig` still had two jobs:
+We already have an `App` with a create/run/destroy lifetime. But when we open `src/main.zig`, we notice it is doing two different jobs:
 
 1. be the executable's root file;
 2. start the Ghostty application.
 
-Chapter 02 separates those jobs. The root file becomes a tiny router. The application startup moves to `main_ghostty.zig`.
-
-You can think of the router as a typed switchboard:
+Let's separate them. `main.zig` will become a tiny switchboard, and the actual Ghostty startup code will live in `main_ghostty.zig`:
 
 ```text
 zig build
@@ -68,9 +66,9 @@ zig build
   → main_ghostty.main creates App
 ```
 
-There is no runtime menu. The compiler resolves this route while building the executable.
+This is not a menu the user sees. Zig picks the route while compiling, so the finished program goes straight to the selected `main`.
 
-## What you will see
+## What should happen when we run it?
 
 <OutputPreview file="src/data/reconstruction/chapter-02/output.txt" title="The executable routes into Ghostty startup" tag="chapter-02-entry-routing" caption="Captured from commit 4a3538b with Zig 0.16.0. The first line makes the selected entry module visible." />
 
@@ -82,7 +80,7 @@ Only one line is new:
 
 The rest is Chapter 01's App lifetime.
 
-## The five files we will read
+## Let's look at the files before diving in
 
 ```text
 src/main.zig              executable root and compile-time router
@@ -92,19 +90,19 @@ src/App.zig               functions called by startup
 build.zig                 why compilation begins at src/main.zig
 ```
 
-We will read the project the way you would explore an unfamiliar C program: start at `main`, follow each referenced name or call, and inspect the build machinery only after the runtime path makes sense.
+We won't read these alphabetically. We'll do what you probably do in a new C project: start at `main`, follow the names and calls we meet, and look at the build file after we understand the program.
 
 We will account for every meaningful line. Blank lines only separate ideas.
 
 ---
 
-## File 1: start at `src/main.zig`
+## Start at `src/main.zig`
 
-Purpose: select the application entry module at compile time.
+Open the program's root file first. Its job is to choose which `main` function this executable should use.
 
 <CodeSnapshot file="src/data/reconstruction/chapter-02/main.zig" label="src/main.zig" status="adapted" reason="The executable root reduced to the only reconstructed entrypoint." />
 
-### Import the configuration namespace
+### The first line points us somewhere else
 
 ```zig
 const build_config = @import("build_config.zig");
@@ -117,13 +115,13 @@ build_config.ExeEntrypoint
 build_config.exe_entrypoint
 ```
 
-This is a compile-time module dependency, not runtime loading.
+Nothing is being loaded while the program runs. This happens during compilation.
 
-At this point we do what a source-code reader naturally does: follow the imported name into `build_config.zig`, learn what `exe_entrypoint` contains, and then return here.
+We just found a new name, `build_config`, so let's follow it and see what `exe_entrypoint` actually contains.
 
-## File 2: follow the import into `src/build_config.zig`
+## Follow the import into `src/build_config.zig`
 
-Purpose: represent the build's entrypoint choice as a Zig type.
+This tiny file turns the build's choice into a normal Zig enum. If you know C enums, this will feel familiar.
 
 <CodeSnapshot file="src/data/reconstruction/chapter-02/build_config.zig" label="src/build_config.zig" status="adapted" reason="Static one-entry replacement for Ghostty's generated build configuration." />
 
@@ -181,11 +179,11 @@ to:
 
 ---
 
-## Return to `src/main.zig`
+## Now jump back to `src/main.zig`
 
-We now know that `build_config.exe_entrypoint` has the value `.ghostty`. Return to the switch and keep reading.
+Good—we now know the value is `.ghostty`. Let's put that fact into the switch we saw in `main.zig`.
 
-### Select a module
+### Let the switch choose the file
 
 <SyntaxBridge client:load reference="compile-time-selection" title="Choose an entry module at compile time" code={[
   'const entrypoint = switch (build_config.exe_entrypoint) {',
@@ -204,7 +202,7 @@ We now know that `build_config.exe_entrypoint` has the value `.ghostty`. Return 
 const entrypoint = switch (build_config.exe_entrypoint) {
 ```
 
-A Zig `switch` can produce a value. Here that value will be a module namespace.
+Unlike a C `switch` that often just runs statements, this Zig `switch` produces a value. Here the value is the imported `main_ghostty.zig` namespace.
 
 The input is a compile-time-known constant, so this does not add a runtime branch.
 
@@ -223,7 +221,7 @@ The input is a compile-time-known constant, so this does not add a runtime branc
 
 The brace closes the switch. The semicolon terminates the `entrypoint` declaration.
 
-### Publish the selected function
+### Make the chosen function our executable's `main`
 
 ```zig
 pub const main = entrypoint.main;
@@ -237,11 +235,11 @@ pub fn main() !void {
 }
 ```
 
-It gives the selected function another public name. There is no extra runtime call frame.
+This line is basically an alias. It does not create a little wrapper function that calls another function, so there is no extra runtime hop.
 
 `pub` controls Zig namespace visibility. It does not by itself export a C ABI symbol.
 
-### Force the route into tests
+### One small test-time detail
 
 ```zig
 test {
@@ -259,15 +257,13 @@ Zig analyzes declarations lazily. Referencing `entrypoint` makes the selected mo
 
 ---
 
-## File 3: follow the selected `src/main_ghostty.zig`
+## Follow the selected file into `src/main_ghostty.zig`
 
-Purpose: start the Ghostty application after the router selects it.
-
-The router gave us `entrypoint.main`, so this is the next function to read.
+The router handed us `entrypoint.main`, so let's open that function next. This is where the program actually starts creating the application.
 
 <CodeSnapshot file="src/data/reconstruction/chapter-02/main_ghostty.zig" label="src/main_ghostty.zig" status="adapted" reason="Chapter 01 startup moved intact behind the selected entry module." />
 
-### Imports
+### First, what does this file need?
 
 ```zig
 const std = @import("std");
@@ -284,7 +280,7 @@ a type
 a namespace containing App functions
 ```
 
-### Fallible main
+### Then we reach the real startup function
 
 ```zig
 /// The application entrypoint selected by src/main.zig.
@@ -304,7 +300,7 @@ The possible allocation failure from `App.create` becomes part of `main`'s retur
 
 **C mental model:** `int main(void)` is close in shape, but C's integer status is only a convention.
 
-### Traces
+### Print a couple of breadcrumbs
 
 ```zig
 std.debug.print("[entry] ghostty\n", .{});
@@ -318,7 +314,7 @@ std.debug.print("[main] process started\n", .{});
 
 There are no replacement fields in these strings, so the tuple is empty.
 
-### Ownership scope
+### Create App, use it, and make sure it dies
 
 ```zig
 {
@@ -383,15 +379,13 @@ The final trace therefore happens after App destruction. The last brace ends `ma
 
 ---
 
-## File 4: follow the App calls into `src/App.zig`
+## Follow the App calls into `src/App.zig`
 
-Purpose: allocate one stable App, initialize it, and free it in the right order.
-
-`main_ghostty.zig` calls `App.create`, `app.run`, and `app.destroy`. We follow those calls into this file now.
+Now we have three questions: what does `App.create` allocate, what does `run` do, and why do we need both `deinit` and `destroy`? Let's follow those calls.
 
 <CodeSnapshot file="src/data/reconstruction/chapter-02/App.zig" label="src/App.zig" status="adapted" reason="Chapter 01 App ownership remains unchanged while startup moves behind the router." />
 
-### Name the current container
+### What is this `App` type?
 
 ```zig
 const App = @This();
@@ -408,7 +402,7 @@ const Allocator = std.mem.Allocator;
 
 The first line imports the standard library. The second creates a short local alias for the allocator interface type.
 
-### App field and error set
+### What does App store right now?
 
 ```zig
 /// General-purpose allocator used to own the stable App pointer.
@@ -423,7 +417,7 @@ pub const CreateError = Allocator.Error;
 
 `CreateError` is a public alias for the allocator's error set. Allocation is the only fallible operation at this checkpoint.
 
-### Create
+### Why have both `create` and `init`?
 
 ```zig
 pub fn create(alloc: Allocator) CreateError!*App {
@@ -467,7 +461,7 @@ return app;
 
 The caller now owns the obligation to call `destroy`.
 
-### Initialize
+### `init` turns raw storage into a valid App
 
 ```zig
 pub fn init(self: *App, alloc: Allocator) void {
@@ -490,7 +484,7 @@ self.* = .{ .alloc = alloc };
 
 The closing brace ends `init`.
 
-### Deinitialize fields
+### `deinit` cleans up things stored inside App
 
 ```zig
 pub fn deinit(self: *App) void {
@@ -504,7 +498,7 @@ pub fn deinit(self: *App) void {
 
 **C mental model:** `(void)self;`
 
-### Destroy the allocation
+### `destroy` also frees the App itself
 
 ```zig
 pub fn destroy(self: *App) void {
@@ -531,7 +525,7 @@ save allocator
 
 After `alloc.destroy(self)`, `self` is invalid.
 
-### Temporary run method
+### `run` is still just a placeholder
 
 ```zig
 pub fn run(self: *App) void {
@@ -544,7 +538,7 @@ This function does not use App state yet, so it discards `self` and prints one l
 
 It is temporary. Chapter 03 moves event-loop ownership out of shared App state.
 
-### Built-in test
+### A small test checks that we clean up
 
 ```zig
 test "create and destroy App" {
@@ -559,11 +553,11 @@ Zig's test runner discovers this named test.
 
 ---
 
-## File 5: read `build.zig` after the runtime path
+## Finally, open `build.zig`
 
-Purpose: answer the remaining question: why did Zig begin at `src/main.zig`?
+We understand the runtime path now. One question remains: how did Zig know to begin with `src/main.zig`?
 
-We read this last because the executable route is already familiar. The build API now has a concrete job instead of being unexplained setup.
+If you come from C, think of `build.zig` as a typed Makefile. Reading it last makes the build API much less mysterious.
 
 <CodeSnapshot file="src/data/reconstruction/chapter-02/build.zig" label="build.zig" status="adapted" reason="Minimal build graph for one executable and one test artifact." />
 
@@ -710,7 +704,7 @@ The final `}` closes the `build` function.
 
 ---
 
-## Put the whole runtime together
+## Let's say the whole story once
 
 Here is a C-shaped mental model. It is not a direct translation because it loses Zig's checked error union and compile-time namespace selection.
 
@@ -743,7 +737,7 @@ int ghostty_main(void) {
 }
 ```
 
-The Zig version improves three boundaries:
+Compared with the C-shaped sketch, Zig makes three things explicit:
 
 1. failure is represented in the function type;
 2. `defer` keeps cleanup attached to the owning scope;
@@ -769,7 +763,7 @@ Expected runtime trace:
 [main] process exiting
 ```
 
-## Then, this checkpoint, and current Ghostty
+## Did real Ghostty make a similar split?
 
 In February 2024, Ghostty commit `f1227a3` moved application startup into `main_ghostty.zig`. `main.zig` became a small build-selected router. A January 2025 refactor changed the export style to the explicit declaration shape used today.
 
@@ -802,7 +796,7 @@ commit  4a3538b7f6b569ae5749031387f22136d74fa220
 tag     chapter-02-entry-routing
 ```
 
-## What is still wrong?
+## What still feels wrong?
 
 `main_ghostty` still calls:
 
