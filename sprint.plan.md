@@ -1,41 +1,35 @@
-# Sprint plan — consistent action rows and sequential cards
+# C-first Zig syntax bridge sprint
 
-## Sprint goal
+Goal: add compact, first-appearance Zig explanations to every published reconstruction chapter for learners coming from C, with TypeScript/Python translations only where they clarify rather than distort the low-level model.
 
-Make consecutive buttons, links, and cards align predictably across every Learn Ghostty page and component, while adding compact functional icons that make repeated actions easier to recognize. Validate the result at constrained article widths and deploy through the existing GitHub Pages workflow.
+## Design contract
 
-## Prioritized tasks
+- C is always the default and most detailed explanation.
+- First syntax appearances use an interactive line-focused explorer.
+- Ownership, pointers, allocation, stack/heap, lifetimes, and concurrency add a memory/lifetime diagram.
+- TypeScript and Python tabs are optional; omit them when GC/high-level semantics would create a misleading analogy.
+- When omitted, say briefly why the low-level operation has no useful direct equivalent.
+- Later appearances use compact reminders and link back to the first explanation.
+- Components must remain responsive, keyboard accessible, reduced-motion safe, and AI-clean Markdown must retain a textual equivalent.
 
-- [x] **1. Normalize consecutive control and card geometry**
-  - Audit every component-owned action row and repeated card/grid sequence.
-  - Give sibling controls one shared height, inline alignment, wrapping behavior, and icon-safe spacing.
-  - Stretch cards within each grid row and keep card content anchored consistently without crushing text at narrow article widths.
+## Tasks
 
-- [x] **2. Add recognizable icons to repeated actions and navigation**
-  - Add decorative, accessible SVG icons to source actions, lesson actions, chapter navigation, reconstruction resume actions, and data-flow previous/next controls.
-  - Preserve visible labels and existing accessible names; icons supplement rather than replace text.
-  - Keep icon sizing and alignment shared instead of introducing component-specific drift.
-
-- [x] **3. Add regression coverage for alignment and icon affordances**
-  - Extend the browser audit to check action-control heights, top alignment, repeated-card geometry, icon presence, and narrow-width wrapping on representative routes.
-  - Cover desktop, constrained desktop article width, and mobile behavior.
-
-- [x] **4. Run publication gates and deploy**
-  - [x] Run `npm run check`, `npm run audit:ui`, and `npm run build`.
-  - [x] Push the focused commits to the current branch so the existing GitHub Pages workflow deploys the update.
-
-## Definition of done
-
-- Consecutive controls share a stable height and vertical position unless intentionally stacked by a responsive layout.
-- Repeated cards start and stretch consistently within each row at desktop and constrained article widths.
-- Repeated actions have recognizable icons plus readable labels.
-- Course validation, UI audit, and production build pass.
-- The deployment commit is pushed to the current branch.
+- [ ] Build the reusable Starlight `SyntaxBridge` component with C-first tabs, optional TS/Python, line focus, and memory flow.
+- [ ] Add an accessible plain-Markdown representation for Copy for AI and no-JavaScript use.
+- [ ] Chapter 00: imports, `pub fn`, `!void`, tuples, formatting, process stack.
+- [ ] Chapter 01: `@This`, `*App`, allocator create/destroy, `self.*`, `defer`/`errdefer`, heap versus stack.
+- [ ] Chapter 02: comptime switch, module imports, exported function aliases.
+- [ ] Chapter 03: optional values, runtime/core types, stable Surface pointers, teardown order.
+- [ ] Chapter 04: slices, owned buffers, tagged unions, process capabilities.
+- [ ] Chapter 05: extern structs, C imports, file descriptors, fork/exec, pointer casts.
+- [ ] Chapter 06: fixed buffers, slices, incremental reads, mutable state.
+- [ ] Chapter 07: tagged unions, state machines, optionals, switch expressions.
+- [ ] Chapter 08: nested arrays, cell values, cursor mutation, enum style state.
+- [ ] Chapter 09: opaque C types, extern functions, callback ABI, native ownership.
+- [ ] Chapter 10: C shim, GL callbacks, coordinate systems, context/resource lifetime.
+- [ ] Add responsive and keyboard browser assertions for every chapter.
+- [ ] Run course validation, build, AI Markdown checks, and full UI audit.
 
 ## Hiccups & Notes
 
-- The first full browser audit exceeded the initial 180-second command timeout. Re-running with a 600-second allowance completed successfully; after rebasing onto concurrent upstream chapter work, the final audit passed 814 assertions across 19 routes, two themes, and three viewport widths.
-- Shared control geometry now covers lesson, source, reconstruction, data-flow, and commit-history action rows. Grid cards explicitly stretch within rows and collapse to aligned single-column cards at narrow widths.
-- Functional SVG icons supplement—rather than replace—visible labels in action rows, Copy for AI options, chapter navigation, roadmap states, and the homepage method cards.
-- Final local publication gates pass: `npm run check`, `npm run audit:ui`, and `npm run build`.
-- The first authorized push was safely rejected as non-fast-forward because three concurrent commits had reached `origin/main`. The sprint commits rebased cleanly onto those changes, all publication gates passed again, and the updated push received fresh confirmation.
+- TypeScript/Python explanations are intentionally absent when they would imply GC semantics equivalent to explicit allocation, raw pointers, fork safety, C ABI, or graphics-context ownership.
