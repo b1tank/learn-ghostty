@@ -51,21 +51,21 @@ import TermioOwnershipDiagram from '../../../components/TermioOwnershipDiagram.a
 
 <LocalLessonSetup chapter="06" />
 
-## What you will see
+## Let's keep the child alive long enough to talk to it
 
-The child now pauses, receives parent input, replies with real SGR escape bytes, and exits while one Termio object owns the session:
+Last chapter waited for a child to finish. A terminal cannot work that way—we need to read some bytes, send some input, read more bytes, and only wait when the child finally exits. One `Termio` object will own that whole conversation.
 
 <OutputPreview file="src/data/reconstruction/chapter-06/output.txt" title="Incremental reads and writes across one live PTY session" tag="chapter-06-termio" caption="Every byte is rendered as hexadecimal. ESC, CR, and LF remain data rather than being interpreted by the browser or the terminal showing this lesson." />
 
-The green reply is not green yet. Termio owns transport; it does not interpret VT syntax.
+The reply contains bytes that mean “turn green,” but we will not color anything yet. `Termio` is the byte-moving layer. Understanding the bytes belongs to the next lesson.
 
-## The limitation after the first PTY
+## Why the Chapter 05 code is too temporary
 
 Chapter 05 blocked until a finite child exited and collected its entire output into one fixed buffer. An interactive terminal must read and write during the same child lifetime.
 
 <TermioOwnershipDiagram />
 
-Termio becomes the owner of:
+Let's gather the pieces that live for the whole child session under one owner:
 
 ```text
 PTY master
@@ -80,7 +80,7 @@ PTY master
 
 This chapter stops before the parser half of that frontier.
 
-## How Termio emerged historically
+## Real Ghostty eventually pulled these jobs together
 
 By November 2022 Ghostty's window/surface code had accumulated PTY, child, read, write, terminal-state, and rendering wakeup responsibilities. Commit `35c1decd` began extracting an I/O backend and thread. Later the same day, `a8e7c520` started continuous PTY reads and explicit write-request ownership.
 
@@ -92,18 +92,18 @@ By November 2022 Ghostty's window/surface code had accumulated PTY, child, read,
 
 The historical extraction happened after real concurrency pressure existed. Our reconstruction does not add a thread yet; it first makes the ownership and incremental API concrete synchronously.
 
-## Step 1: separate child start from wait
+## First, stop treating `start` and `wait` as one operation
 
 `Command.startPty` now returns immediately with a child handle instead of reading until exit. `Child.wait` is a later explicit operation.
 
-That separation lets Termio perform work between:
+Now Termio has time to do useful work in the middle:
 
 ```text
 fork/exec ───────────────────────────── wait
           read → write → read → ...
 ```
 
-## Step 2: give PTY incremental operations
+## Give `Pty` small read and write operations
 
 <SyntaxBridge client:load reference="arrays-slices-and-ownership" title="Accumulate arbitrary reads into one owned buffer" code={[
   'phase_bytes: [4096]u8 = undefined,',
@@ -128,7 +128,7 @@ fork/exec ───────────────────────�
 
 > **Text version:** Termio owns a fixed 4096-byte array and tracks its initialized prefix separately. Each PTY read fills an arbitrary prefix of a three-byte temporary. `chunk[0..count]` and `phase_bytes[0..phase_len]` are no-copy slices. The returned slice borrows Termio storage and is invalid after reuse or teardown.
 
-The PTY wrapper now exposes:
+The PTY wrapper now gives Termio two plain operations:
 
 ```zig
 pub fn read(self: *Pty, buffer: []u8) !usize
@@ -137,11 +137,11 @@ pub fn writeAll(self: *Pty, bytes: []const u8) !void
 
 `read` treats Linux `EIO` after slave closure as end-of-stream. `writeAll` handles partial writes and interrupted syscalls. Neither method knows what bytes mean.
 
-## Step 3: create the Termio owner
+## Open `Termio.zig`: who owns the live session?
 
 <CodeSnapshot file="src/data/reconstruction/chapter-06/termio/Termio.zig" label="src/termio/Termio.zig" status="adapted" reason="Synchronous deterministic owner for PTY, child, read phases, writes, exit, and teardown; production parser/state/mailbox/thread responsibilities are deferred." />
 
-Initialization opens the PTY and starts the child. Deinitialization closes the PTY and ensures an unwaited child is reaped.
+`init` opens the PTY and starts the child. `deinit` closes the PTY and makes sure we do not leave a zombie child behind. This is the same create/use/cleanup story from App, just for a terminal session.
 
 The child program deliberately pauses:
 
@@ -153,11 +153,11 @@ printf '\033[32mreply:%s\033[0m\n' "$line"
 
 Termio reads until `ready>`, writes `hello\n`, then reads until the slave closes.
 
-## Step 4: refuse to depend on read boundaries
+## Do not confuse one `read` call with one message
 
 Both read methods use a three-byte scratch buffer. `ready>` is six bytes; the SGR sequences and reply are longer. The API aggregates until a semantic condition or end-of-stream rather than treating one `read` call as one message.
 
-This is the essential stream invariant:
+This is the rule to remember:
 
 ```text
 read chunks are transport accidents
@@ -166,7 +166,7 @@ VT actions are protocol structure
 
 The parser in Chapter 07 must preserve state between calls for exactly this reason.
 
-## Step 5: keep bytes visible and unparsed
+## Print the bytes without pretending we understand them
 
 `traceHex` prints two-digit hexadecimal bytes:
 
@@ -202,7 +202,7 @@ The test uses the testing allocator and testing I/O capability, starts a real PT
 | `src/pty.zig` | adapted | incremental master read/write subset |
 | `src/Surface.zig` | adapted | orchestrates one Termio probe |
 
-## Compare with current Ghostty
+## What grows inside production Termio?
 
 <SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/termio/Termio.zig" line={1} end={75} label="Current Termio ownership inventory" note="Read the fields and their owners. Ignore detailed configuration types and methods until those jobs enter the frontier." />
 
@@ -217,7 +217,7 @@ commit  6b3b663fc7620877060684ebc7be26459edb0390
 tag     chapter-06-termio
 ```
 
-## The next limitation
+## We can move bytes—how do we understand them?
 
 Termio can identify a phase marker only by searching raw bytes. It cannot explain printable text, carriage return, line feed, or SGR.
 
