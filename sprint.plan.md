@@ -26,6 +26,8 @@ Goal: turn the existing chapter-local Zig syntax bridges into a permanent, cumul
 - The cumulative page now documents the Chapter 00–10 language frontier, corrects common C-to-Zig misconceptions, and links to all eleven published reconstruction chapters.
 - All eleven embedded bridges link to scoped anchors on the cumulative page. Links use Astro's base URL so the GitHub Pages deployment remains valid.
 - Static validation now requires one reference link per published chapter, valid section anchors, Zig 0.16.0 scope, all chapter backlinks, and the key semantic corrections.
-- Final validation passed: `npm run check`; `npm run build` with 27 generated pages and valid internal base paths; `npm run audit:ui` with 1325 assertions across themes and widths.
+- Final validation passed: `npm run check`; `npm run build` with 27 generated pages and valid internal base paths; `npm run audit:ui:quick` in 1.55 seconds with 5 critical assertions; `npm run audit:ui` in 2.20 seconds with 14 critical assertions.
 - One test expectation initially assumed 25 quick-reference rows; the authored table contains 24. The assertion was corrected to the deliberate exact count and the full audit then passed.
+- The first validation accidentally used the legacy 1325-assertion audit because the lean-audit commit existed only in the separate `/home/b1tank/learn-ghostty-a1e46e` clone and had not reached this branch. Integration was performed in a new isolated clone, `/home/b1tank/learn-ghostty-e784c2`, then cherry-picked only after check, build, quick, and full audits passed there.
+- The lean audit retains the new syntax-reference coverage: quick mode checks the scoped bridge link; full mode checks the reference heading, Zig version, table coverage, all eleven chapter links, and target anchor.
 - Push remains pending because it is a public write and requires immediate confirmation after remote and authenticated identity verification.
