@@ -51,9 +51,9 @@ import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 
 <LocalLessonSetup chapter="00" />
 
-## What you will see
+## Let's start with the smallest thing that can work
 
-The first result is intentionally tiny. You will compile a Zig executable, start a process, reach `main`, and write one visible line.
+Okay, before we talk about terminals, windows, or GPUs, let's make sure we can build and run one program. We want the operating system to start our process, enter `main`, and print one line. That's all.
 
 <OutputPreview
   file="src/data/reconstruction/chapter-00/output.txt"
@@ -62,19 +62,19 @@ The first result is intentionally tiny. You will compile a Zig executable, start
   caption="Captured from the tagged reconstruction with Zig 0.16.0 on GitHub Actions Ubuntu. A decorative screenshot would add no information yet, so the exact output is the visual proof."
 />
 
-No shell, PTY, parser, terminal state, native window, font system, or GPU renderer has been added. Those omissions are the point.
+You may be thinking, “Where is the terminal emulator?” We haven't built it yet. There is no shell, PTY, parser, window, font system, or GPU code. First we are checking that our toolchain and entrypoint work.
 
 <ProcessBirthDiagram />
 
-## The dependency frontier
+## What are we deliberately not building yet?
 
-A dependency frontier separates code you can explain today from systems that do not exist yet.
+Let's draw a line around today's code. On our side of the line is one process and one print call. Everything else stays on the other side until we actually need it.
 
 <FrontierMap current="Process entry" />
 
 Do not solve future problems early. Chapter 01 introduces an App lifecycle only after one function has become an obvious ownership bottleneck.
 
-## The repository at this checkpoint
+## Take a quick look around the repository
 
 ```text
 ghostty-from-scratch/
@@ -96,7 +96,7 @@ The public chapter is pinned to reconstruction commit:
 00b751fbfd354a645a178542ba47bafb64e7b6df
 ```
 
-## Step 1: read the entire program
+## Open `src/main.zig` first
 
 <CodeSnapshot
   file="src/data/reconstruction/chapter-00/main.zig"
@@ -105,7 +105,7 @@ The public chapter is pinned to reconstruction commit:
   reason="A minimal process bootstrap. Chapter 02 replaces it with Ghostty-shaped entrypoint routing."
 />
 
-There are only five meaningful ideas.
+This whole program is only a few lines, so let's read it from top to bottom.
 
 <SyntaxBridge client:load reference="declarations-and-inference" title="Read the first Zig function from C" code={[
   'const std = @import("std");',
@@ -129,7 +129,7 @@ There are only five meaningful ideas.
 
 > **Text version:** `@import` binds a compile-time module namespace. `pub fn main() !void` exposes a function that either succeeds without a value or returns an error. `.{}` is the empty formatting tuple. The call frame owns no heap allocation; static string bytes are formatted to stderr.
 
-### Import the Zig standard library
+### First, get Zig's standard library
 
 ```zig
 const std = @import("std");
@@ -137,7 +137,7 @@ const std = @import("std");
 
 `@import` makes another Zig module available at compile time. `std` is only a local name. No runtime file loading occurs here.
 
-### Declare the process entrypoint
+### Now define where the process starts
 
 ```zig
 pub fn main() !void {
@@ -150,7 +150,7 @@ pub fn main() !void {
 
 We do not need the error capability yet, but retaining it gives later startup operations a natural way to fail.
 
-### Write bytes to standard error
+### Finally, print something we can see
 
 ```zig
 std.debug.print("ghostty-from-scratch: hello\n", .{});
@@ -164,9 +164,9 @@ The newline is one byte:
 \n → 0A hexadecimal → line feed
 ```
 
-Your existing terminal emulator—not this program—interprets and displays those bytes.
+One easy thing to mix up: our tiny program only writes bytes. The terminal app you are already using reads those bytes and draws the letters on screen.
 
-## Step 2: understand the build graph
+## Now open `build.zig`—think Makefile, but written in Zig
 
 <CodeSnapshot
   file="src/data/reconstruction/chapter-00/build.zig"
@@ -175,7 +175,7 @@ Your existing terminal emulator—not this program—interprets and displays tho
   reason="It uses Ghostty's current minimum Zig version and modern Build API, but omits every production artifact and dependency beyond one executable."
 />
 
-Read this file as a graph rather than line-by-line syntax:
+If you come from C, treat this like a typed Makefile. It says which source file starts the program, what executable to create, and which `run` and `test` commands should depend on it:
 
 ```text
 standard target + optimization
@@ -191,7 +191,7 @@ standard target + optimization
 
 The test step exists even though no tests have been introduced. It establishes the command shape later pure modules will use.
 
-## Step 3: run exactly one behavior
+## Let's build and run it
 
 From the reconstruction repository:
 
@@ -222,7 +222,7 @@ For this chapter:
 
 Nothing is labeled exact yet.
 
-## How Ghostty began historically
+## How did real Ghostty start?
 
 <EvolutionStrip moments={[
   {
@@ -271,7 +271,7 @@ Historical source:
 
 The historical project moved toward a native window very quickly. Our reconstruction starts one step earlier so the process/build boundary is explicit before adding a windowing dependency.
 
-## Compare with current Ghostty
+## Now peek at today's Ghostty
 
 Current Ghostty’s `main.zig` is mostly an entrypoint router selected by generated build configuration.
 
@@ -311,7 +311,7 @@ git tag chapter-00-bootstrap
 
 Your commit message can use your own words. The tag matters because future website snippets and visuals need a stable implementation revision.
 
-## The next limitation
+## What feels awkward now?
 
 `main` currently owns the entire lifetime of the program. As soon as startup, state, and cleanup grow, one function becomes a poor owner.
 
