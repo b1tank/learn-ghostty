@@ -1,10 +1,10 @@
 ---
-title: "Chapter 02: Route into Ghostty"
-description: Separate the executable root from application startup and select the Ghostty entrypoint at compile time.
+title: "Chapter 02: Read the Router"
+description: Read every Zig file in the Chapter 02 checkpoint and follow how the executable reaches App startup.
 order: 2
 module: Reconstruction
 status: published
-duration: 25–35 minutes
+duration: 35–50 minutes
 sidebar:
   order: 2
 historyRefs:
@@ -39,11 +39,9 @@ sourceRefs:
 import CodeSnapshot from '../../../components/CodeSnapshot.astro';
 import EvolutionStrip from '../../../components/EvolutionStrip.astro';
 import FidelityLegend from '../../../components/FidelityLegend.astro';
-import FrontierMap from '../../../components/FrontierMap.astro';
 import LessonActions from '../../../components/LessonActions.astro';
 import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
-import RoutingDiagram from '../../../components/RoutingDiagram.astro';
 import SourceLink from '../../../components/SourceLink.vue';
 import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
@@ -51,47 +49,284 @@ import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LocalLessonSetup chapter="02" />
 
-## What you will see
+## What are we trying to do?
 
-The App lifecycle is unchanged. One new line proves which application entrypoint the executable selected:
+Chapter 01 put application ownership in `App`. But `src/main.zig` still had two jobs:
 
-<OutputPreview file="src/data/reconstruction/chapter-02/output.txt" title="The executable routes into Ghostty startup" tag="chapter-02-entry-routing" caption="Captured from commit 4a3538b with Zig 0.16.0. The route is selected at compile time; the trace only makes that otherwise invisible decision observable." />
+1. be the executable's root file;
+2. start the Ghostty application.
 
-## The limitation
+Chapter 02 separates those jobs. The root file becomes a tiny router. The application startup moves to `main_ghostty.zig`.
 
-Chapter 01 put application ownership in `App`, but `src/main.zig` still mixed two roles:
+You can think of the router as a typed switchboard:
 
 ```text
-operating-system entrypoint
-+
-Ghostty application startup
+zig build
+  → build.zig chooses src/main.zig
+  → src/main.zig reads build_config.zig
+  → .ghostty selects main_ghostty.zig
+  → main_ghostty.main creates App
 ```
 
-Ghostty's build produces more than its graphical application: helper generators and documentation tools also need executable roots. Duplicating the whole build graph for every root would make configuration drift likely.
+There is no runtime menu. The compiler resolves this route while building the executable.
 
-The next boundary is a tiny router.
+## What you will see
 
-<FrontierMap current="App lifecycle" />
+<OutputPreview file="src/data/reconstruction/chapter-02/output.txt" title="The executable routes into Ghostty startup" tag="chapter-02-entry-routing" caption="Captured from commit 4a3538b with Zig 0.16.0. The first line makes the selected entry module visible." />
 
-The implementation frontier remains headless. Routing is build structure, not a runtime, Surface, or terminal session.
+Only one line is new:
 
-## How the router appeared historically
+```text
+[entry] ghostty
+```
 
-In February 2024, commit `f1227a3` moved roughly 315 lines from `main.zig` into `main_ghostty.zig`. The former application entrypoint became a ten-line build-selected router. A January 2025 build refactor replaced `usingnamespace` with explicit exports close to today's form.
+The rest is Chapter 01's App lifetime.
 
-<EvolutionStrip moments={[
-  { kind:'then', eyebrow:'THEN · 2024-02-04', title:'Extract the application entry', description:'main.zig switched on build configuration while main_ghostty.zig received process and application startup.', revision:'f1227a3', href:'https://github.com/ghostty-org/ghostty/blob/f1227a3ebd2c1a48c3ce8135320bb68f07d72f98/src/main.zig', linkLabel:'Open first router' },
-  { kind:'reconstruction', eyebrow:'RECONSTRUCTION · CHAPTER 02', title:'Route one executable', description:'Only .ghostty exists, but the root/config/application boundaries now have their production names and directions.', revision:'chapter-02-entry-routing' },
-  { kind:'now', eyebrow:'NOW · PINNED MAIN', title:'Route every build tool', description:'Current main selects Ghostty, help and manual generators, and web-data generators while forwarding standard options.', revision:'6ad1fe7', href:'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/main.zig', linkLabel:'Open current router' },
-]} />
+## The five files we will read
 
-The historical pressure was not “main is too long” alone. Multiple artifacts needed one consistent configuration boundary.
+```text
+build.zig                 build graph
+src/build_config.zig      typed entrypoint choice
+src/main.zig              compile-time router
+src/main_ghostty.zig      application startup
+src/App.zig               stable App allocation and cleanup
+```
 
-## The route
+We will account for every meaningful line. Blank lines only separate ideas.
 
-<RoutingDiagram />
+---
 
-`switch` sees a compile-time-known enum value. Only the selected import becomes the executable's `main` implementation.
+## File 1: `build.zig`
+
+Purpose: tell Zig what to compile, install, run, and test.
+
+<CodeSnapshot file="src/data/reconstruction/chapter-02/build.zig" label="build.zig" status="adapted" reason="Minimal build graph for one executable and one test artifact." />
+
+### Import and build function
+
+```zig
+const std = @import("std");
+```
+
+`@import("std")` gives us the Zig standard-library namespace. This is not textual inclusion like a C header. No file is loaded at runtime.
+
+```zig
+pub fn build(b: *std.Build) void {
+```
+
+- `pub fn` declares a visible function.
+- `b: *std.Build` is a pointer to Zig's build context.
+- `void` means the function returns no value.
+
+Zig's build runner calls this function. The function creates a graph of work. It does not compile each target immediately as the line executes.
+
+**C mental model:** a typed function that configures Make or CMake targets.
+
+### Target and optimization options
+
+```zig
+const target = b.standardTargetOptions(.{});
+const optimize = b.standardOptimizeOption(.{});
+```
+
+Both locals use inferred types.
+
+- `const` means the local binding cannot be reassigned.
+- `.{}` is an empty options struct whose type comes from the function parameter.
+- `target` stores the requested operating system and CPU target.
+- `optimize` stores Debug or a release optimization mode.
+
+Zig does not require a written type for an initialized local variable.
+
+### Root module
+
+```zig
+const root_module = b.createModule(.{
+    .root_source_file = b.path("src/main.zig"),
+    .target = target,
+    .optimize = optimize,
+});
+```
+
+This creates one module description.
+
+- `.root_source_file` says where compilation begins.
+- `b.path(...)` makes a path relative to the project.
+- `.target` and `.optimize` copy the choices above.
+- The leading dots are field names in an inferred struct literal.
+
+The important line for this chapter is:
+
+```zig
+.root_source_file = b.path("src/main.zig")
+```
+
+That is why the compiler enters through the router.
+
+### Executable and install step
+
+```zig
+const exe = b.addExecutable(.{
+    .name = "ghostty-from-scratch",
+    .root_module = root_module,
+});
+b.installArtifact(exe);
+```
+
+`addExecutable` adds an executable node to the graph. `installArtifact` connects it to the normal install step.
+
+Expected installed path:
+
+```text
+zig-out/bin/ghostty-from-scratch
+```
+
+**C mental model:** define an executable target, then add it to an install target.
+
+### Run step
+
+```zig
+const run = b.addRunArtifact(exe);
+run.step.dependOn(b.getInstallStep());
+```
+
+The first line creates a step that can run the executable. The second line says installation must finish first.
+
+```zig
+if (b.args) |args| run.addArgs(args);
+```
+
+`b.args` is optional. It either contains no value or contains an argument slice.
+
+```zig
+if (optional_value) |payload|
+```
+
+means: enter the body only when a value exists, and call that value `payload`.
+
+**C mental model:** `if (args != NULL)`, except Zig narrows the optional value to its non-null payload.
+
+```zig
+const run_step = b.step("run", "Run ghostty-from-scratch");
+run_step.dependOn(&run.step);
+```
+
+This exposes:
+
+```console
+zig build run
+```
+
+`&run.step` takes the step's address. The dependency points from the public `run` command to the actual executable-run step.
+
+### Test step
+
+```zig
+const tests = b.addTest(.{ .root_module = root_module });
+const run_tests = b.addRunArtifact(tests);
+const test_step = b.step("test", "Run the Zig tests");
+test_step.dependOn(&run_tests.step);
+```
+
+These four lines:
+
+1. create a test artifact from the same root module;
+2. create a step that runs that artifact;
+3. expose a public step named `test`;
+4. connect the public step to the test runner.
+
+That gives us:
+
+```console
+zig build test
+```
+
+The final `}` closes the `build` function.
+
+---
+
+## File 2: `src/build_config.zig`
+
+Purpose: represent the build's entrypoint choice as a Zig type.
+
+<CodeSnapshot file="src/data/reconstruction/chapter-02/build_config.zig" label="src/build_config.zig" status="adapted" reason="Static one-entry replacement for Ghostty's generated build configuration." />
+
+```zig
+pub const ExeEntrypoint = enum {
+    ghostty,
+};
+```
+
+This declares a public enum type named `ExeEntrypoint`.
+
+- `enum` creates a closed set of tags.
+- `ghostty` is the only tag in this checkpoint.
+- `};` closes and terminates the type declaration.
+
+**C mental model:**
+
+```c
+typedef enum {
+    EXE_ENTRYPOINT_GHOSTTY,
+} ExeEntrypoint;
+```
+
+The Zig tag belongs to its type. It is not an unchecked global integer macro.
+
+```zig
+/// The build-selected executable entrypoint.
+```
+
+`///` is a documentation comment for the declaration directly below it.
+
+```zig
+pub const exe_entrypoint: ExeEntrypoint = .ghostty;
+```
+
+Read it from left to right:
+
+- `pub`: importing modules may access it;
+- `const`: the declaration cannot be rebound;
+- `exe_entrypoint`: its name;
+- `: ExeEntrypoint`: its explicit type;
+- `= .ghostty`: its value.
+
+The expected type lets Zig shorten:
+
+```zig
+ExeEntrypoint.ghostty
+```
+
+to:
+
+```zig
+.ghostty
+```
+
+---
+
+## File 3: `src/main.zig`
+
+Purpose: select the application entry module at compile time.
+
+<CodeSnapshot file="src/data/reconstruction/chapter-02/main.zig" label="src/main.zig" status="adapted" reason="The executable root reduced to the only reconstructed entrypoint." />
+
+### Import the configuration namespace
+
+```zig
+const build_config = @import("build_config.zig");
+```
+
+`@import` returns the imported file's namespace. The local name `build_config` gives us access to:
+
+```zig
+build_config.ExeEntrypoint
+build_config.exe_entrypoint
+```
+
+This is a compile-time module dependency, not runtime loading.
+
+### Select a module
 
 <SyntaxBridge client:load reference="compile-time-selection" title="Choose an entry module at compile time" code={[
   'const entrypoint = switch (build_config.exe_entrypoint) {',
@@ -99,51 +334,406 @@ The historical pressure was not “main is too long” alone. Multiple artifacts
   '};',
   'pub const main = entrypoint.main;',
 ]} points={[
-  { line:1, label:'comptime switch', c:'Imagine a build-generated enum feeding a switch that the compiler must resolve, not a runtime command-line branch.', zig:'Because the value is compile-time known, the switch result is a module namespace.' },
-  { lines:[2,3], label:'module import', c:'This selects one translation-unit-like namespace; unselected branches do not become runtime dispatch paths.', zig:'@import participates in semantic analysis and dependency construction at compile time.' },
-  { line:4, label:'function alias', c:'Closest to exporting a symbol alias for the selected module function rather than writing a forwarding wrapper.', zig:'The executable root exposes the same function declaration, so no extra runtime call frame exists.' },
-]} comparisons={[
-  { id:'typescript', label:'TypeScript', code:'export { main } from "./main_ghostty.js";', note:'The export alias is similar, but normal TypeScript module selection is not driven by a typed compile-time switch.' },
+  { line:1, label:'switch expression', c:'A typed build choice replaces a preprocessor branch.', zig:'The compile-time-known switch produces a module namespace.' },
+  { lines:[2,3], label:'selected module', c:'Choose the Ghostty translation-unit-like namespace.', zig:'@import participates in compile-time dependency construction.' },
+  { line:4, label:'function alias', c:'Think symbol alias, not forwarding function.', zig:'The root exposes the same function declaration with no extra call frame.' },
 ]} />
 
-> **Text version:** A compile-time-known enum selects one imported Zig module. `pub const main = entrypoint.main` exports the selected function declaration directly; it does not add a forwarding call or runtime dispatch.
-
-## Step 1: represent the build choice
-
-<CodeSnapshot file="src/data/reconstruction/chapter-02/build_config.zig" label="src/build_config.zig" status="adapted" reason="A static one-entry substitute for Ghostty's generated typed build options." />
+> **Text version:** The typed build value selects the `main_ghostty.zig` namespace at compile time. The root module then aliases that namespace's `main` function directly.
 
 ```zig
-pub const ExeEntrypoint = enum { ghostty };
-pub const exe_entrypoint: ExeEntrypoint = .ghostty;
+const entrypoint = switch (build_config.exe_entrypoint) {
 ```
 
-This file is deliberately not generated yet. Generation would add machinery without changing the one available choice. The important boundary is that source code consumes a typed build decision rather than command-line text.
+A Zig `switch` can produce a value. Here that value will be a module namespace.
 
-## Step 2: make main only a router
+The input is a compile-time-known constant, so this does not add a runtime branch.
 
-<CodeSnapshot file="src/data/reconstruction/chapter-02/main.zig" label="src/main.zig" status="adapted" reason="The current router reduced to the only reconstructed entrypoint." />
+```zig
+    .ghostty => @import("main_ghostty.zig"),
+```
 
-The key line is an exported declaration, not a wrapper function:
+- `.ghostty` is the enum case to match.
+- `=>` separates the case from its result.
+- `@import(...)` produces the selected namespace.
+- The trailing comma ends the switch arm.
+
+```zig
+};
+```
+
+The brace closes the switch. The semicolon terminates the `entrypoint` declaration.
+
+### Publish the selected function
 
 ```zig
 pub const main = entrypoint.main;
 ```
 
-Zig exposes the selected module's function as the root executable entrypoint. There is no extra runtime call frame whose only job is forwarding.
+This does not create a wrapper like:
 
-The test block forces semantic analysis of the selected module during `zig build test`.
+```zig
+pub fn main() !void {
+    return entrypoint.main();
+}
+```
 
-## Step 3: move application startup
+It gives the selected function another public name. There is no extra runtime call frame.
 
-<CodeSnapshot file="src/data/reconstruction/chapter-02/main_ghostty.zig" label="src/main_ghostty.zig" status="adapted" reason="The Chapter 01 lifecycle moved intact; global initialization, CLI actions, and a platform runtime remain omitted." />
+`pub` controls Zig namespace visibility. It does not by itself export a C ABI symbol.
 
-The new trace:
+### Force the route into tests
+
+```zig
+test {
+    _ = entrypoint;
+}
+```
+
+Zig has built-in test declarations. This one has no display name.
+
+Zig analyzes declarations lazily. Referencing `entrypoint` makes the selected module reachable during `zig build test`.
+
+`_` is the discard target. It says we intentionally use the value only to make it reachable.
+
+**C mental model:** `(void)entrypoint;` explains the discard, but not Zig's lazy semantic analysis.
+
+---
+
+## File 4: `src/main_ghostty.zig`
+
+Purpose: start the Ghostty application after the router selects it.
+
+<CodeSnapshot file="src/data/reconstruction/chapter-02/main_ghostty.zig" label="src/main_ghostty.zig" status="adapted" reason="Chapter 01 startup moved intact behind the selected entry module." />
+
+### Imports
+
+```zig
+const std = @import("std");
+const App = @import("App.zig");
+```
+
+The first line imports the standard library. The second imports the `App.zig` file container.
+
+Because `App.zig` has fields, its file container is also the `App` struct type. `App` therefore acts as both:
+
+```text
+a type
++
+a namespace containing App functions
+```
+
+### Fallible main
+
+```zig
+/// The application entrypoint selected by src/main.zig.
+pub fn main() !void {
+```
+
+The comment documents the function.
+
+`!void` means:
+
+```text
+success → no value
+failure → an inferred error
+```
+
+The possible allocation failure from `App.create` becomes part of `main`'s return type.
+
+**C mental model:** `int main(void)` is close in shape, but C's integer status is only a convention.
+
+### Traces
 
 ```zig
 std.debug.print("[entry] ghostty\n", .{});
+std.debug.print("[main] process started\n", .{});
 ```
 
-is temporary instrumentation. It proves the selected module runs before `App.create` without pretending another subsystem exists.
+`std.debug.print` writes formatted bytes to standard error.
+
+- `\n` is one line-feed byte.
+- `.{}` is an empty tuple of formatting arguments.
+
+There are no replacement fields in these strings, so the tuple is empty.
+
+### Ownership scope
+
+```zig
+{
+```
+
+This inner block controls when `defer` runs.
+
+```zig
+const app = try App.create(std.heap.page_allocator);
+```
+
+Read this from right to left:
+
+1. use the page allocator;
+2. ask `App.create` for an App;
+3. if creation fails, `try` returns that error from `main`;
+4. otherwise bind the returned `*App` to `app`.
+
+The local type is inferred.
+
+`const app` fixes the pointer binding. It does not make the pointed-to App immutable.
+
+**C mental model:**
+
+```c
+App *const app = app_create(page_allocator);
+if (app == NULL) return 1;
+```
+
+```zig
+defer app.destroy();
+```
+
+This schedules destruction for the end of the current inner block.
+
+It is structured cleanup. It is not a promise that cleanup survives forced process termination.
+
+```zig
+app.run();
+```
+
+Dot-call syntax resolves this as:
+
+```zig
+App.run(app);
+```
+
+There is no hidden class or virtual table.
+
+```zig
+}
+```
+
+Leaving the block runs the deferred `app.destroy()`.
+
+```zig
+std.debug.print("[main] process exiting\n", .{});
+}
+```
+
+The final trace therefore happens after App destruction. The last brace ends `main`. Reaching it means successful `void` completion.
+
+---
+
+## File 5: `src/App.zig`
+
+Purpose: allocate one stable App, initialize it, and free it in the right order.
+
+<CodeSnapshot file="src/data/reconstruction/chapter-02/App.zig" label="src/App.zig" status="adapted" reason="Chapter 01 App ownership remains unchanged while startup moves behind the router." />
+
+### Name the current container
+
+```zig
+const App = @This();
+```
+
+`@This()` returns the current file container type. Since this file declares fields, that container is the `App` struct.
+
+**C mental model:** `typedef struct App App;` is close, but `@This()` returns the actual enclosing Zig type.
+
+```zig
+const std = @import("std");
+const Allocator = std.mem.Allocator;
+```
+
+The first line imports the standard library. The second creates a short local alias for the allocator interface type.
+
+### App field and error set
+
+```zig
+/// General-purpose allocator used to own the stable App pointer.
+alloc: Allocator,
+```
+
+The comment documents the field. Zig fields use `name: Type` order. The App stores its allocator because it will need the same allocator when it destroys itself.
+
+```zig
+pub const CreateError = Allocator.Error;
+```
+
+`CreateError` is a public alias for the allocator's error set. Allocation is the only fallible operation at this checkpoint.
+
+### Create
+
+```zig
+pub fn create(alloc: Allocator) CreateError!*App {
+```
+
+The return type parses as:
+
+```text
+CreateError ! *App
+```
+
+It contains either an allocation error or a non-null pointer to one App.
+
+```zig
+const app = try alloc.create(App);
+```
+
+`alloc.create(App)` reserves correctly sized and aligned storage for one App. `try` propagates allocation failure and unwraps the successful pointer.
+
+**C mental model:** typed `malloc(sizeof(App))` plus an immediate failure check.
+
+```zig
+errdefer alloc.destroy(app);
+```
+
+`errdefer` runs only if a later error exits this function. It prevents leaks during fallible initialization.
+
+In Chapter 02 the remaining operations cannot fail, so this cleanup edge is currently dormant.
+
+```zig
+app.init(alloc);
+std.debug.print("[app] created\n", .{});
+return app;
+}
+```
+
+- `app.init(alloc)` resolves to `App.init(app, alloc)`.
+- The print emits the creation trace.
+- `return app` transfers the pointer to the caller.
+- The brace closes `create`.
+
+The caller now owns the obligation to call `destroy`.
+
+### Initialize
+
+```zig
+pub fn init(self: *App, alloc: Allocator) void {
+```
+
+`self` is an ordinary explicit pointer parameter. Zig has no implicit C++ `this`.
+
+```zig
+self.* = .{ .alloc = alloc };
+```
+
+- `self.*` dereferences the pointer.
+- `.{ .alloc = alloc }` is an App struct literal inferred from the assignment target.
+
+**C mental model:**
+
+```c
+*self = (App){ .alloc = alloc };
+```
+
+The closing brace ends `init`.
+
+### Deinitialize fields
+
+```zig
+pub fn deinit(self: *App) void {
+    _ = self;
+}
+```
+
+`deinit` will eventually release resources stored inside App. There are none yet.
+
+`_ = self` deliberately discards the unused parameter.
+
+**C mental model:** `(void)self;`
+
+### Destroy the allocation
+
+```zig
+pub fn destroy(self: *App) void {
+    const alloc = self.alloc;
+```
+
+The function first copies out the allocator. After the App is freed, reading `self.alloc` would be use-after-free.
+
+```zig
+self.deinit();
+std.debug.print("[app] destroyed\n", .{});
+alloc.destroy(self);
+}
+```
+
+The order is deliberate:
+
+```text
+save allocator
+→ release App-owned fields
+→ print trace
+→ release App storage
+```
+
+After `alloc.destroy(self)`, `self` is invalid.
+
+### Temporary run method
+
+```zig
+pub fn run(self: *App) void {
+    _ = self;
+    std.debug.print("[app] running\n", .{});
+}
+```
+
+This function does not use App state yet, so it discards `self` and prints one line.
+
+It is temporary. Chapter 03 moves event-loop ownership out of shared App state.
+
+### Built-in test
+
+```zig
+test "create and destroy App" {
+    const app = try App.create(std.testing.allocator);
+    app.destroy();
+}
+```
+
+Zig's test runner discovers this named test.
+
+`std.testing.allocator` tracks allocations. If `app.destroy()` were missing, the test allocator would report a leak.
+
+---
+
+## Put the whole runtime together
+
+Here is a C-shaped mental model. It is not a direct translation because it loses Zig's checked error union and compile-time namespace selection.
+
+```c
+typedef struct App {
+    Allocator alloc;
+} App;
+
+App *app_create(Allocator alloc) {
+    App *app = allocator_create(alloc, sizeof(App));
+    if (app == NULL) return NULL;
+
+    *app = (App){ .alloc = alloc };
+    fprintf(stderr, "[app] created\n");
+    return app;
+}
+
+int ghostty_main(void) {
+    fprintf(stderr, "[entry] ghostty\n");
+    fprintf(stderr, "[main] process started\n");
+
+    App *app = app_create(page_allocator);
+    if (app == NULL) return 1;
+
+    app_run(app);
+    app_destroy(app);
+
+    fprintf(stderr, "[main] process exiting\n");
+    return 0;
+}
+```
+
+The Zig version improves three boundaries:
+
+1. failure is represented in the function type;
+2. `defer` keeps cleanup attached to the owning scope;
+3. the entry module is selected by typed compile-time code.
 
 ## Build and run
 
@@ -154,34 +744,42 @@ zig build test
 zig build run
 ```
 
-Expected output begins:
+Expected runtime trace:
 
 ```text
 [entry] ghostty
 [main] process started
+[app] created
+[app] running
+[app] destroyed
+[main] process exiting
 ```
 
-Everything after those lines is Chapter 01's unchanged ownership trace.
+## Then, this checkpoint, and current Ghostty
+
+In February 2024, Ghostty commit `f1227a3` moved application startup into `main_ghostty.zig`. `main.zig` became a small build-selected router. A January 2025 refactor changed the export style to the explicit declaration shape used today.
+
+<EvolutionStrip moments={[
+  { kind:'then', eyebrow:'THEN · 2024-02-04', title:'Extract application startup', description:'main.zig became a router and main_ghostty.zig received the existing startup code.', revision:'f1227a3', href:'https://github.com/ghostty-org/ghostty/blob/f1227a3ebd2c1a48c3ce8135320bb68f07d72f98/src/main.zig', linkLabel:'Open first router' },
+  { kind:'reconstruction', eyebrow:'RECONSTRUCTION · CHAPTER 02', title:'Route one executable', description:'The learner checkpoint has only .ghostty, so every existing branch has a real job.', revision:'chapter-02-entry-routing' },
+  { kind:'now', eyebrow:'NOW · PINNED MAIN', title:'Route Ghostty and build tools', description:'Current Ghostty selects the application and several generators through the same typed boundary.', revision:'6ad1fe7', href:'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/main.zig', linkLabel:'Open current router' },
+]} />
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/main.zig" line={1} end={28} label="Current executable router" note="Read the switch and exported main. Ignore helper implementations until they have a job in the reconstruction." />
+
+<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/build_config.zig" line={1} end={38} label="Current build configuration boundary" note="Read how generated build options become typed source values. Ignore renderer and platform choices for now." />
 
 ## Fidelity
 
 <FidelityLegend />
 
-| File | Status | Difference from pinned current Ghostty |
+| File | Status | What is intentionally missing |
 |---|---|---|
-| `src/main.zig` | adapted | Same selection/export direction; only `.ghostty`; no `std_options` or memset override |
-| `src/main_ghostty.zig` | adapted | Only the reconstructed App lifecycle and trace |
-| `src/build_config.zig` | adapted | Static enum rather than generated options and backend configuration |
-
-Adding empty helper modules merely to copy every switch case would be false fidelity. A branch is introduced when its artifact has a job.
-
-## Compare with current Ghostty
-
-<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/main.zig" line={1} end={28} label="Current executable router" note="Read the switch, exported main, and std_options fallback. Ignore each helper implementation." />
-
-Current `main.zig` also force-references a memset override and tunes test logging. Those are accumulated toolchain and platform constraints, not entry-routing fundamentals.
-
-<SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/build_config.zig" line={1} end={38} label="Current build configuration bridge" note="Read how generated build_options become typed source-level values. Ignore renderer, font, and runtime backend choices for now." />
+| `build.zig` | adapted | production artifacts and dependencies |
+| `src/App.zig` | adapted | surfaces, fonts, configuration, and mailboxes |
+| `src/build_config.zig` | adapted | generated options and additional entrypoints |
+| `src/main.zig` | adapted | helper branches, `std_options`, and toolchain workarounds |
+| `src/main_ghostty.zig` | adapted | globals, CLI actions, and a platform runtime |
 
 ## Checkpoint
 
@@ -190,16 +788,14 @@ commit  4a3538b7f6b569ae5749031387f22136d74fa220
 tag     chapter-02-entry-routing
 ```
 
-## The next limitation
+## What is still wrong?
 
-`main_ghostty` still calls `App.run()`. Current Ghostty does not: a selected platform runtime owns the native event loop and calls into shared App state.
+`main_ghostty` still calls:
 
-Chapter 03 introduces a headless runtime and one Surface-shaped session boundary:
-
-```text
-main_ghostty → shared App
-             → platform runtime App → run
-                                  ↘ Surface
+```zig
+app.run();
 ```
 
-No native toolkit or PTY is needed to prove that ownership split.
+That makes shared App state pretend it owns every platform's event loop. GTK, macOS, browsers, and embedding hosts do not run the same way.
+
+Chapter 03 introduces a headless platform runtime and one Surface-shaped session boundary. It still does not add a PTY, parser, or window.

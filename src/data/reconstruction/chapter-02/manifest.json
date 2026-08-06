@@ -9,6 +9,18 @@
   "output_sha256": "0cc2b651260d18a03c5e06470309d91f75520e96a5d81ce4749136423fb00df2",
   "files": [
     {
+      "path": "build.zig",
+      "status": "adapted",
+      "reason": "Minimal Zig build graph shared by the executable and test artifact.",
+      "sha256": "eddf0fa7f1156adcc2ef977cc9255295a3645b41c20646eff2ff62e64edfce2b"
+    },
+    {
+      "path": "src/App.zig",
+      "status": "adapted",
+      "reason": "Chapter 01 App ownership remains unchanged while the entrypoint moves around it.",
+      "sha256": "813148a0ff3e2ce27e95d65b2b5e01fd11b766ab4d536ef37cbcba6426effc14"
+    },
+    {
       "path": "src/main.zig",
       "status": "adapted",
       "reason": "Preserves current compile-time selection and exported main with only the ghostty branch reconstructed.",
