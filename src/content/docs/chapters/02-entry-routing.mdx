@@ -45,6 +45,7 @@ import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
 import RoutingDiagram from '../../../components/RoutingDiagram.astro';
 import SourceLink from '../../../components/SourceLink.vue';
+import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LessonActions entryId="chapters/02-entry-routing" />
 
@@ -91,6 +92,21 @@ The historical pressure was not “main is too long” alone. Multiple artifacts
 <RoutingDiagram />
 
 `switch` sees a compile-time-known enum value. Only the selected import becomes the executable's `main` implementation.
+
+<SyntaxBridge client:load title="Choose an entry module at compile time" code={[
+  'const entrypoint = switch (build_config.exe_entrypoint) {',
+  '    .ghostty => @import("main_ghostty.zig"),',
+  '};',
+  'pub const main = entrypoint.main;',
+]} points={[
+  { line:1, label:'comptime switch', c:'Imagine a build-generated enum feeding a switch that the compiler must resolve, not a runtime command-line branch.', zig:'Because the value is compile-time known, the switch result is a module namespace.' },
+  { lines:[2,3], label:'module import', c:'This selects one translation-unit-like namespace; unselected branches do not become runtime dispatch paths.', zig:'@import participates in semantic analysis and dependency construction at compile time.' },
+  { line:4, label:'function alias', c:'Closest to exporting a symbol alias for the selected module function rather than writing a forwarding wrapper.', zig:'The executable root exposes the same function declaration, so no extra runtime call frame exists.' },
+]} comparisons={[
+  { id:'typescript', label:'TypeScript', code:'export { main } from "./main_ghostty.js";', note:'The export alias is similar, but normal TypeScript module selection is not driven by a typed compile-time switch.' },
+]} />
+
+> **Text version:** A compile-time-known enum selects one imported Zig module. `pub const main = entrypoint.main` exports the selected function declaration directly; it does not add a forwarding call or runtime dispatch.
 
 ## Step 1: represent the build choice
 

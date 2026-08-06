@@ -43,6 +43,7 @@ import FrontierMap from '../../../components/FrontierMap.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
 import ProcessBirthDiagram from '../../../components/ProcessBirthDiagram.astro';
 import SourceLink from '../../../components/SourceLink.vue';
+import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 import LessonActions from '../../../components/LessonActions.astro';
 import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 
@@ -105,6 +106,28 @@ The public chapter is pinned to reconstruction commit:
 />
 
 There are only five meaningful ideas.
+
+<SyntaxBridge client:load title="Read the first Zig function from C" code={[
+  'const std = @import("std");',
+  '',
+  'pub fn main() !void {',
+  '    std.debug.print("ghostty-from-scratch: hello\\n", .{});',
+  '}',
+]} points={[
+  { lines:[1,2], label:'compile-time import', c:'Treat this like a compile-time module dependency plus a local const binding, not dlopen or a preprocessor include.', zig:'@import returns a module namespace; std is an immutable declaration inferred from that value.' },
+  { line:3, label:'pub fn and !void', c:'This is closest to an externally visible function returning an error status, except the possible errors are part of the Zig type.', zig:'!void is an inferred error union: success carries no payload; failure carries an error value propagated with try.' },
+  { line:4, label:'format tuple', c:'Like fprintf(stderr, ...) with a statically checked argument list. The empty initializer means this format has no values to substitute.', zig:'.{} is an anonymous empty tuple, and debug.print writes to standard error.' },
+  { line:5, label:'scope and stack', c:'main has an ordinary call frame, but these declarations allocate no heap object and the string bytes live in static program data.', zig:'Leaving the block returns success unless an error was propagated.' },
+]} comparisons={[
+  { id:'typescript', label:'TypeScript', code:'console.error("ghostty-from-scratch: hello");', note:'This matches the visible stderr effect, but TypeScript has no compile-time module namespace or error-union return equivalent here.' },
+  { id:'python', label:'Python', code:'import sys\nprint("ghostty-from-scratch: hello", file=sys.stderr)', note:'This matches the output destination only; Python imports and exceptions have different runtime semantics.' },
+]} memory={[
+  { owner:'executable image', value:'format string bytes' },
+  { owner:'main call frame', value:'no heap allocation' },
+  { owner:'stderr', value:'formatted bytes + LF' },
+]} />
+
+> **Text version:** `@import` binds a compile-time module namespace. `pub fn main() !void` exposes a function that either succeeds without a value or returns an error. `.{}` is the empty formatting tuple. The call frame owns no heap allocation; static string bytes are formatted to stderr.
 
 ### Import the Zig standard library
 

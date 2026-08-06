@@ -53,6 +53,7 @@ import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 import LifecycleDiagram from '../../../components/LifecycleDiagram.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
 import SourceLink from '../../../components/SourceLink.vue';
+import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LessonActions entryId="chapters/01-app-lifecycle" />
 
@@ -193,6 +194,28 @@ The complete checkpoint file is short enough to inspect:
 />
 
 Focus first on `create`:
+
+<SyntaxBridge client:load title="Allocate and return one stable App" code={[
+  'const App = @This();',
+  'pub fn create(alloc: Allocator) !*App {',
+  '    const app = try alloc.create(App);',
+  '    errdefer alloc.destroy(app);',
+  '    app.* = .{ .alloc = alloc };',
+  '    return app;',
+  '}',
+]} points={[
+  { line:1, label:'@This', c:'Inside the file-as-struct, this names the current struct type, similar to a typedef for the enclosing definition.', zig:'The source file itself is the namespace and struct type.' },
+  { line:2, label:'!*App', c:'Read this as either an error or a non-null App pointer whose pointee has a stable address.', zig:'The error union and pointer are checked language types rather than a sentinel return convention.' },
+  { line:3, label:'allocator create', c:'Comparable to allocator-specific malloc(sizeof(App)) with alignment supplied by the type.', zig:'create returns typed *App storage; try immediately returns any allocation error.' },
+  { line:4, label:'errdefer', c:'A goto-cleanup edge installed only for an error return after this line.', zig:'It runs during error unwinding, unlike defer, which runs on every scope exit.' },
+  { lines:[5,6,7], label:'self.* and ownership', c:'app.* assigns the complete pointee, then the pointer transfers to the caller, which must eventually destroy it.', zig:'The pointer is valid only after the full-value assignment; destroy closes the explicit allocation lifetime.' },
+]} memory={[
+  { owner:'create stack frame', value:'alloc + local pointer' },
+  { owner:'allocator heap', value:'stable App storage' },
+  { owner:'main', value:'returned *App; must destroy' },
+]} omission="TypeScript and Python garbage collection would hide the explicit allocation, pointer stability, errdefer cleanup edge, and required destroy operation." />
+
+> **Text version:** `@This()` names the file-as-struct. `Allocator.create(App)` obtains aligned storage and returns `*App`; `try` propagates allocation failure. `errdefer` frees that storage only if a later error unwinds the function. `app.*` initializes the pointee. The caller owns the returned pointer and must call `destroy`.
 
 ```zig
 pub fn create(alloc: Allocator) CreateError!*App {

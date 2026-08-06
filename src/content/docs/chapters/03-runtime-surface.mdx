@@ -50,6 +50,7 @@ import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
 import RuntimeSurfaceDiagram from '../../../components/RuntimeSurfaceDiagram.astro';
 import SourceLink from '../../../components/SourceLink.vue';
+import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LessonActions entryId="chapters/03-runtime-surface" />
 
@@ -93,6 +94,24 @@ The sequence matters: runtime extraction came before the mature Surface accumula
 <RuntimeSurfaceDiagram />
 
 Two similarly named types have different jobs:
+
+<SyntaxBridge client:load title="Keep a stable optional Surface pointer" code={[
+  'surface: ?*Surface = null,',
+  'self.surface = try Surface.create(self.core_app, 1);',
+  'if (self.surface) |surface| surface.destroy();',
+  'self.surface = null;',
+]} points={[
+  { line:1, label:'optional pointer', c:'This is a pointer plus an explicit empty state, similar to a nullable pointer but exhaustively handled by the language.', zig:'?*Surface can contain null or a valid typed pointer; the default starts with no owned Surface.' },
+  { line:2, label:'create and store', c:'Allocate the object, then retain its stable address in the runtime owner.', zig:'try propagates failure before assignment, so a failed create leaves the field empty.' },
+  { line:3, label:'unwrap and destroy', c:'Equivalent to a null check that introduces a non-null local pointer for cleanup.', zig:'The payload capture `|surface|` is valid only in the non-null branch.' },
+  { line:4, label:'close the state', c:'Clear the field after freeing so the owner no longer advertises a live object.', zig:'Teardown order is Surface first, runtime App second, core App last.' },
+]} memory={[
+  { owner:'core App heap', value:'shared process state' },
+  { owner:'runtime App stack', value:'optional *Surface' },
+  { owner:'Surface heap', value:'stable session state' },
+]} omission="GC languages can express optional references, but they do not accurately model the required destroy-before-App teardown contract or allocator-owned stable storage." />
+
+> **Text version:** `?*Surface` is either null or a typed stable pointer. A successful `create` stores ownership; payload capture unwraps the non-null pointer for `destroy`; assigning null records that teardown completed. The Surface must die before the runtime App and core App.
 
 | Type | Owns |
 |---|---|
