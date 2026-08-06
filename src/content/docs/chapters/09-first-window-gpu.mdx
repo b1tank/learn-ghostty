@@ -51,17 +51,17 @@ import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LocalLessonSetup chapter="09" />
 
-## What you will see
+## Finally, let's open a real window
 
 <NativeWindowArtifact />
 
-This is the first chapter whose result requires a screenshot. The capture is a real GTK window running on X11 inside Xvfb, produced by the tagged reconstruction—not a design mockup.
+That plain dark rectangle is a real GTK window from our program. It is not a mockup. It may not look exciting, but getting a native window to open, run its event loop, and close cleanly is the whole lesson.
 
 <OutputPreview file="src/data/reconstruction/chapter-09/output.txt" title="GTK initialization, presentation, loop, and teardown" tag="chapter-09-first-window" caption="The deterministic timeout exists for reproducible capture. The default headless runtime remains unchanged." />
 
-## The limitation
+## Why the debug frame is not enough
 
-Chapter 08 can explain every cell but cannot create a native application surface. A GUI runtime introduces a new owner:
+Chapter 08 has useful Terminal state, but a user still cannot see an application. GTK brings a new chain of things we must own:
 
 ```text
 operating-system display connection
@@ -75,7 +75,7 @@ operating-system display connection
 
 This checkpoint crosses only the window part of the frontier. It draws no terminal cells, rectangle, or glyph.
 
-## How Ghostty's GTK runtime appeared
+## Real Ghostty also built the GTK shell before the full renderer
 
 Ghostty added a GTK backend option on February 20, 2023. The next day it initialized `GtkApplication` and a manually controlled GLib context while its Window methods were still placeholders. On February 22 it created a GTK application window and GLArea with realize/render callbacks.
 
@@ -87,9 +87,9 @@ Ghostty added a GTK backend option on February 20, 2023. The next day it initial
 
 The first historical GTK window included a GLArea. Our reconstruction stops one step earlier so native lifecycle and graphics initialization remain separate observable milestones.
 
-## Step 1: keep GTK opt-in
+## Start in `build.zig`: make GTK optional
 
-The build adds:
+To ask for the native runtime, run:
 
 ```console
 zig build run -Dgtk=true
@@ -99,15 +99,15 @@ Without `-Dgtk=true`, the headless runtime and pure tests build exactly as befor
 
 <CodeSnapshot file="src/data/reconstruction/chapter-09/build.zig" label="build.zig" status="adapted" reason="Adds one opt-in GTK4 pkg-config dependency while preserving headless default builds." />
 
-This prevents a GUI development package from becoming a prerequisite for parser and terminal-state work or CI.
+Why make it optional? Parser and Terminal tests should not suddenly require a display server or GTK development packages.
 
-## Step 2: select the native runtime
+## Follow the option into `apprt.zig`
 
 <CodeSnapshot file="src/data/reconstruction/chapter-09/apprt.zig" label="src/apprt.zig" status="adapted" reason="Compile-time selection now includes headless and GTK runtimes." />
 
 The same `apprt.App` and `apprt.Surface` names resolve to different concrete types at compile time. `main_ghostty` does not change.
 
-## Step 3: initialize GTK and the event loop
+## Open `apprt/gtk.zig`: create, show, run, destroy
 
 <SyntaxBridge client:load reference="c-abi-boundaries" title="Describe native GTK types and one C callback" code={[
   'const GMainLoop = opaque {};',
@@ -133,7 +133,7 @@ The same `apprt.App` and `apprt.Surface` names resolve to different concrete typ
 
 <CodeSnapshot file="src/data/reconstruction/chapter-09/apprt/gtk.zig" label="src/apprt/gtk.zig" status="adapted" reason="GTK4 window and GLib loop subset; no application registration, actions, input, graphics area, or terminal-state display." />
 
-The runtime:
+Read the runtime as one lifetime story:
 
 1. calls `gtk_init`;
 2. creates a GLib main loop;
@@ -145,9 +145,9 @@ The runtime:
 8. exits through a capture timeout;
 9. destroys the window and surfaces.
 
-A direct `@cImport("gtk/gtk.h")` hit thousands of GTK/GLib autocleanup macro translation errors with this Zig 0.16 toolchain. The checkpoint uses narrow manual extern declarations for the nine functions it calls. This is an explicit adaptation, not a hidden compatibility framework.
+One practical bump: importing all of `gtk/gtk.h` made Zig 0.16 choke on thousands of helper macros. Instead of hiding that, this checkpoint declares only the nine C functions it calls. If you have used a small C shim around a huge library, this is the same idea.
 
-## Step 4: capture real evidence
+## Capture the window so we know it really happened
 
 The reproducible script is:
 
@@ -179,7 +179,7 @@ The screenshot's SHA-256 is validated during the course build.
 | `build.zig` | adapted | optional GTK4 pkg-config linkage |
 | `tools/capture/chapter-09-first-window.sh` | project-owned | reproducible Xvfb screenshot support, not upstream runtime code |
 
-## Compare with current Ghostty
+## What does today's GTK runtime add?
 
 <SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/apprt/gtk/App.zig" line={1} end={60} label="Current GTK App lifecycle" note="Read initialization, run, and termination. Ignore action/IPC methods until interaction exists." />
 
@@ -192,6 +192,6 @@ commit  bc1e2e0143f143c0cf3545d046c68b4c7964cca5
 tag     chapter-09-first-window
 ```
 
-## The next limitation
+## We have a window—what can we draw in it?
 
 The native window is blank. Chapter 10 must create a graphics surface and draw one known rectangle, with a real before/after screenshot, before fonts or terminal cells enter the renderer.
