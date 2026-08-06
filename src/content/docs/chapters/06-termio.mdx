@@ -44,6 +44,7 @@ import LessonActions from '../../../components/LessonActions.astro';
 import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
 import SourceLink from '../../../components/SourceLink.vue';
+import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 import TermioOwnershipDiagram from '../../../components/TermioOwnershipDiagram.astro';
 
 <LessonActions entryId="chapters/06-termio" />
@@ -103,6 +104,29 @@ fork/exec ───────────────────────�
 ```
 
 ## Step 2: give PTY incremental operations
+
+<SyntaxBridge client:load title="Accumulate arbitrary reads into one owned buffer" code={[
+  'phase_bytes: [4096]u8 = undefined,',
+  'phase_len: usize = 0,',
+  'var chunk: [3]u8 = undefined;',
+  'const count = try self.pty.read(&chunk);',
+  'try self.append(chunk[0..count]);',
+  'return self.phase_bytes[0..self.phase_len];',
+]} points={[
+  { lines:[1,2], label:'fixed storage and length', c:'This is an inline 4096-byte array plus a separate initialized-length field, like a bounded C buffer struct.', zig:'The array storage belongs to Termio; undefined bytes cannot be read until phase_len includes them.' },
+  { lines:[3,4], label:'incremental read', c:'read receives a three-byte destination and reports how many bytes became initialized; call boundaries are not protocol boundaries.', zig:'&chunk coerces to the writable buffer shape expected by the PTY read operation; try propagates I/O failure.' },
+  { line:5, label:'bounded slice', c:'chunk[0..count] is a pointer-and-length view over only the bytes read, with no copy and no terminator.', zig:'append can reject overflow before copying into Termio-owned storage.' },
+  { line:6, label:'borrowed return', c:'Return a span into the object-owned prefix; it remains valid only while that Termio storage is alive and not overwritten.', zig:'The slice does not transfer or allocate bytes; a later phase read reuses the same backing array.' },
+]} comparisons={[
+  { id:'typescript', label:'TypeScript', code:'const chunk = new Uint8Array(3);\nconst initialized = chunk.subarray(0, count);', note:'Uint8Array.subarray is also a no-copy bounded view. Its backing-store lifetime is garbage-collected, unlike Zig’s borrow from Termio-owned inline storage.' },
+]} memory={[
+  { owner:'PTY kernel queue', value:'arbitrary byte availability' },
+  { owner:'read stack frame', value:'3-byte temporary chunk' },
+  { owner:'Termio', value:'4096-byte reusable phase buffer' },
+  { owner:'caller', value:'borrowed initialized slice' },
+]} />
+
+> **Text version:** Termio owns a fixed 4096-byte array and tracks its initialized prefix separately. Each PTY read fills an arbitrary prefix of a three-byte temporary. `chunk[0..count]` and `phase_bytes[0..phase_len]` are no-copy slices. The returned slice borrows Termio storage and is invalid after reuse or teardown.
 
 The PTY wrapper now exposes:
 

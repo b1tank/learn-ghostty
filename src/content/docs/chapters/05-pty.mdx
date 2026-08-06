@@ -45,6 +45,7 @@ import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
 import PtyRelationshipDiagram from '../../../components/PtyRelationshipDiagram.astro';
 import SourceLink from '../../../components/SourceLink.vue';
+import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LessonActions entryId="chapters/05-pty" />
 
@@ -85,6 +86,27 @@ Ghostty first opened a PTY on April 15, 2022. At that point it only proved descr
 The historical sequence separates opening a device pair from correctly launching a process inside it. Our checkpoint keeps those responsibilities separate in `pty.zig` and `Command.zig` too.
 
 ## Step 1: link the platform API honestly
+
+<SyntaxBridge client:load title="Cross the POSIX C ABI without hiding it" code={[
+  'pub const c = @cImport({ @cInclude("pty.h"); });',
+  'pub const winsize = extern struct {',
+  '    ws_row: u16 = 24,',
+  '    ws_col: u16 = 80,',
+  '};',
+  'if (c.openpty(&master, &slave, null, null, @ptrCast(&mutable_size)) < 0)',
+  '    return error.OpenptyFailed;',
+]} points={[
+  { line:1, label:'C import', c:'The included C header supplies declarations and platform constants through the target C ABI.', zig:'@cImport translates declarations at compile time; it does not make the OS call yet.' },
+  { lines:[2,3,4,5], label:'extern struct', c:'This is a C-layout struct whose field order and ABI alignment can be passed to libc.', zig:'extern promises C-compatible layout; defaults initialize the teaching value but do not change the ABI.' },
+  { line:6, label:'out pointers and cast', c:'openpty writes two file descriptors through int* out parameters and receives a struct winsize*.', zig:'&master and &slave are typed pointers; @ptrCast is explicit because the translated platform type differs from the local ABI-compatible declaration.' },
+  { line:7, label:'error boundary', c:'The negative C sentinel is converted immediately into a typed Zig error instead of leaking errno-style control flow upward.', zig:'Callers can propagate the error with try while successful descriptors remain ordinary c_int values.' },
+]} memory={[
+  { owner:'parent stack', value:'winsize + fd out slots' },
+  { owner:'kernel', value:'PTY master/slave objects' },
+  { owner:'Pty value', value:'two integer capabilities; must close' },
+]} omission="Raw file descriptors, fork/exec process state, pointer casts, and C ABI layout have no useful direct TypeScript or Python equivalent without dropping to a native extension." />
+
+> **Text version:** `@cImport` translates POSIX header declarations. `extern struct` preserves C field layout. `openpty` writes kernel file descriptors through pointer arguments; `@ptrCast` makes an ABI pointer conversion explicit. A negative C return becomes a typed Zig error, and the resulting descriptors must be closed exactly once.
 
 Linux exposes `openpty` through libc headers. The build graph now sets `root_module.link_libc = true` for both executable and tests.
 

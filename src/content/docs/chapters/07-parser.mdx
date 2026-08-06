@@ -53,6 +53,7 @@ import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
 import ParserStateDiagram from '../../../components/ParserStateDiagram.astro';
 import SourceLink from '../../../components/SourceLink.vue';
+import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LessonActions entryId="chapters/07-parser" />
 
@@ -94,6 +95,31 @@ Ghostty did not begin with today's complete parser. On April 18, 2022 it first e
 Our added SGR support is justified by the actual `ESC [ 32 m` and `ESC [ 0 m` bytes from Chapter 06—not by a desire to enumerate VT features.
 
 ## Step 1: define caller-visible actions
+
+<SyntaxBridge client:load title="Represent parser state and emitted actions" code={[
+  'pub const State = enum { ground, escape, csi };',
+  'pub const Action = union(enum) {',
+  '    print: u8,',
+  '    execute: u8,',
+  '    sgr: u16,',
+  '};',
+  'pub fn next(self: *Parser, byte: u8) ?Action {',
+  '    return switch (self.state) { /* transitions */ };',
+  '}',
+]} points={[
+  { line:1, label:'enum state', c:'A closed enum gives each parser mode a named discriminant instead of magic integers.', zig:'The compiler checks switch exhaustiveness when every State case is listed.' },
+  { lines:[2,3,4,5,6], label:'tagged union action', c:'Like a C tagged union packaged so its discriminant and payload cannot disagree.', zig:'union(enum) synthesizes the tag; print and execute carry u8, while sgr carries u16.' },
+  { line:7, label:'optional action', c:'One byte may produce either no action or one valid tagged action, avoiding a sentinel payload.', zig:'?Action has explicit null and Action cases; parser state can still mutate through *Parser.' },
+  { lines:[8,9], label:'switch expression', c:'The state switch computes the function result while transition branches mutate self before returning.', zig:'Labeled blocks can break with values, letting nested transitions remain expressions.' },
+]} comparisons={[
+  { id:'typescript', label:'TypeScript', code:'type Action =\n  | { kind: "print"; byte: number }\n  | { kind: "execute"; byte: number }\n  | { kind: "sgr"; value: number };', note:'A TypeScript discriminated union accurately mirrors tag-dependent payloads, but not fixed-width layout or allocation-free representation.' },
+]} memory={[
+  { owner:'Parser value', value:'current State + partial parameter' },
+  { owner:'next call', value:'one input byte' },
+  { owner:'caller', value:'null or one Action value' },
+]} />
+
+> **Text version:** `State` is a closed enum. `Action` is a tagged union whose active tag determines the valid payload. `?Action` explicitly represents no emitted action. `next` mutates persistent parser state and uses a switch expression to return the action produced by one byte.
 
 <CodeSnapshot file="src/data/reconstruction/chapter-07/terminal/Parser.zig" label="src/terminal/Parser.zig" status="adapted" reason="Ground/escape/CSI subset emitting ASCII print, C0 execute, and one SGR parameter; full VT and Unicode behavior remain deferred." />
 

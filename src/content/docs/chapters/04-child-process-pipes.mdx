@@ -45,6 +45,7 @@ import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
 import PipeExperimentDiagram from '../../../components/PipeExperimentDiagram.astro';
 import SourceLink from '../../../components/SourceLink.vue';
+import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LessonActions entryId="chapters/04-child-process-pipes" />
 
@@ -85,6 +86,29 @@ Ghostty opened a basic PTY on April 15, 2022. The next day it introduced a custo
 Our use of `std.process.run` is not an attempted replacement for production Command. It is the smallest experiment that reaches the limitation production Command exists to solve.
 
 ## Step 1: pass process capabilities explicitly
+
+<SyntaxBridge client:load title="Borrow argv, then own child output" code={[
+  'argv: []const []const u8,',
+  'pub const Result = struct {',
+  '    inner: std.process.RunResult,',
+  '    pub fn deinit(self: *Result, alloc: Allocator) void {',
+  '        alloc.free(self.inner.stdout);',
+  '        alloc.free(self.inner.stderr);',
+  '        self.* = undefined;',
+  '    }',
+  '};',
+]} points={[
+  { line:1, label:'nested slices', c:'This is a borrowed span of borrowed byte spans: pointer-plus-length pairs, not NUL-terminated char** strings.', zig:'Both const qualifiers prevent mutation through these views; neither slice owns its bytes.' },
+  { lines:[2,3], label:'owned result', c:'The result struct carries buffers returned by the process runner; ownership must be closed explicitly.', zig:'A struct groups the child status and allocated stdout/stderr slices without hiding their allocator contract.' },
+  { lines:[4,5,6], label:'deinit', c:'Like a destructor function that must receive the same allocator family used to obtain both buffers.', zig:'free consumes the owned allocations; the Result storage itself remains with its caller.' },
+  { lines:[7,8,9], label:'invalidate value', c:'Comparable to poisoning a debug struct after releasing its members so accidental reuse fails loudly.', zig:'undefined deliberately removes any valid post-deinit value; reading it is illegal.' },
+]} memory={[
+  { owner:'Command borrower', value:'argv slice views' },
+  { owner:'process runner', value:'allocates stdout + stderr' },
+  { owner:'Result caller', value:'deinit frees both buffers' },
+]} omission="TypeScript and Python arrays do not expose this borrowed-slice versus allocator-owned-buffer contract; garbage collection would erase the reason deinit exists." />
+
+> **Text version:** `[]const []const u8` is a borrowed slice of borrowed immutable byte slices. `RunResult` returns allocator-owned stdout and stderr buffers. `deinit` frees those buffers with the allocator and poisons the result with `undefined`; it does not free the caller-owned Result value.
 
 Zig 0.16 supplies allocator and I/O capabilities through `std.process.Init`. `main_ghostty` now accepts that value and passes `init.gpa` and `init.io` into core App.
 
