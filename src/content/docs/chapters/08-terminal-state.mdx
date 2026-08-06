@@ -64,17 +64,17 @@ import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LocalLessonSetup chapter="08" />
 
-## What you will see
+## Let's keep the result instead of only printing actions
 
-Parser actions now survive as cells, styles, and cursor position:
+The Parser now tells us what happened, but its actions disappear after we log them. Let's add a small Terminal object that remembers characters, styles, and the cursor.
 
 <OutputPreview file="src/data/reconstruction/chapter-08/output.txt" title="A deterministic terminal frame without a GUI" tag="chapter-08-terminal-state" caption="Dots represent blank cells and G represents green cell style. The textual frame is generated from the same Terminal state a later renderer will consume." />
 
 <TerminalGridDiagram />
 
-## The limitation
+## Why can't a renderer draw Parser actions directly?
 
-Chapter 07 produced correct actions and then discarded them after tracing. A renderer cannot draw actions; it needs durable state representing the current terminal screen.
+A Parser action says “print A” or “turn green.” A renderer needs the result after all those instructions have run: which character is in each cell, what style it has, and where the cursor ended up.
 
 <FrontierMap current="Terminal state" />
 
@@ -86,7 +86,7 @@ cells + per-cell style + cursor + current style
 
 It still does not own glyphs, textures, frames, or a native window.
 
-## How Ghostty accumulated terminal state
+## Real Ghostty's Terminal grew one behavior at a time
 
 Ghostty introduced `Terminal.zig` on April 17, 2022 with a grid and parser owner. The next day printable strings and multiline movement started working. SGR attributes were connected on May 12. The modern screen/page model accumulated through years of scrolling, Unicode, modes, alternate screens, selection, hyperlinks, images, and performance work.
 
@@ -98,7 +98,7 @@ Ghostty introduced `Terminal.zig` on April 17, 2022 with a grid and parser owner
 
 The reconstruction does not copy modern page abstractions backward. Three fixed rows are enough to prove the parser-to-state contract.
 
-## Step 1: define cells and active style
+## Start with one Cell: what must we remember?
 
 <SyntaxBridge client:load reference="literals-structs-and-enums" title="Store cells inline and mutate the cursor" code={[
   'pub const Style = enum { default, green };',
@@ -124,7 +124,7 @@ The reconstruction does not copy modern page abstractions backward. Three fixed 
 
 <CodeSnapshot file="src/data/reconstruction/chapter-08/terminal/Terminal.zig" label="src/terminal/Terminal.zig" status="adapted" reason="Fixed 3×24 ASCII cells, cursor, default/green style, action application, and textual frame; production pages, modes, Unicode, and scrollback are deferred." />
 
-A cell stores what the renderer eventually needs from this checkpoint:
+For now, one cell only needs a byte and a style:
 
 ```zig
 pub const Cell = struct {
@@ -135,9 +135,9 @@ pub const Cell = struct {
 
 Terminal also stores `cursor_row`, `cursor_column`, and the current style applied to future printed cells.
 
-## Step 2: apply parser actions
+## Follow each Parser action into Terminal state
 
-The mapping is intentionally direct:
+The first mapping is almost mechanical:
 
 | Parser action | State transition |
 |---|---|
@@ -147,9 +147,9 @@ The mapping is intentionally direct:
 | `sgr(32)` | current style becomes green |
 | `sgr(0)` | current style becomes default |
 
-The Terminal never sees ESC or CSI bytes. That syntax was consumed by Parser.
+This separation is important: Terminal never sees raw ESC or CSI syntax. Parser already turned those bytes into clean actions.
 
-## Step 3: update state after every read chunk
+## Return to Termio and apply only new actions
 
 Termio records the Parser action count before feeding bytes, then applies only newly emitted actions:
 
@@ -163,7 +163,7 @@ This prevents old actions from being replayed and makes state advance incrementa
 
 <CodeSnapshot file="src/data/reconstruction/chapter-08/termio/Termio.zig" label="src/termio/Termio.zig" status="adapted" reason="Owns Parser and Terminal together, applying newly emitted actions synchronously after each PTY read chunk." />
 
-## Step 4: inspect the resulting frame
+## Walk through the child output by hand
 
 The child interaction produces:
 
@@ -179,7 +179,7 @@ CR LF        cursor to row 2, column 0
 
 The first row therefore contains `ready>hello` in default style. The second contains `reply:hello` in green. The third is blank with the cursor at its start.
 
-## Step 5: use a debug frame before pixels
+## Draw a text-only frame before building a GUI renderer
 
 `Terminal.trace` renders:
 
@@ -188,7 +188,7 @@ The first row therefore contains `ready>hello` in default style. The second cont
 - green styles as `G`;
 - cursor and current style as metadata.
 
-This is a real renderer boundary in the architectural sense: it consumes state and produces an observable representation. It is not yet a graphical renderer.
+This is not a pretty renderer, but it proves the boundary: give it Terminal state and it produces a frame we can check exactly.
 
 ## Build and run
 
@@ -212,7 +212,7 @@ The Terminal unit test applies print, SGR, CR, and LF actions and asserts exact 
 | `src/termio/Termio.zig` | adapted | owns synchronous Terminal; no renderer snapshot or mailbox |
 | `src/Surface.zig` | adapted | emits textual frame rather than native rendering |
 
-## Compare with current Ghostty
+## How does this tiny grid grow into real Ghostty?
 
 <SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/terminal/Terminal.zig" line={300} end={340} label="Current Terminal initialization" note="Read the durable state owners and initialization order. Ignore configuration values not yet reconstructed." />
 
@@ -227,6 +227,6 @@ commit  d730e085c760ddaadf654c5c4430f3099932d3c9
 tag     chapter-08-terminal-state
 ```
 
-## The next limitation
+## The state works—how do we show it in a real app?
 
 The debug frame proves state, but users still cannot see a native application surface. The next chapter must choose and initialize the first real platform runtime, open a blank window, and capture an actual screenshot before any GPU or font complexity is added.
