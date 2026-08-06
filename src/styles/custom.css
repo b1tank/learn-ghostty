@@ -288,7 +288,7 @@
 
 .home-progress-tools button,
 .reset-dialog button,
-.lesson-progress__actions button {
+.lesson-progress__actions > button {
   display: inline-flex;
   height: 2.75rem;
   min-height: 2.75rem;
@@ -352,8 +352,8 @@
 
 .lesson-progress__label { color: var(--sl-color-text-accent); font: 650 var(--sl-text-xs) var(--__sl-font-mono); letter-spacing: 0.05em; }
 .lesson-progress__actions { display: flex; width: 100%; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; }
-.lesson-progress__actions a,
-.lesson-progress__actions button {
+.lesson-progress__actions > a,
+.lesson-progress__actions > button {
   display: inline-flex;
   box-sizing: border-box;
   height: var(--course-control-height);
@@ -380,13 +380,14 @@
 .field-guides-preview__link > svg,
 .reconstruction-resume a > svg,
 .evolution-strip li a > svg { width: 1rem; height: 1rem; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.lesson-progress__actions button:disabled { color: var(--sl-color-text-accent); cursor: default; }
+.lesson-progress__actions > button:disabled { color: var(--sl-color-text-accent); cursor: default; }
 
 /* Copy for AI */
 .ai-copy-menu { position: relative; display: inline-flex; box-sizing: border-box; width: fit-content; height: var(--course-control-height); align-items: flex-start; }
 .lesson-progress__actions > .ai-copy-menu { margin: 0 !important; }
+.lesson-progress__actions > .ai-copy-menu:has(.ai-copy-notice:not(:empty)) { margin-bottom: 1.6rem !important; }
 .ai-copy-primary,
-.ai-copy-trigger { height: 2.75rem; min-height: 2.75rem; margin: 0 !important; border: 1px solid var(--course-border); color: var(--sl-color-text); background: var(--course-surface-soft); cursor: pointer; }
+.ai-copy-trigger { height: var(--course-control-height); min-height: var(--course-control-height); margin: 0 !important; border: 1px solid var(--course-border); color: var(--sl-color-text); background: var(--course-surface-soft); cursor: pointer; }
 .ai-copy-primary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.75rem; border-radius: var(--course-radius-sm) 0 0 var(--course-radius-sm); font: 600 var(--sl-text-xs) var(--__sl-font-mono); white-space: nowrap; }
 .ai-copy-primary:disabled { opacity: 0.5; }
 .ai-copy-icon { position: relative; width: 0.75rem; height: 0.75rem; border: 1px solid currentColor; border-radius: 2px; }
@@ -404,7 +405,7 @@
 .ai-copy-popover a:hover { background: var(--sl-color-bg-inline-code); }
 .ai-copy-popover strong { font-size: var(--sl-text-sm); }
 .ai-copy-popover small { color: var(--course-muted); font-size: var(--sl-text-xs); line-height: 1.35; }
-.ai-copy-notice { position: absolute; right: 0; top: calc(100% + 0.4rem); width: max-content; color: var(--sl-color-text-accent); font: var(--sl-text-2xs) var(--__sl-font-mono); }
+.ai-copy-notice { position: absolute; left: 0; top: calc(100% + 0.4rem); width: max-content; max-width: min(22rem, calc(100vw - 2rem)); color: var(--sl-color-text-accent); font: var(--sl-text-2xs)/1.35 var(--__sl-font-mono); }
 
 /* Source cards and source viewer */
 .source-card { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr); gap: .75rem 1rem; align-items: start; margin: 1rem 0; padding: 1rem; border: 1px solid var(--course-border); border-radius: var(--course-radius-md); background: var(--course-surface); container-type: inline-size; }

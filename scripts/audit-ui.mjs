@@ -45,6 +45,21 @@ try {
         const url = new URL(link.href, location.href);
         return ["http:", "https:"].includes(url.protocol) && url.origin !== location.origin;
       }).every((link) => link.target === "_blank" && link.relList.contains("noopener") && link.relList.contains("noreferrer")),
+      copyControlJoined: [...document.querySelectorAll(".ai-copy-menu")].every((menu) => {
+        const primary = menu.querySelector(".ai-copy-primary");
+        const trigger = menu.querySelector(".ai-copy-trigger");
+        if (!primary || !trigger) return false;
+        const primaryRect = primary.getBoundingClientRect();
+        const triggerRect = trigger.getBoundingClientRect();
+        const primaryStyle = getComputedStyle(primary);
+        const triggerStyle = getComputedStyle(trigger);
+        return Math.abs(primaryRect.right - triggerRect.left) <= 1
+          && parseFloat(primaryStyle.borderTopRightRadius) === 0
+          && parseFloat(primaryStyle.borderBottomRightRadius) === 0
+          && parseFloat(triggerStyle.borderTopLeftRadius) === 0
+          && parseFloat(triggerStyle.borderBottomLeftRadius) === 0
+          && parseFloat(triggerStyle.borderLeftWidth) === 0;
+      }),
       actionRowsAligned: [
         ".lesson-progress__actions", ".source-card__actions", ".source-actions", ".reconstruction-next__actions",
         ".flow-footer", ".commit-nav", ".commit-actions", ".commit-error > div",
@@ -88,6 +103,7 @@ try {
     check(state.main, `${route}: main missing`);
     if (route.startsWith("/chapters/")) check(state.localSetup, `${route}: local lesson setup missing`);
     check(state.externalLinksSafe, `${route}: external links must open safely in a new tab`);
+    check(state.copyControlJoined, `${theme} ${width}px ${route}: Copy for AI split button has a rounded or doubled middle seam`);
     check(state.actionRowsAligned, `${theme} ${width}px ${route}: consecutive controls are vertically misaligned`);
     check(state.repeatedCardsAligned, `${theme} ${width}px ${route}: repeated cards do not share row geometry`);
     check(state.repeatedCardsHaveIcons, `${theme} ${width}px ${route}: a repeated card is missing its functional icon`);
@@ -181,6 +197,13 @@ try {
   await chapter.click(".ai-copy-primary");
   const copied = await chapter.evaluate(() => window.__copy || "");
   check(copied.includes("# Current section") && copied.includes("~/learn-ghostty/src/content/docs/chapters/00-process-exists.mdx") && copied.includes("~/ghostty") && copied.includes("# My question"), "Copy for AI context is incomplete");
+  const copyNoticeLayout = await chapter.evaluate(() => {
+    const notice = document.querySelector(".ai-copy-notice:not(:empty)")?.getBoundingClientRect();
+    const menu = document.querySelector(".ai-copy-menu")?.getBoundingClientRect();
+    const progress = document.querySelector(".lesson-progress")?.getBoundingClientRect();
+    return Boolean(notice && menu && progress && notice.top >= menu.bottom && notice.bottom <= progress.bottom);
+  });
+  check(copyNoticeLayout, "Copy for AI confirmation overlaps adjacent lesson UI");
 
   await chapter.evaluate(() => localStorage.removeItem("learn-ghostty.progress.v5"));
   await chapter.$eval("#step-1-read-the-entire-program", (element) => element.scrollIntoView());
