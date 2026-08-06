@@ -42,17 +42,17 @@ import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LocalLessonSetup chapter="10" />
 
-## What you will see
+## Let's make the blank window prove it can draw
 
 <RectangleArtifact />
 
 <OutputPreview file="src/data/reconstruction/chapter-10/output.txt" title="OpenGL capability and rectangle evidence" tag="chapter-10-first-rectangle" caption="The capture runs GTK's normal close path through an explicit capture-only timeout. CI repeats the native build, lifecycle smoke test, capture, and pixel checks." />
 
-## Why a rectangle comes before a glyph
+## Why draw a boring rectangle before text?
 
-The blank window proved native ownership but no graphics context. A glyph would mix context creation, shaders, textures, font discovery, rasterization, metrics, blending, and atlas ownership.
+It is tempting to jump straight to letters. But one glyph would mix OpenGL setup, shaders, textures, font loading, rasterization, metrics, and blending. If the screen stayed blank, we would not know which part failed.
 
-One rectangle isolates:
+A rectangle lets us test one short path:
 
 ```text
 GtkGLArea → current OpenGL context → viewport → known background → known region
@@ -60,9 +60,9 @@ GtkGLArea → current OpenGL context → viewport → known background → known
 
 Terminal state remains disconnected intentionally.
 
-## The readiness work
+## First, make sure the window lifetime is trustworthy
 
-Before drawing, the GTK scaffold was hardened:
+Before touching OpenGL, we clean up a few weak spots in the GTK scaffold:
 
 - runtime Surface now owns GtkWindow and GtkGLArea;
 - normal execution waits for window close;
@@ -73,7 +73,7 @@ Before drawing, the GTK scaffold was hardened:
 
 This work prevents the screenshot from hiding a broken lifecycle.
 
-## Historical path
+## Real Ghostty started with a simple GL clear too
 
 <EvolutionStrip moments={[
  {kind:'then',eyebrow:'THEN · 2023-02-23',title:'Clear the first GLArea color',description:'Ghostty connected realize/render callbacks, loaded OpenGL, and cleared the GTK graphics surface to one color.',revision:'7f34afa',href:'https://github.com/ghostty-org/ghostty/blob/7f34afa3953289d33f95150c5f7d6a6d458a6993/src/apprt/gtk.zig#L180-L238',linkLabel:'Open first GTK render'},
@@ -81,7 +81,7 @@ This work prevents the screenshot from hiding a broken lifecycle.
  {kind:'now',eyebrow:'NOW · PINNED MAIN',title:'Drive the production renderer',description:'Current GTK Surface manages realize, unrealize, context errors, app-thread drawing, and renderer frame handoff.',revision:'6ad1fe7',href:'https://github.com/ghostty-org/ghostty/blob/6ad1fe7d8cbda36c77b337a96c9bea8a77883699/src/apprt/gtk/class/surface.zig#L3250-L3380',linkLabel:'Open current GLArea path'}
 ]} />
 
-## Context acceptance
+## Ask OpenGL what context we actually got
 
 The realized GLArea reports:
 
@@ -92,9 +92,9 @@ version=4.5 Core Profile
 shading language=4.50
 ```
 
-The runtime requests at least OpenGL 4.3, matching current Ghostty's minimum direction. llvmpipe is accepted as deterministic CI evidence; hardware and Wayland remain separate support gates.
+We ask for OpenGL 4.3 or newer. Here Mesa's `llvmpipe` software renderer gives us 4.5. That is good deterministic evidence, but it does not magically prove every hardware driver or Wayland setup.
 
-## Draw operation
+## Follow the GTK render callback
 
 <SyntaxBridge client:load reference="c-abi-boundaries" sourceLabel="C shim" title="Draw inside the current GL callback" code={[
   'static gboolean gl_render(GtkGLArea *area, GdkGLContext *context, gpointer data) {',
@@ -121,7 +121,7 @@ The runtime requests at least OpenGL 4.3, matching current Ghostty's minimum dir
 
 > **Text version:** GTK enters a C render callback with native pointers. The callback makes the GLArea context current, reads widget dimensions, establishes a bottom-left framebuffer viewport, restricts drawing with a centered scissor rectangle, and clears it. Returning handles the frame but does not free the GTK Surface or GL context; their native lifetime continues until teardown.
 
-The render callback:
+Read the callback like a short recipe:
 
 1. makes the GLArea context current;
 2. sets a viewport from widget dimensions;
@@ -130,9 +130,9 @@ The render callback:
 5. clears the centered half-width/half-height region to green;
 6. disables scissor testing.
 
-No shader, vertex buffer, texture, or renderer abstraction is needed for this milestone.
+Notice what we did not add: no shader, vertex buffer, texture, or renderer class. A clear plus scissor is enough to prove pixels can change.
 
-## Pixel verification
+## Check actual pixels, not just “the screenshot changed”
 
 The capture checks three root-image samples:
 
@@ -142,7 +142,7 @@ background = srgb(13,18,31)
 root       = srgb(0,0,0)
 ```
 
-The center must differ from the client background, and the client background must differ from the X root display. This verifies the intended graphical layers rather than accepting any changed screenshot hash.
+The center must differ from the client background, and the client background must differ from the X root display. These three samples tell us the green rectangle, navy window, and black X root are all distinct. That is much stronger than saying “some screenshot bytes changed.”
 
 ## Fidelity
 
@@ -155,7 +155,7 @@ The center must differ from the client background, and the client background mus
 | `build.zig` | adapted | optional GTK4/libepoxy and capture options |
 | native CI | project-owned | deterministic llvmpipe evidence, not hardware/Wayland support |
 
-## Compare with current Ghostty
+## How does today's renderer grow from this callback?
 
 <SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/renderer/OpenGL.zig" line={130} end={180} label="Current OpenGL initialization" note="Read version validation and GTK loading. Ignore resources not earned by the rectangle." />
 
@@ -168,6 +168,6 @@ implementation  5bc46b51742610097358128b5391c3471f491a72
 tag             chapter-10-first-rectangle
 ```
 
-## The next limitation
+## Geometry works—how do we draw one letter?
 
 The graphics surface can draw geometry but not text. The next checkpoint should isolate font discovery, metrics, and one rasterized glyph before introducing an atlas or terminal-cell rendering.
