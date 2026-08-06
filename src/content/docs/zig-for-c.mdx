@@ -417,7 +417,7 @@ const loop: *GMainLoop = @ptrCast(@alignCast(data.?));
 
 `data.?` asserts that the optional is non-null and obtains its payload. `@alignCast` asserts sufficient alignment; `@ptrCast` changes the pointer's pointee type. Neither operation allocates, copies, or changes resource ownership. A failed safety assertion is a bug, not an error-union result.
 
-[Cross the POSIX ABI in Chapter 05 →](../chapters/05-pty/) · [Read GTK callbacks in Chapter 09 →](../chapters/09-first-window-gpu/)
+[Cross the POSIX ABI in Chapter 05 →](../chapters/05-pty/) · [Read GTK callbacks in Chapter 09 →](../chapters/09-first-window-gpu/) · [See why Chapter 10 keeps a narrow C rendering shim →](../chapters/10-first-rectangle/)
 
 ## Common C-to-Zig traps
 

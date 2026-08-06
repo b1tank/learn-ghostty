@@ -32,7 +32,7 @@ async function newPage(browser, width = 1280, theme = "light") {
 await ensureServer();
 const browser = await puppeteer.launch({ executablePath: await chromePath(), headless: true, args: ["--no-sandbox", "--disable-gpu"] });
 try {
-  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/chapters/05-pty", "/chapters/06-termio", "/chapters/07-parser", "/chapters/08-terminal-state", "/chapters/09-first-window-gpu", "/chapters/10-first-rectangle", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/history", "/source"];
+  const routes = ["/", "/course-map", "/chapters/00-process-exists", "/chapters/01-app-lifecycle", "/chapters/02-entry-routing", "/chapters/03-runtime-surface", "/chapters/04-child-process-pipes", "/chapters/05-pty", "/chapters/06-termio", "/chapters/07-parser", "/chapters/08-terminal-state", "/chapters/09-first-window-gpu", "/chapters/10-first-rectangle", "/field-guides/run-ls-cat", "/field-guides/codex-tui", "/field-guides/tmux", "/field-guides/ssh-remote", "/zig-for-c", "/history", "/source"];
   for (const theme of ["light", "dark"]) for (const width of [390, 768, 1440]) for (const route of routes) {
     const page = await newPage(browser, width, theme);
     await page.goto(base + route, { waitUntil: "networkidle0" });
@@ -97,6 +97,7 @@ try {
         points: element.querySelectorAll('.syntax-bridge__points [role="tab"]').length,
         focusedLines: element.querySelectorAll('.syntax-bridge__code button[aria-pressed="true"]').length,
         hasTextEquivalent: (element.closest("astro-island")?.nextElementSibling ?? element.nextElementSibling)?.textContent?.includes("Text version") ?? false,
+        reference: element.querySelector(".syntax-bridge__reference")?.getAttribute("href") ?? "",
       })),
     }));
     check(state.scroll <= state.viewport, `${theme} ${width}px ${route}: horizontal overflow ${state.scroll - state.viewport}px`);
@@ -111,6 +112,7 @@ try {
     if (/^\/chapters\/(?:0\d|10)-/.test(route)) {
       check(state.syntaxBridges.length === 1, `${theme} ${width}px ${route}: expected one syntax bridge`);
       check(state.syntaxBridges.every((bridge) => bridge.fits && bridge.cSelected && bridge.points >= 3 && bridge.focusedLines >= 1 && bridge.hasTextEquivalent), `${theme} ${width}px ${route}: syntax bridge is incomplete or overflows`);
+      check(state.syntaxBridges.every((bridge) => /\/zig-for-c\/#[-a-z]+$/.test(bridge.reference)), `${theme} ${width}px ${route}: syntax bridge lacks a scoped cumulative-reference link`);
     }
     await page.close();
   }
@@ -134,6 +136,22 @@ try {
     }
     await page.close();
   }
+
+  const syntaxReference = await newPage(browser, 1280, "dark");
+  await syntaxReference.goto(base + "/zig-for-c", { waitUntil: "networkidle0" });
+  const syntaxReferenceState = await syntaxReference.evaluate(() => ({
+    heading: document.querySelector("h1")?.textContent?.trim(),
+    version: document.querySelector("main")?.textContent?.includes("Zig 0.16.0"),
+    quickRows: document.querySelectorAll(".sl-markdown-content table:first-of-type tbody tr").length,
+    trapRows: document.querySelectorAll(".sl-markdown-content table:last-of-type tbody tr").length,
+    sections: ["declarations-and-inference", "allocation-and-explicit-lifetime", "compile-time-selection", "pointers-addresses-and-optionals", "arrays-slices-and-ownership", "control-flow-and-payload-capture", "literals-structs-and-enums", "c-abi-boundaries"].every((id) => Boolean(document.getElementById(id))),
+    chapters: new Set([...document.querySelectorAll('a[href*="/chapters/"]')].map((link) => new URL(link.href).pathname.match(/\/chapters\/([^/]+)/)?.[1]).filter(Boolean)).size,
+    inTools: [...document.querySelectorAll("nav a, .sidebar-content a")].some((link) => new URL(link.href, location.href).pathname.endsWith("/zig-for-c/")),
+  }));
+  check(syntaxReferenceState.heading === "Zig for C programmers", "Zig/C reference heading changed unexpectedly");
+  check(syntaxReferenceState.version && syntaxReferenceState.quickRows === 24 && syntaxReferenceState.trapRows === 9, "Zig/C reference is missing its versioned lookup or C-trap coverage");
+  check(syntaxReferenceState.sections && syntaxReferenceState.chapters === 11 && syntaxReferenceState.inTools, "Zig/C reference is missing section anchors, chapter provenance, or Tools navigation");
+  await syntaxReference.close();
 
   const home = await newPage(browser, 1440, "dark");
   await home.goto(base, { waitUntil: "networkidle0" });

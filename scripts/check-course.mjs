@@ -24,6 +24,7 @@ async function walk(dir) {
 
 const contentFiles = (await walk(docsRoot)).filter((path) => path.includes("/chapters/") || path.includes("/field-guides/"));
 const lessons = [];
+const syntaxReferences = [];
 for (const path of contentFiles) {
   const raw = await readFile(path, "utf8");
   const parsed = matter(raw);
@@ -57,11 +58,29 @@ for (const path of contentFiles) {
   if (contentId.startsWith("chapters/") && data.status === "published" && !(data.historyRefs?.length)) {
     errors.push(`${contentId}: a published reconstruction chapter requires at least one historical source reference`);
   }
+  if (contentId.startsWith("chapters/") && data.status === "published") {
+    const references = [...raw.matchAll(/<SyntaxBridge\b[^>]*\breference="([^"]+)"/g)].map((match) => match[1]);
+    if (references.length !== 1) errors.push(`${contentId}: expected one SyntaxBridge reference link, found ${references.length}`);
+    else syntaxReferences.push({ contentId, section: references[0] });
+  }
   if (data.status === "published") {
     const clean = cleanLessonMarkdown(raw, { id, contentId, href: `/${contentId}`, summary: data.description, ...data }, upstreamCommit);
     if (/<(?:script|[A-Z][A-Za-z]+)\b/.test(clean)) errors.push(`${contentId}: AI Markdown contains implementation markup`);
     if (!clean.includes("~/learn-ghostty/") || !clean.includes("source_commit:")) errors.push(`${contentId}: AI Markdown missing local/pinned context`);
   }
+}
+
+const syntaxReference = await readFile(resolve(docsRoot, "zig-for-c.mdx"), "utf8");
+if (!syntaxReference.includes("Zig `0.16.0`")) errors.push("zig-for-c: missing Zig 0.16.0 version scope");
+const syntaxSectionIds = new Set([...syntaxReference.matchAll(/^## (.+)$/gm)].map((match) => match[1].toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")));
+for (const { contentId, section } of syntaxReferences) {
+  if (!syntaxSectionIds.has(section)) errors.push(`${contentId}: Zig reference section #${section} is missing`);
+}
+const linkedChapters = new Set([...syntaxReference.matchAll(/\.\.\/chapters\/([^/)]+)\//g)].map((match) => match[1]));
+const publishedChapters = lessons.filter((lesson) => lesson.contentId.startsWith("chapters/") && lesson.status === "published").map((lesson) => lesson.id);
+for (const chapter of publishedChapters) if (!linkedChapters.has(chapter)) errors.push(`zig-for-c: missing link to chapter ${chapter}`);
+for (const claim of ["does **not** require explicit types everywhere", "error is a checked union case", "not a promise that cleanup runs", "does not by itself promise a C ABI symbol", "additional pointer categories"]) {
+  if (!syntaxReference.includes(claim)) errors.push(`zig-for-c: missing C-to-Zig correction: ${claim}`);
 }
 
 const orders = lessons.map((lesson) => lesson.order);
