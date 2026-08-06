@@ -30,6 +30,8 @@ visible result
 ```
 
 - Introduce a subsystem only after the previous version makes its need visible.
+- Teach like an engineer sitting beside a freshman: start with “let's open this file,” follow references and calls in reading order, use short oral sentences, and explain why a function exists before naming its pattern.
+- Use C as the default bridge when helpful: “this is like a typed Makefile” or “this is the cleanup path you might write with goto,” followed immediately by where the analogy stops.
 - Label reconstruction files exact, adapted, temporary, or redesigned.
 - Use concrete bytes, owners, lifetimes, threads, and boundaries before jargon or analogy.
 - Keep source reads narrow and state what to read, what to ignore, and why.

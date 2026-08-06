@@ -2,7 +2,9 @@
 
 ## Reader
 
-Write for an experienced engineer with no assumed knowledge of terminal hardware, PTYs, VT protocols, Zig, font shaping, GPU rendering, GTK, SwiftUI, tmux, or SSH internals.
+Write for a freshman or new intern who understands basic C syntax but has no assumed knowledge of terminal hardware, PTYs, VT protocols, Zig, font shaping, GPU rendering, GTK, SwiftUI, tmux, or SSH internals.
+
+Use a natural spoken teaching voice. Prefer “let's open `main.zig` and follow this call” over “the following boundary establishes orchestration.” Keep sentences short. Explain why a function or owner is needed before explaining its syntax or architectural name.
 
 ## Chapter sequence
 
@@ -18,7 +20,7 @@ visible result
 → stable chapter tag
 ```
 
-Do not begin with a glossary, architecture inventory, or finished production implementation. Introduce a subsystem only after the learner can see why the previous version needs it.
+Do not begin with a glossary, architecture inventory, or finished production implementation. Start where a student would start reading the source, then follow imported names and calls. Introduce a subsystem only after the learner can see why the previous version needs it.
 
 ## Diagrams and graphs
 
