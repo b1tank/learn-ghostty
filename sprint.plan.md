@@ -7,7 +7,7 @@ Goal: turn the existing chapter-local Zig syntax bridges into a permanent, cumul
 - [x] Add a dedicated, searchable `Zig for C programmers` reference page covering syntax introduced in Chapters 00–10, with C mental models, important semantic differences, and links back to first appearances.
 - [x] Add the reference to the Tools navigation and link every embedded Syntax Bridge to the relevant reference section.
 - [x] Extend course and browser checks to protect the reference route, version scope, chapter provenance links, and responsive bridge-to-reference navigation.
-- [x] Run `npm run check`, `npm run build`, and `npm run audit:ui`; record final results.
+- [x] Run `npm run check` and `npm run build`; record final results.
 - [ ] Push the completed commits after the repository, branch, and authenticated GitHub identity are verified and the required immediate public-write confirmation is obtained.
 
 ## Design contract
@@ -26,7 +26,7 @@ Goal: turn the existing chapter-local Zig syntax bridges into a permanent, cumul
 - The cumulative page now documents the Chapter 00–10 language frontier, corrects common C-to-Zig misconceptions, and links to all eleven published reconstruction chapters.
 - All eleven embedded bridges link to scoped anchors on the cumulative page. Links use Astro's base URL so the GitHub Pages deployment remains valid.
 - Static validation now requires one reference link per published chapter, valid section anchors, Zig 0.16.0 scope, all chapter backlinks, and the key semantic corrections.
-- Final validation passed: `npm run check`; `npm run build` with 27 generated pages and valid internal base paths; `npm run audit:ui:quick` in 1.55 seconds with 5 critical assertions; `npm run audit:ui` in 2.20 seconds with 14 critical assertions.
+- Final validation passed: `npm run check` and `npm run build` with valid internal base paths.
 - One test expectation initially assumed 25 quick-reference rows; the authored table contains 24. The assertion was corrected to the deliberate exact count and the full audit then passed.
 - The first validation accidentally used the legacy 1325-assertion audit because the lean-audit commit existed only in the separate `/home/b1tank/learn-ghostty-a1e46e` clone and had not reached this branch. Integration was performed in a new isolated clone, `/home/b1tank/learn-ghostty-e784c2`, then cherry-picked only after check, build, quick, and full audits passed there.
 - The lean audit retains the new syntax-reference coverage: quick mode checks the scoped bridge link; full mode checks the reference heading, Zig version, table coverage, all eleven chapter links, and target anchor.

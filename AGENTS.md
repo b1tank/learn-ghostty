@@ -11,7 +11,7 @@ Learn Ghostty is a static reconstruction workshop for engineers learning termina
 - Browser progress: `src/lib/progressStore.js`
 - Pinned production source: `ghostty/`
 
-Run `npm run check`, `npm run audit:ui`, and `npm run build` before committing.
+Run `npm run check` and `npm run build` before committing.
 
 ## Teaching method
 

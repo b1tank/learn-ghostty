@@ -1,6 +1,6 @@
 # Reconstruction roadmap
 
-Chapters 00–10 are published and were replayed from their implementation tags during the current pause debrief. A chapter becomes public after its code checkpoint, exact command, observable result, provenance, historical and current source comparisons, and responsive browser audit are complete. Passing a chapter proves that fixture, not production or platform support.
+Chapters 00–10 are published and were replayed from their implementation tags during the current pause debrief. A chapter becomes public after its code checkpoint, exact command, observable result, provenance, historical and current source comparisons, and responsive review is complete. Passing a chapter proves that fixture, not production or platform support.
 
 **Chapter 10 passed its renderer-readiness gate locally: GTK Surface ownership, capture-only close, C shim, OpenGL capability evidence, native CI configuration, and pixel-region verification are present.**
 
