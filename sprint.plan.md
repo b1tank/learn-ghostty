@@ -1,33 +1,35 @@
-# Zig for C programmers reference sprint
+# Conversational code-first chapter sprint
 
-Goal: turn the existing chapter-local Zig syntax bridges into a permanent, cumulative reference for experienced C programmers without teaching syntax before it appears in the reconstruction.
+Goal: rewrite every published reconstruction chapter (00–10) as a friendly teacher-led source walkthrough for a freshman who knows basic C, while preserving exact checkpoints, observable evidence, provenance, and historical/current Ghostty comparisons.
 
-## Prioritized tasks
+## Teaching contract
 
-- [x] Add a dedicated, searchable `Zig for C programmers` reference page covering syntax introduced in Chapters 00–10, with C mental models, important semantic differences, and links back to first appearances.
-- [x] Add the reference to the Tools navigation and link every embedded Syntax Bridge to the relevant reference section.
-- [x] Extend course and browser checks to protect the reference route, version scope, chapter provenance links, and responsive bridge-to-reference navigation.
-- [x] Run `npm run check` and `npm run build`; record final results.
-- [ ] Push the completed commits after the repository, branch, and authenticated GitHub identity are verified and the required immediate public-write confirmation is obtained.
+- Sound like a teacher sitting beside the student: “let’s open this file,” “here is why we need it,” and “in C you may have seen…”.
+- Start with the small problem the current checkpoint is solving before naming architecture.
+- Follow source in the order a student would naturally explore it: entrypoint → referenced declaration → called function → owner → build details.
+- Explain why a type or lifecycle function exists before explaining its syntax.
+- Use short paragraphs, concrete values, and small C comparisons. Avoid policy/report language and unexplained jargon.
+- Keep exact commands, output, screenshots, checkpoint tags, fidelity labels, and then → reconstruction → now evidence.
+- Keep each chapter inside its existing implementation frontier; do not pull future systems backward.
 
-## Design contract
+## Tasks
 
-- Write for an experienced C programmer, but describe C as a mental model rather than an exact translation.
-- Scope claims to Zig `0.16.0`, the reconstruction's required version.
-- Correct common traps explicitly: local type inference, binding versus pointee mutability, error unions versus errno conventions, `defer` scope-exit behavior, `pub` versus ABI export, and Zig pointer categories.
-- Introduce only syntax already present in published Chapters 00–10.
-- Keep chapter bridges contextual and the reference cumulative; avoid copying entire lesson explanations.
-- Preserve static rendering, Pagefind searchability, keyboard access, responsive layout, and base-path-safe links.
+- [ ] Chapter 00: conversationally discover the first Zig process and build graph.
+- [ ] Chapter 01: conversationally follow App create → init → run → destroy and explain why each lifecycle step exists.
+- [ ] Chapter 02: retone the new source-following router walkthrough as an oral freshman lesson.
+- [ ] Chapter 03: pivot to a source-following runtime/App/Surface ownership walkthrough.
+- [ ] Chapter 04: pivot to a source-following child-process and ordinary-pipes walkthrough.
+- [ ] Chapter 05: pivot to a source-following PTY and C-ABI walkthrough.
+- [ ] Chapter 06: pivot to a source-following Termio ownership and incremental-I/O walkthrough.
+- [ ] Chapter 07: pivot to a source-following parser state-machine walkthrough.
+- [ ] Chapter 08: pivot to a source-following terminal-grid walkthrough.
+- [ ] Chapter 09: pivot to a source-following GTK window walkthrough.
+- [ ] Chapter 10: pivot to a source-following OpenGL rectangle walkthrough.
+- [ ] Update the contributor-facing teaching guidance to preserve the conversational code-first tone.
+- [ ] Run `npm run check` and `npm run build`, then deploy after the required public-write identity check and immediate confirmation.
 
 ## Hiccups & Notes
 
-- The invocation input was `go`; the sprint goal is inferred from the immediately preceding accepted recommendation for a cumulative Zig-for-C reference backed by existing chapter Syntax Bridges.
-- Public pushing is governed by the repository's confirmation policy. Local implementation and commits may proceed, but pushing requires identity verification and immediate confirmation of the exact remote write.
-- The cumulative page now documents the Chapter 00–10 language frontier, corrects common C-to-Zig misconceptions, and links to all eleven published reconstruction chapters.
-- All eleven embedded bridges link to scoped anchors on the cumulative page. Links use Astro's base URL so the GitHub Pages deployment remains valid.
-- Static validation now requires one reference link per published chapter, valid section anchors, Zig 0.16.0 scope, all chapter backlinks, and the key semantic corrections.
-- Final validation passed: `npm run check` and `npm run build` with valid internal base paths.
-- One test expectation initially assumed 25 quick-reference rows; the authored table contains 24. The assertion was corrected to the deliberate exact count and the full audit then passed.
-- The first validation accidentally used the legacy 1325-assertion audit because the lean-audit commit existed only in the separate `/home/b1tank/learn-ghostty-a1e46e` clone and had not reached this branch. Integration was performed in a new isolated clone, `/home/b1tank/learn-ghostty-e784c2`, then cherry-picked only after check, build, quick, and full audits passed there.
-- The lean audit retains the new syntax-reference coverage: quick mode checks the scoped bridge link; full mode checks the reference heading, Zig version, table coverage, all eleven chapter links, and target anchor.
-- Push remains pending because it is a public write and requires immediate confirmation after remote and authenticated identity verification.
+- “All chapters” is scoped to the eleven published reconstruction chapters, 00–10. Chapter 11 remains a planned frontier rather than invented lesson content.
+- Browser audit tooling was removed in the previous sprint at the learner’s request; validation for this sprint is the static course check and production build.
+- Public deployment still follows the repository policy requiring identity verification and immediate confirmation of the exact push, even though all local sprint work proceeds without pauses.
