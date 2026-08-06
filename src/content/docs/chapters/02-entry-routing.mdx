@@ -85,167 +85,43 @@ The rest is Chapter 01's App lifetime.
 ## The five files we will read
 
 ```text
-build.zig                 build graph
-src/build_config.zig      typed entrypoint choice
-src/main.zig              compile-time router
-src/main_ghostty.zig      application startup
-src/App.zig               stable App allocation and cleanup
+src/main.zig              executable root and compile-time router
+src/build_config.zig      typed choice referenced by the router
+src/main_ghostty.zig      selected application startup
+src/App.zig               functions called by startup
+build.zig                 why compilation begins at src/main.zig
 ```
+
+We will read the project the way you would explore an unfamiliar C program: start at `main`, follow each referenced name or call, and inspect the build machinery only after the runtime path makes sense.
 
 We will account for every meaningful line. Blank lines only separate ideas.
 
 ---
 
-## File 1: `build.zig`
+## File 1: start at `src/main.zig`
 
-Purpose: tell Zig what to compile, install, run, and test.
+Purpose: select the application entry module at compile time.
 
-<CodeSnapshot file="src/data/reconstruction/chapter-02/build.zig" label="build.zig" status="adapted" reason="Minimal build graph for one executable and one test artifact." />
+<CodeSnapshot file="src/data/reconstruction/chapter-02/main.zig" label="src/main.zig" status="adapted" reason="The executable root reduced to the only reconstructed entrypoint." />
 
-### Import and build function
-
-```zig
-const std = @import("std");
-```
-
-`@import("std")` gives us the Zig standard-library namespace. This is not textual inclusion like a C header. No file is loaded at runtime.
+### Import the configuration namespace
 
 ```zig
-pub fn build(b: *std.Build) void {
+const build_config = @import("build_config.zig");
 ```
 
-- `pub fn` declares a visible function.
-- `b: *std.Build` is a pointer to Zig's build context.
-- `void` means the function returns no value.
-
-Zig's build runner calls this function. The function creates a graph of work. It does not compile each target immediately as the line executes.
-
-**C mental model:** a typed function that configures Make or CMake targets.
-
-### Target and optimization options
+`@import` returns the imported file's namespace. The local name `build_config` gives us access to:
 
 ```zig
-const target = b.standardTargetOptions(.{});
-const optimize = b.standardOptimizeOption(.{});
+build_config.ExeEntrypoint
+build_config.exe_entrypoint
 ```
 
-Both locals use inferred types.
+This is a compile-time module dependency, not runtime loading.
 
-- `const` means the local binding cannot be reassigned.
-- `.{}` is an empty options struct whose type comes from the function parameter.
-- `target` stores the requested operating system and CPU target.
-- `optimize` stores Debug or a release optimization mode.
+At this point we do what a source-code reader naturally does: follow the imported name into `build_config.zig`, learn what `exe_entrypoint` contains, and then return here.
 
-Zig does not require a written type for an initialized local variable.
-
-### Root module
-
-```zig
-const root_module = b.createModule(.{
-    .root_source_file = b.path("src/main.zig"),
-    .target = target,
-    .optimize = optimize,
-});
-```
-
-This creates one module description.
-
-- `.root_source_file` says where compilation begins.
-- `b.path(...)` makes a path relative to the project.
-- `.target` and `.optimize` copy the choices above.
-- The leading dots are field names in an inferred struct literal.
-
-The important line for this chapter is:
-
-```zig
-.root_source_file = b.path("src/main.zig")
-```
-
-That is why the compiler enters through the router.
-
-### Executable and install step
-
-```zig
-const exe = b.addExecutable(.{
-    .name = "ghostty-from-scratch",
-    .root_module = root_module,
-});
-b.installArtifact(exe);
-```
-
-`addExecutable` adds an executable node to the graph. `installArtifact` connects it to the normal install step.
-
-Expected installed path:
-
-```text
-zig-out/bin/ghostty-from-scratch
-```
-
-**C mental model:** define an executable target, then add it to an install target.
-
-### Run step
-
-```zig
-const run = b.addRunArtifact(exe);
-run.step.dependOn(b.getInstallStep());
-```
-
-The first line creates a step that can run the executable. The second line says installation must finish first.
-
-```zig
-if (b.args) |args| run.addArgs(args);
-```
-
-`b.args` is optional. It either contains no value or contains an argument slice.
-
-```zig
-if (optional_value) |payload|
-```
-
-means: enter the body only when a value exists, and call that value `payload`.
-
-**C mental model:** `if (args != NULL)`, except Zig narrows the optional value to its non-null payload.
-
-```zig
-const run_step = b.step("run", "Run ghostty-from-scratch");
-run_step.dependOn(&run.step);
-```
-
-This exposes:
-
-```console
-zig build run
-```
-
-`&run.step` takes the step's address. The dependency points from the public `run` command to the actual executable-run step.
-
-### Test step
-
-```zig
-const tests = b.addTest(.{ .root_module = root_module });
-const run_tests = b.addRunArtifact(tests);
-const test_step = b.step("test", "Run the Zig tests");
-test_step.dependOn(&run_tests.step);
-```
-
-These four lines:
-
-1. create a test artifact from the same root module;
-2. create a step that runs that artifact;
-3. expose a public step named `test`;
-4. connect the public step to the test runner.
-
-That gives us:
-
-```console
-zig build test
-```
-
-The final `}` closes the `build` function.
-
----
-
-## File 2: `src/build_config.zig`
+## File 2: follow the import into `src/build_config.zig`
 
 Purpose: represent the build's entrypoint choice as a Zig type.
 
@@ -305,26 +181,9 @@ to:
 
 ---
 
-## File 3: `src/main.zig`
+## Return to `src/main.zig`
 
-Purpose: select the application entry module at compile time.
-
-<CodeSnapshot file="src/data/reconstruction/chapter-02/main.zig" label="src/main.zig" status="adapted" reason="The executable root reduced to the only reconstructed entrypoint." />
-
-### Import the configuration namespace
-
-```zig
-const build_config = @import("build_config.zig");
-```
-
-`@import` returns the imported file's namespace. The local name `build_config` gives us access to:
-
-```zig
-build_config.ExeEntrypoint
-build_config.exe_entrypoint
-```
-
-This is a compile-time module dependency, not runtime loading.
+We now know that `build_config.exe_entrypoint` has the value `.ghostty`. Return to the switch and keep reading.
 
 ### Select a module
 
@@ -400,9 +259,11 @@ Zig analyzes declarations lazily. Referencing `entrypoint` makes the selected mo
 
 ---
 
-## File 4: `src/main_ghostty.zig`
+## File 3: follow the selected `src/main_ghostty.zig`
 
 Purpose: start the Ghostty application after the router selects it.
+
+The router gave us `entrypoint.main`, so this is the next function to read.
 
 <CodeSnapshot file="src/data/reconstruction/chapter-02/main_ghostty.zig" label="src/main_ghostty.zig" status="adapted" reason="Chapter 01 startup moved intact behind the selected entry module." />
 
@@ -522,9 +383,11 @@ The final trace therefore happens after App destruction. The last brace ends `ma
 
 ---
 
-## File 5: `src/App.zig`
+## File 4: follow the App calls into `src/App.zig`
 
 Purpose: allocate one stable App, initialize it, and free it in the right order.
+
+`main_ghostty.zig` calls `App.create`, `app.run`, and `app.destroy`. We follow those calls into this file now.
 
 <CodeSnapshot file="src/data/reconstruction/chapter-02/App.zig" label="src/App.zig" status="adapted" reason="Chapter 01 App ownership remains unchanged while startup moves behind the router." />
 
@@ -693,6 +556,157 @@ test "create and destroy App" {
 Zig's test runner discovers this named test.
 
 `std.testing.allocator` tracks allocations. If `app.destroy()` were missing, the test allocator would report a leak.
+
+---
+
+## File 5: read `build.zig` after the runtime path
+
+Purpose: answer the remaining question: why did Zig begin at `src/main.zig`?
+
+We read this last because the executable route is already familiar. The build API now has a concrete job instead of being unexplained setup.
+
+<CodeSnapshot file="src/data/reconstruction/chapter-02/build.zig" label="build.zig" status="adapted" reason="Minimal build graph for one executable and one test artifact." />
+
+### Import and build function
+
+```zig
+const std = @import("std");
+```
+
+`@import("std")` gives us the Zig standard-library namespace. This is not textual inclusion like a C header. No file is loaded at runtime.
+
+```zig
+pub fn build(b: *std.Build) void {
+```
+
+- `pub fn` declares a visible function.
+- `b: *std.Build` is a pointer to Zig's build context.
+- `void` means the function returns no value.
+
+Zig's build runner calls this function. The function creates a graph of work. It does not compile each target immediately as the line executes.
+
+**C mental model:** a typed function that configures Make or CMake targets.
+
+### Target and optimization options
+
+```zig
+const target = b.standardTargetOptions(.{});
+const optimize = b.standardOptimizeOption(.{});
+```
+
+Both locals use inferred types.
+
+- `const` means the local binding cannot be reassigned.
+- `.{}` is an empty options struct whose type comes from the function parameter.
+- `target` stores the requested operating system and CPU target.
+- `optimize` stores Debug or a release optimization mode.
+
+Zig does not require a written type for an initialized local variable.
+
+### Root module
+
+```zig
+const root_module = b.createModule(.{
+    .root_source_file = b.path("src/main.zig"),
+    .target = target,
+    .optimize = optimize,
+});
+```
+
+This creates one module description.
+
+- `.root_source_file` says where compilation begins.
+- `b.path(...)` makes a path relative to the project.
+- `.target` and `.optimize` copy the choices above.
+- The leading dots are field names in an inferred struct literal.
+
+The important line for this chapter is:
+
+```zig
+.root_source_file = b.path("src/main.zig")
+```
+
+That is why the compiler enters through the router.
+
+### Executable and install step
+
+```zig
+const exe = b.addExecutable(.{
+    .name = "ghostty-from-scratch",
+    .root_module = root_module,
+});
+b.installArtifact(exe);
+```
+
+`addExecutable` adds an executable node to the graph. `installArtifact` connects it to the normal install step.
+
+Expected installed path:
+
+```text
+zig-out/bin/ghostty-from-scratch
+```
+
+**C mental model:** define an executable target, then add it to an install target.
+
+### Run step
+
+```zig
+const run = b.addRunArtifact(exe);
+run.step.dependOn(b.getInstallStep());
+```
+
+The first line creates a step that can run the executable. The second line says installation must finish first.
+
+```zig
+if (b.args) |args| run.addArgs(args);
+```
+
+`b.args` is optional. It either contains no value or contains an argument slice.
+
+```zig
+if (optional_value) |payload|
+```
+
+means: enter the body only when a value exists, and call that value `payload`.
+
+**C mental model:** `if (args != NULL)`, except Zig narrows the optional value to its non-null payload.
+
+```zig
+const run_step = b.step("run", "Run ghostty-from-scratch");
+run_step.dependOn(&run.step);
+```
+
+This exposes:
+
+```console
+zig build run
+```
+
+`&run.step` takes the step's address. The dependency points from the public `run` command to the actual executable-run step.
+
+### Test step
+
+```zig
+const tests = b.addTest(.{ .root_module = root_module });
+const run_tests = b.addRunArtifact(tests);
+const test_step = b.step("test", "Run the Zig tests");
+test_step.dependOn(&run_tests.step);
+```
+
+These four lines:
+
+1. create a test artifact from the same root module;
+2. create a step that runs that artifact;
+3. expose a public step named `test`;
+4. connect the public step to the test runner.
+
+That gives us:
+
+```console
+zig build test
+```
+
+The final `}` closes the `build` function.
 
 ---
 
