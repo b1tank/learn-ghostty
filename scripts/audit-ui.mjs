@@ -59,7 +59,7 @@ try {
         }, []);
         return sameHeight && rowTops.every((row) => Math.max(...row.map((rect) => rect.top)) - Math.min(...row.map((rect) => rect.top)) <= 1);
       }),
-      repeatedCardsAligned: [".reconstruction-promise", ".platform-branch", ".process-birth__flow", ".evolution-strip ol"].flatMap((selector) => [...document.querySelectorAll(selector)]).every((grid) => {
+      repeatedCardsAligned: [".reconstruction-promise", ".local-setup__modes", ".platform-branch", ".process-birth__flow", ".evolution-strip ol"].flatMap((selector) => [...document.querySelectorAll(selector)]).every((grid) => {
         const cards = [...grid.children].filter((element) => element.getClientRects().length).map((element) => element.getBoundingClientRect());
         const rows = cards.reduce((groups, rect) => {
           const row = groups.find((candidate) => Math.abs(candidate[0].top - rect.top) <= 1);
@@ -68,6 +68,7 @@ try {
         }, []);
         return rows.every((row) => row.length < 2 || (Math.max(...row.map((rect) => rect.top)) - Math.min(...row.map((rect) => rect.top)) <= 1 && Math.max(...row.map((rect) => rect.height)) - Math.min(...row.map((rect) => rect.height)) <= 1));
       }),
+      repeatedCardsHaveIcons: [".reconstruction-promise > div", ".local-setup__modes > section"].flatMap((selector) => [...document.querySelectorAll(selector)]).filter((element) => element.getClientRects().length).every((element) => Boolean(element.querySelector("svg"))),
       repeatedActionsHaveIcons: [
         ".lesson-progress__actions > a", ".lesson-progress__actions > button", ".ai-copy-menu > button",
         ".source-card__actions > a", ".source-card__actions > button", ".source-actions > a", ".source-actions > button",
@@ -89,6 +90,7 @@ try {
     check(state.externalLinksSafe, `${route}: external links must open safely in a new tab`);
     check(state.actionRowsAligned, `${theme} ${width}px ${route}: consecutive controls are vertically misaligned`);
     check(state.repeatedCardsAligned, `${theme} ${width}px ${route}: repeated cards do not share row geometry`);
+    check(state.repeatedCardsHaveIcons, `${theme} ${width}px ${route}: a repeated card is missing its functional icon`);
     check(state.repeatedActionsHaveIcons, `${theme} ${width}px ${route}: a repeated action is missing its functional icon`);
     if (/^\/chapters\/(?:0\d|10)-/.test(route)) {
       check(state.syntaxBridges.length === 1, `${theme} ${width}px ${route}: expected one syntax bridge`);
