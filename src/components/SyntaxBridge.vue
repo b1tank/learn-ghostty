@@ -3,6 +3,7 @@ import { computed, nextTick, ref, useId } from "vue";
 
 const props = defineProps({
   title: { type: String, required: true },
+  sourceLabel: { type: String, default: "Zig" },
   code: { type: Array, required: true },
   points: { type: Array, required: true },
   comparisons: { type: Array, default: () => [] },
@@ -83,7 +84,7 @@ function lineIsActive(number) {
       role="tabpanel"
       :aria-labelledby="`${id}-language-c`"
     >
-      <div class="syntax-bridge__code" aria-label="Zig source with selectable lines">
+      <div class="syntax-bridge__code" :aria-label="`${sourceLabel} source with selectable lines`">
         <button
           v-for="(line, index) in code"
           :key="index"

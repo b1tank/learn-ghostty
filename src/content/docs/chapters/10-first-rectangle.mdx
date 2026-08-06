@@ -36,6 +36,7 @@ import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
 import RectangleArtifact from '../../../components/RectangleArtifact.astro';
 import SourceLink from '../../../components/SourceLink.vue';
+import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LessonActions entryId="chapters/10-first-rectangle" />
 
@@ -94,6 +95,31 @@ shading language=4.50
 The runtime requests at least OpenGL 4.3, matching current Ghostty's minimum direction. llvmpipe is accepted as deterministic CI evidence; hardware and Wayland remain separate support gates.
 
 ## Draw operation
+
+<SyntaxBridge client:load sourceLabel="C shim" title="Draw inside the current GL callback" code={[
+  'static gboolean gl_render(GtkGLArea *area, GdkGLContext *context, gpointer data) {',
+  '  gtk_gl_area_make_current(area);',
+  '  int width = gtk_widget_get_width(GTK_WIDGET(area));',
+  '  int height = gtk_widget_get_height(GTK_WIDGET(area));',
+  '  glViewport(0, 0, width, height);',
+  '  glScissor(width / 4, height / 4, width / 2, height / 2);',
+  '  glClear(GL_COLOR_BUFFER_BIT);',
+  '  return TRUE;',
+  '}',
+]} points={[
+  { line:1, label:'native render callback', c:'GTK invokes this C ABI function with the GL area, current-context metadata, and the registered surface context pointer.', zig:'The Zig side deliberately calls a narrow shim instead of recreating GTK macros and callback ABI details.' },
+  { line:2, label:'context currentness', c:'OpenGL commands affect thread-local current context state, so the area’s context must be made current before any GL call.', zig:'A pointer to a context is not enough; currentness is temporal state owned by the callback thread.' },
+  { lines:[3,4,5], label:'coordinate space', c:'GTK reports logical widget dimensions; glViewport maps normalized device coordinates into framebuffer pixel coordinates from bottom-left.', zig:'The bridge must state which coordinate system crosses each boundary rather than treating width and height as universal.' },
+  { lines:[6,7], label:'scissored clear', c:'The scissor rectangle limits a clear to the centered half-width, half-height pixel region.', zig:'This C shim owns GL command ordering; later Zig rendering can call a smaller typed boundary once the graphics contract is understood.' },
+  { lines:[8,9], label:'callback lifetime', c:'TRUE reports that the frame was handled; GL resources and context remain GTK-owned beyond this stack frame.', zig:'Returning does not destroy the Surface, context, or window; teardown follows the registered native ownership path.' },
+]} memory={[
+  { owner:'GTK Surface', value:'window + GLArea widgets' },
+  { owner:'render callback thread', value:'temporarily current GL context' },
+  { owner:'OpenGL context', value:'viewport, scissor, clear state' },
+  { owner:'framebuffer', value:'background + centered rectangle pixels' },
+]} omission="TypeScript canvas and Python graphics wrappers can draw rectangles, but they hide GTK callback ABI, current-context state, OpenGL coordinates, and native resource lifetime—the exact concepts this chapter introduces." />
+
+> **Text version:** GTK enters a C render callback with native pointers. The callback makes the GLArea context current, reads widget dimensions, establishes a bottom-left framebuffer viewport, restricts drawing with a centered scissor rectangle, and clears it. Returning handles the frame but does not free the GTK Surface or GL context; their native lifetime continues until teardown.
 
 The render callback:
 

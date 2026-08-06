@@ -45,6 +45,7 @@ import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 import NativeWindowArtifact from '../../../components/NativeWindowArtifact.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
 import SourceLink from '../../../components/SourceLink.vue';
+import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LessonActions entryId="chapters/09-first-window-gpu" />
 
@@ -107,6 +108,28 @@ This prevents a GUI development package from becoming a prerequisite for parser 
 The same `apprt.App` and `apprt.Surface` names resolve to different concrete types at compile time. `main_ghostty` does not change.
 
 ## Step 3: initialize GTK and the event loop
+
+<SyntaxBridge client:load title="Describe native GTK types and one C callback" code={[
+  'const GMainLoop = opaque {};',
+  'extern fn g_main_loop_new(?*anyopaque, c_int) ?*GMainLoop;',
+  'extern fn g_timeout_add(',
+  '    interval: c_uint,',
+  '    function: *const fn (?*anyopaque) callconv(.c) c_int,',
+  '    data: ?*anyopaque,',
+  ') c_uint;',
+  'const loop: *GMainLoop = @ptrCast(@alignCast(data.?));',
+]} points={[
+  { line:1, label:'opaque C type', c:'This declares an incomplete native type: code may hold GMainLoop pointers but cannot inspect its private fields.', zig:'opaque prevents accidental layout assumptions while preserving a distinct pointer type.' },
+  { line:2, label:'extern function', c:'This is a C ABI declaration returning either NULL or a pointer owned according to GLib’s API contract.', zig:'extern has no Zig body; nullable pointers and c_int make the foreign boundary visible.' },
+  { lines:[3,4,5,6,7], label:'callback ABI', c:'g_timeout_add stores a function pointer and untyped context pointer, then later calls that function using the C calling convention.', zig:'callconv(.c) is part of the function-pointer type, so an incompatible Zig callback cannot be passed silently.' },
+  { line:8, label:'recover context', c:'After checking non-null, recover alignment and cast void* back to the native loop pointer expected by the callback.', zig:'The nested casts separate alignment proof from pointee-type conversion; neither transfers ownership.' },
+]} memory={[
+  { owner:'GTK / GLib', value:'native window + loop allocations' },
+  { owner:'runtime App', value:'borrowed typed pointers; explicit unref/destroy' },
+  { owner:'GLib callback queue', value:'function pointer + borrowed data pointer' },
+]} omission="TypeScript and Python callbacks do not expose the C calling convention, raw context pointer, native alignment, or explicit GTK ownership contract." />
+
+> **Text version:** `opaque` permits typed pointers to a native object without assuming its layout. `extern fn` declares a C ABI function. The callback type includes `callconv(.c)` and receives an untyped borrowed context pointer. The callback checks null, restores alignment, and casts back to `*GMainLoop`; GTK/GLib still own native resources until explicit destroy or unref.
 
 <CodeSnapshot file="src/data/reconstruction/chapter-09/apprt/gtk.zig" label="src/apprt/gtk.zig" status="adapted" reason="GTK4 window and GLib loop subset; no application registration, actions, input, graphics area, or terminal-state display." />
 

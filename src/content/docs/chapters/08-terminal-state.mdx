@@ -58,6 +58,7 @@ import LocalLessonSetup from '../../../components/LocalLessonSetup.astro';
 import OutputPreview from '../../../components/OutputPreview.astro';
 import SourceLink from '../../../components/SourceLink.vue';
 import TerminalGridDiagram from '../../../components/TerminalGridDiagram.astro';
+import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LessonActions entryId="chapters/08-terminal-state" />
 
@@ -98,6 +99,28 @@ Ghostty introduced `Terminal.zig` on April 17, 2022 with a grid and parser owner
 The reconstruction does not copy modern page abstractions backward. Three fixed rows are enough to prove the parser-to-state contract.
 
 ## Step 1: define cells and active style
+
+<SyntaxBridge client:load title="Store cells inline and mutate the cursor" code={[
+  'pub const Style = enum { default, green };',
+  'pub const Cell = struct { char: u8 = \' \', style: Style = .default };',
+  'const blank_row = [_]Cell{.{}} ** columns;',
+  'cells: [rows][columns]Cell = [_][columns]Cell{blank_row} ** rows,',
+  'self.cells[self.cursor_row][self.cursor_column] = .{',
+  '    .char = byte, .style = self.style,',
+  '};',
+  'self.cursor_column += 1;',
+]} points={[
+  { line:1, label:'style enum', c:'A closed enum stores a compact named style state rather than an unchecked integer constant.', zig:'The inferred `.green` and `.default` tags remain type-checked at assignment and switch sites.' },
+  { line:2, label:'cell value', c:'A Cell is a small value struct containing one byte and one style; defaults make a blank cell expression concise.', zig:'`.{}` initializes both fields from defaults without allocation or hidden object identity.' },
+  { lines:[3,4], label:'nested arrays', c:'These are fixed-size inline arrays: rows × columns Cell values are embedded directly in Terminal storage.', zig:'`**` repeats a value at compile time; no row or cell pointers are allocated.' },
+  { lines:[5,6,7,8], label:'cursor mutation', c:'Two integer indexes choose one in-place cell, then the cursor column is advanced explicitly.', zig:'The anonymous struct literal is inferred as Cell from the indexed assignment target.' },
+]} memory={[
+  { owner:'Terminal value', value:'inline rows × columns Cells' },
+  { owner:'cursor fields', value:'indexes into the same storage' },
+  { owner:'apply call', value:'copies Action payload into one Cell' },
+]} omission="Nested JavaScript or Python lists are reference-based, dynamically sized objects and would misrepresent Zig’s fixed contiguous cell storage and value copies." />
+
+> **Text version:** `Style` is a closed enum and each `Cell` is a small value. `[rows][columns]Cell` embeds every cell inline in Terminal; compile-time repetition creates blank rows without heap allocation. Cursor indexes select a cell for in-place assignment, then mutate explicitly.
 
 <CodeSnapshot file="src/data/reconstruction/chapter-08/terminal/Terminal.zig" label="src/terminal/Terminal.zig" status="adapted" reason="Fixed 3×24 ASCII cells, cursor, default/green style, action application, and textual frame; production pages, modes, Unicode, and scrollback are deferred." />
 
