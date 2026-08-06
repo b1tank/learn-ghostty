@@ -1,39 +1,25 @@
-# C-first Zig syntax bridge sprint
+# Zig for C programmers reference sprint
 
-Goal: add compact, first-appearance Zig explanations to every published reconstruction chapter for learners coming from C, with TypeScript/Python translations only where they clarify rather than distort the low-level model.
+Goal: turn the existing chapter-local Zig syntax bridges into a permanent, cumulative reference for experienced C programmers without teaching syntax before it appears in the reconstruction.
+
+## Prioritized tasks
+
+- [ ] Add a dedicated, searchable `Zig for C programmers` reference page covering syntax introduced in Chapters 00–10, with C mental models, important semantic differences, and links back to first appearances.
+- [ ] Add the reference to the Tools navigation and link every embedded Syntax Bridge to the relevant reference section.
+- [ ] Extend course and browser checks to protect the reference route, version scope, chapter provenance links, and responsive bridge-to-reference navigation.
+- [ ] Run `npm run check`, `npm run build`, and `npm run audit:ui`; record final results.
+- [ ] Push the completed commits after the repository, branch, and authenticated GitHub identity are verified and the required immediate public-write confirmation is obtained.
 
 ## Design contract
 
-- C is always the default and most detailed explanation.
-- First syntax appearances use an interactive line-focused explorer.
-- Ownership, pointers, allocation, stack/heap, lifetimes, and concurrency add a memory/lifetime diagram.
-- TypeScript and Python tabs are optional; omit them when GC/high-level semantics would create a misleading analogy.
-- When omitted, say briefly why the low-level operation has no useful direct equivalent.
-- Later appearances use compact reminders and link back to the first explanation.
-- Components must remain responsive, keyboard accessible, reduced-motion safe, and AI-clean Markdown must retain a textual equivalent.
-
-## Tasks
-
-- [x] Build the reusable Starlight `SyntaxBridge` component with C-first tabs, optional TS/Python, line focus, and memory flow.
-- [x] Add an accessible plain-Markdown representation for Copy for AI and no-JavaScript use.
-- [x] Chapter 00: imports, `pub fn`, `!void`, tuples, formatting, process stack.
-- [x] Chapter 01: `@This`, `*App`, allocator create/destroy, `self.*`, `defer`/`errdefer`, heap versus stack.
-- [x] Chapter 02: comptime switch, module imports, exported function aliases.
-- [x] Chapter 03: optional values, runtime/core types, stable Surface pointers, teardown order.
-- [x] Chapter 04: slices, owned buffers, tagged unions, process capabilities.
-- [x] Chapter 05: extern structs, C imports, file descriptors, fork/exec, pointer casts.
-- [x] Chapter 06: fixed buffers, slices, incremental reads, mutable state.
-- [x] Chapter 07: tagged unions, state machines, optionals, switch expressions.
-- [x] Chapter 08: nested arrays, cell values, cursor mutation, enum style state.
-- [x] Chapter 09: opaque C types, extern functions, callback ABI, native ownership.
-- [x] Chapter 10: C shim, GL callbacks, coordinate systems, context/resource lifetime.
-- [x] Add responsive and keyboard browser assertions for every chapter.
-- [x] Run course validation, build, AI Markdown checks, and full UI audit.
+- Write for an experienced C programmer, but describe C as a mental model rather than an exact translation.
+- Scope claims to Zig `0.16.0`, the reconstruction's required version.
+- Correct common traps explicitly: local type inference, binding versus pointee mutability, error unions versus errno conventions, `defer` scope-exit behavior, `pub` versus ABI export, and Zig pointer categories.
+- Introduce only syntax already present in published Chapters 00–10.
+- Keep chapter bridges contextual and the reference cumulative; avoid copying entire lesson explanations.
+- Preserve static rendering, Pagefind searchability, keyboard access, responsive layout, and base-path-safe links.
 
 ## Hiccups & Notes
 
-- TypeScript/Python explanations are intentionally absent when they would imply GC semantics equivalent to explicit allocation, raw pointers, fork safety, C ABI, or graphics-context ownership.
-- Every published reconstruction chapter now has one first-appearance bridge. C is always selected first; TypeScript or Python appears only for output effects, export aliases, discriminated unions, or no-copy typed-array views that can be qualified accurately.
-- Each bridge is server-rendered, keyboard-operable, container-responsive, and paired with an authored `Text version` paragraph retained by AI-clean Markdown.
-- The browser audit covers all eleven bridges at 390, 768, and 1440 pixels in both themes, plus ArrowRight behavior and explicit language-omission reasons. The final audit passed 979 assertions.
-- Visual spot checks covered Chapter 00 at 1280×900 and Chapter 06 at 390×844; code uses local horizontal scrolling while explanations and memory flow reflow to one column.
+- The invocation input was `go`; the sprint goal is inferred from the immediately preceding accepted recommendation for a cumulative Zig-for-C reference backed by existing chapter Syntax Bridges.
+- Public pushing is governed by the repository's confirmation policy. Local implementation and commits may proceed, but pushing requires identity verification and immediate confirmation of the exact remote write.
