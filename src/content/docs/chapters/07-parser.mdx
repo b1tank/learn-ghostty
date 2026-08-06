@@ -59,13 +59,13 @@ import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LocalLessonSetup chapter="07" />
 
-## What you will see
+## Let's teach the program what those bytes mean
 
-The raw Termio bytes now produce ordered protocol actions:
+Termio can move bytes, but right now `1B 5B 33 32 6D` is just five numbers. In this chapter a Parser turns the stream into small instructions such as “print this byte,” “move for CR,” or “set green style.”
 
 <OutputPreview file="src/data/reconstruction/chapter-07/output.txt" title="One action stream independent of PTY read boundaries" tag="chapter-07-parser" caption="The live child sequence is read in buffers no larger than three bytes. Parser actions still reconstruct print runs, CR/LF controls, green SGR 32, and reset SGR 0." />
 
-## Why searching bytes is no longer enough
+## Why can't we just search for escape strings?
 
 Chapter 06 searched for the literal readiness marker `ready>`. VT syntax is stateful:
 
@@ -78,11 +78,11 @@ m finally dispatches the action
 
 <ParserStateDiagram />
 
-A parser call ending mid-sequence is not an error. The parser's state is the incomplete protocol context.
+A `read` can stop anywhere, even in the middle of `ESC [ 32 m`. That is normal. The Parser must remember where it stopped and continue when the next chunk arrives.
 
 <FrontierMap current="I/O + parser" />
 
-## How Ghostty built its parser
+## Real Ghostty also started with a small parser
 
 Ghostty did not begin with today's complete parser. On April 18, 2022 it first encoded the VT state table, then implemented only print and execute. CSI dispatch followed on May 8; OSC, DCS, UTF-8, colon parameters, and many correctness fixes arrived later.
 
@@ -94,7 +94,7 @@ Ghostty did not begin with today's complete parser. On April 18, 2022 it first e
 
 Our added SGR support is justified by the actual `ESC [ 32 m` and `ESC [ 0 m` bytes from Chapter 06—not by a desire to enumerate VT features.
 
-## Step 1: define caller-visible actions
+## Start with the Parser's output: what can it tell us?
 
 <SyntaxBridge client:load reference="control-flow-and-payload-capture" title="Represent parser state and emitted actions" code={[
   'pub const State = enum { ground, escape, csi };',
@@ -123,7 +123,7 @@ Our added SGR support is justified by the actual `ESC [ 32 m` and `ESC [ 0 m` by
 
 <CodeSnapshot file="src/data/reconstruction/chapter-07/terminal/Parser.zig" label="src/terminal/Parser.zig" status="adapted" reason="Ground/escape/CSI subset emitting ASCII print, C0 execute, and one SGR parameter; full VT and Unicode behavior remain deferred." />
 
-The action union separates parsing from effects:
+The tagged union is the Parser's little vocabulary:
 
 ```zig
 pub const Action = union(enum) {
@@ -133,11 +133,11 @@ pub const Action = union(enum) {
 };
 ```
 
-The parser does not move a cursor, color a cell, or render. It reports what the byte stream requested.
+Notice what Parser does not do: it does not move a cursor or color a cell. Like a lexer in a C compiler, it recognizes structure and reports it to the next layer.
 
-## Step 2: preserve state between calls
+## Now follow one byte through the state machine
 
-The three states are:
+We only need three states for the bytes we have actually seen:
 
 - `ground`: printable bytes and C0 controls;
 - `escape`: saw ESC and waits for an introducer;
@@ -145,7 +145,7 @@ The three states are:
 
 On `m`, the parser emits `sgr(parameter)` and returns to ground. An empty parameter means reset `0`.
 
-## Step 3: feed every Termio chunk
+## Put one Parser inside Termio
 
 Termio owns one Parser value and calls `parser.feed(bytes)` inside its read append path. The parser therefore sees the exact bytes in their actual chunking while preserving state across reads.
 
@@ -159,7 +159,7 @@ The three-byte buffers split the green sequence:
 
 Yet only one `[parser sgr] 32` appears.
 
-## Step 4: prove chunk invariance in a test
+## Test the bug we are most likely to write
 
 The parser test feeds:
 
@@ -169,9 +169,9 @@ A ESC [ 3 2 m B ESC [ 0 m CR LF
 
 once as a whole slice and again one byte per call. It compares final state and every action exactly.
 
-That test protects the invariant better than asserting a particular PTY read size.
+If both inputs produce the same actions, we know our Parser is reading a stream rather than depending on lucky kernel chunk sizes.
 
-## Step 5: render actions as evidence
+## Print the actions so we can inspect them
 
 Consecutive print actions are grouped for readability. Controls and SGR remain explicit:
 
@@ -195,7 +195,7 @@ This trace is not terminal state. It is the ordered instruction stream terminal 
 | `src/termio/Termio.zig` | adapted | owns Parser but no Terminal or renderer wakeup |
 | `src/Surface.zig` | adapted | traces actions instead of displaying state |
 
-## Compare with current Ghostty
+## Why is production Ghostty's parser much larger?
 
 <SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/terminal/Parser.zig" line={1} end={86} label="Current parser vocabulary" note="Read State, TransitionAction, and Action. Ignore detailed structures for protocol families not introduced here." />
 
@@ -210,7 +210,7 @@ commit  b4549bf84e5c36d3c760f3e14e0de244f3489e35
 tag     chapter-07-parser
 ```
 
-## The next limitation
+## We understand actions—where do they live?
 
 Actions disappear after tracing. Chapter 08 introduces durable terminal state:
 
