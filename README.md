@@ -24,12 +24,18 @@ npm install
 npm run dev
 ```
 
-Checks:
+Build once, then use the sub-five-second browser smoke check while iterating:
 
 ```console
 npm run check
-npm run audit:ui
 npm run build
+npm run audit:ui:quick
+```
+
+Before committing or publishing, run the full critical-path audit against the same built output. Static course and build checks cover every route; the browser audit covers only shared responsive syntax behavior, keyboard access, lesson progress, Copy for AI, resume, search, and AI Markdown:
+
+```console
+npm run audit:ui
 ```
 
 ## Current design docs

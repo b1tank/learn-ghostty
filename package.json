@@ -10,7 +10,8 @@
     "fetch:history": "node scripts/fetch-historical-source.mjs",
     "history:index": "node scripts/generate-commit-history.mjs",
     "check": "node scripts/check-course.mjs",
-    "audit:ui": "node scripts/audit-ui.mjs"
+    "audit:ui": "node scripts/audit-ui.mjs",
+    "audit:ui:quick": "AUDIT_MODE=quick node scripts/audit-ui.mjs"
   },
   "devDependencies": {
     "gray-matter": "^4.0.3",
