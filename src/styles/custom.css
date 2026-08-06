@@ -76,6 +76,9 @@
 
 .sl-markdown-content { font-size: var(--sl-text-body); }
 
+/* Prose flow owns spacing between text blocks, never inside interactive controls. */
+.sl-markdown-content :where(button) { margin-block: 0 !important; }
+
 /* Homepage */
 .sl-markdown-content .home-course {
   min-height: 0;

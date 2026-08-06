@@ -75,9 +75,19 @@ try {
     hasMemory: Boolean(document.querySelector(".syntax-bridge__memory")),
     hasTextEquivalent: document.body.textContent.includes("Text version"),
     reference: document.querySelector(".syntax-bridge__reference")?.getAttribute("href") ?? "",
+    controlsAligned: [".syntax-bridge__languages", ".syntax-bridge__points"].every((selector) => {
+      const controls = [...document.querySelector(selector).querySelectorAll("button")].map((element) => element.getBoundingClientRect());
+      return Math.max(...controls.map((rect) => rect.top)) - Math.min(...controls.map((rect) => rect.top)) <= 1
+        && Math.max(...controls.map((rect) => rect.height)) - Math.min(...controls.map((rect) => rect.height)) <= 1;
+    }),
+    buttonMarginsReset: [...document.querySelectorAll(".syntax-bridge button")].every((element) => {
+      const style = getComputedStyle(element);
+      return parseFloat(style.marginTop) === 0 && parseFloat(style.marginBottom) === 0;
+    }),
   }));
   check(mobile.fits && mobile.bridgeFits, "mobile SyntaxBridge overflows the page");
   check(mobile.cSelected && mobile.hasMemory && mobile.hasTextEquivalent, "mobile SyntaxBridge is missing its C-first, memory, or text contract");
+  check(mobile.controlsAligned && mobile.buttonMarginsReset, "SyntaxBridge controls inherited prose margins or lost shared row geometry");
   check(/\/zig-for-c\/#arrays-slices-and-ownership$/.test(mobile.reference), "SyntaxBridge lost its scoped cumulative-reference link");
 
   const pointBefore = await page.$eval('.syntax-bridge__points [aria-selected="true"]', (element) => element.textContent.trim());
