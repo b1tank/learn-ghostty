@@ -1,0 +1,438 @@
+---
+title: Zig for C programmers
+description: A cumulative, chapter-linked reference for the Zig syntax used while rebuilding Ghostty.
+sidebar:
+  order: 28
+  badge:
+    text: Zig 0.16.0
+    variant: note
+---
+
+This is a lookup companion for an experienced C programmer reading the reconstruction. It covers the Zig forms that appear in Chapters 00–10 and links each idea to the chapter where it first becomes useful.
+
+The comparisons below are **C mental models**, not source-to-source translations. Zig puts error sets, optional values, pointer kinds, array lengths, and many ownership boundaries into types that C usually represents through conventions.
+
+> **Version scope:** The reconstruction requires Zig `0.16.0`. Zig is evolving; examples from older releases may use different standard-library or build APIs.
+
+## Quick lookup
+
+| When you see | Read it as | First lesson |
+|---|---|---|
+| `const x = value` | immutable binding with an inferred type | [Chapter 00](../chapters/00-process-exists/) |
+| `@import("std")` | compile-time module dependency and namespace | [Chapter 00](../chapters/00-process-exists/) |
+| `pub fn main() !void` | visible function returning success or an error | [Chapter 00](../chapters/00-process-exists/) |
+| `.{}` | anonymous literal inferred from context | [Chapter 00](../chapters/00-process-exists/) |
+| `const App = @This()` | name the current container type | [Chapter 01](../chapters/01-app-lifecycle/) |
+| `!*App` | error union whose success payload is a single-item pointer | [Chapter 01](../chapters/01-app-lifecycle/) |
+| `try operation()` | return its error now, otherwise use its payload | [Chapter 01](../chapters/01-app-lifecycle/) |
+| `defer cleanup()` | run cleanup when the current scope exits | [Chapter 01](../chapters/01-app-lifecycle/) |
+| `errdefer cleanup()` | run cleanup only if the scope exits with an error | [Chapter 01](../chapters/01-app-lifecycle/) |
+| `self.*` | dereference a single-item pointer | [Chapter 01](../chapters/01-app-lifecycle/) |
+| `.ghostty` | enum or union tag inferred from context | [Chapter 02](../chapters/02-entry-routing/) |
+| `switch (value) { ... }` | exhaustive statement or value-producing expression | [Chapter 02](../chapters/02-entry-routing/) |
+| `?*Surface` | optional pointer: `null` or `*Surface` | [Chapter 03](../chapters/03-runtime-surface/) |
+| `if (maybe) |value|` | unwrap an optional payload in the non-null branch | [Chapter 03](../chapters/03-runtime-surface/) |
+| `[]const u8` | borrowed read-only byte slice: pointer plus length | [Chapter 04](../chapters/04-child-process-pipes/) |
+| `extern struct` | struct with C ABI layout | [Chapter 05](../chapters/05-pty/) |
+| `@cImport` / `@cInclude` | translate C declarations at compile time | [Chapter 05](../chapters/05-pty/) |
+| `[4096]u8` | fixed-size inline array of 4096 bytes | [Chapter 06](../chapters/06-termio/) |
+| `bytes[0..count]` | bounded, no-copy slice view | [Chapter 06](../chapters/06-termio/) |
+| `union(enum)` | tagged union with a compiler-maintained discriminant | [Chapter 07](../chapters/07-parser/) |
+| `?Action` | explicit absence or one `Action` value | [Chapter 07](../chapters/07-parser/) |
+| `[_]Cell{.{}} ** columns` | infer array length and repeat a value at compile time | [Chapter 08](../chapters/08-terminal-state/) |
+| `opaque {}` | distinct type whose representation is unavailable | [Chapter 09](../chapters/09-first-window-gpu/) |
+| `callconv(.c)` | function uses the C calling convention | [Chapter 09](../chapters/09-first-window-gpu/) |
+
+## Declarations and inference
+
+### `const` and `var`
+
+```zig
+const app = try App.create(alloc);
+var chunk: [3]u8 = undefined;
+```
+
+`const` makes the **binding** immutable. Zig infers `app`'s type from the initializer. If `app` is a mutable pointer such as `*App`, a `const` binding prevents assigning a different pointer to `app`; it does not make the pointed-to `App` immutable. The closest C declaration is:
+
+```c
+App *const app = app_create(alloc);
+```
+
+`var` permits the stored value to change. Zig rejects a `var` that is never mutated, so the choice records intent rather than style.
+
+Zig does **not** require explicit types everywhere. Parameters, fields, and function return types are declared explicitly, while initialized local declarations can infer their type.
+
+### Integer and byte types
+
+```zig
+id: u64,
+byte: u8,
+phase_len: usize = 0,
+```
+
+`u8`, `u16`, and `u64` are unsigned integers of exact width. `usize` is an unsigned integer large enough to index any addressable object on the target. C's nearest types are `uint8_t`, `uint16_t`, `uint64_t`, and `size_t`.
+
+[First used in Chapter 00 →](../chapters/00-process-exists/)
+
+## Modules, containers, and visibility
+
+### `@import`
+
+```zig
+const std = @import("std");
+const App = @import("App.zig");
+```
+
+`@import` is a compile-time builtin that returns a module namespace. It is not textual inclusion and does not load a library at runtime. A file import is closer to depending on one compiled namespace than copying a C header into the current file.
+
+### A file can be a type
+
+At the top level of `App.zig`:
+
+```zig
+const App = @This();
+alloc: Allocator,
+```
+
+The file is a container. Top-level fields make that container a struct type, and `@This()` obtains the current container type. Top-level declarations such as `create` then belong to the same namespace.
+
+### `pub` is Zig visibility, not C export
+
+```zig
+pub fn create(...) ...
+pub const main = entrypoint.main;
+```
+
+`pub` allows another Zig namespace to access the declaration. It does not by itself promise a C ABI symbol; foreign export and calling convention are separate decisions.
+
+[Imports first appear in Chapter 00 →](../chapters/00-process-exists/) · [File-as-struct appears in Chapter 01 →](../chapters/01-app-lifecycle/)
+
+## Functions and call syntax
+
+```zig
+pub fn destroy(self: *App) void {
+    // ...
+}
+
+app.destroy();
+```
+
+Parameters place the name before the type. The return type follows the parameter list. `void` means successful completion carries no value.
+
+When a namespaced function's first parameter accepts the receiver, Zig permits dot-call syntax:
+
+```zig
+app.destroy();
+// resolves to the declaration App.destroy(app)
+```
+
+This is syntax resolution, not a hidden vtable or implicit object allocation.
+
+Functions are values. Chapter 02 aliases the selected entry function rather than adding a forwarding call:
+
+```zig
+pub const main = entrypoint.main;
+```
+
+[Function aliases appear in Chapter 02 →](../chapters/02-entry-routing/)
+
+## Literals, structs, and enums
+
+### Anonymous literals: `.{ ... }`
+
+```zig
+self.* = .{ .alloc = alloc };
+std.debug.print("ready\n", .{});
+```
+
+The leading dot asks the compiler to infer the literal's type from context. Named fields form a struct literal. An empty `.{}` passed to `debug.print` is an empty tuple of formatting arguments.
+
+### Enum tags: `.ghostty`
+
+```zig
+pub const ExeEntrypoint = enum { ghostty };
+pub const exe_entrypoint: ExeEntrypoint = .ghostty;
+```
+
+The expected type supplies `ExeEntrypoint`, so `.ghostty` is a concise, checked tag rather than a global integer macro.
+
+### Default field values
+
+```zig
+pub const Cell = struct {
+    char: u8 = ' ',
+    style: Style = .default,
+};
+```
+
+A field default is used when a struct literal omits that field. `Cell{}` is not the form used here; `.{}` lets context infer `Cell`.
+
+[Enum routing appears in Chapter 02 →](../chapters/02-entry-routing/) · [Value defaults appear in Chapter 08 →](../chapters/08-terminal-state/)
+
+## Errors and scope cleanup
+
+### Error unions: `E!T` and `!T`
+
+```zig
+pub fn create(alloc: Allocator) Allocator.Error!*App
+pub fn main() !void
+```
+
+An error union contains either an error or a success payload. `Allocator.Error!*App` names the error set and the successful pointer type. `!void` lets the compiler infer the function's error set; success carries no payload.
+
+This is not simply `NULL` or `errno`. At a C boundary Zig may still inspect a sentinel or use platform error conventions, but an ordinary Zig caller sees the failure possibility in the return type.
+
+### `try`
+
+```zig
+const app = try App.create(alloc);
+```
+
+If `create` returns an error, `try` immediately returns that error from the current function. Otherwise the expression evaluates to `*App`. A C mental model is an early status check plus payload extraction, but Zig type-checks the propagation.
+
+### `catch`
+
+```zig
+pty.childPreExec() catch c._exit(126);
+```
+
+`catch` supplies the expression evaluated for an error. The successful payload passes through unchanged. It can recover, translate the error, or—as above in the post-fork child—terminate immediately.
+
+### `defer` and `errdefer`
+
+```zig
+const app = try App.create(alloc);
+defer app.destroy();
+
+const storage = try alloc.create(App);
+errdefer alloc.destroy(storage);
+```
+
+`defer` schedules an expression for scope exit in last-in, first-out order. It covers ordinary block exit, `return`, and error return. It is not a promise that cleanup runs after an abort, forced process termination, or every panic mode.
+
+`errdefer` runs only when the scope returns an error. In Chapter 01 it protects newly allocated storage, although the remaining initialization is not yet fallible; that path is deliberately dormant at that checkpoint.
+
+[Errors and cleanup appear in Chapter 01 →](../chapters/01-app-lifecycle/)
+
+## Pointers, addresses, and optionals
+
+### Single-item pointers: `*T`
+
+```zig
+self: *App
+const app: *App
+```
+
+`*T` points to exactly one `T`. It is non-null unless wrapped in an optional. Zig has additional pointer categories for slices, C pointers, and unknown-length memory; do not read every Zig pointer as C's undifferentiated `T *`.
+
+### Address and dereference
+
+```zig
+&master
+app.*
+```
+
+`&value` takes an address. `pointer.*` accesses the pointed-to value. Field access automatically follows a suitable pointer, so `self.alloc` does not require C's separate `->` operator.
+
+### Optional pointers: `?*T`
+
+```zig
+surface: ?*Surface = null,
+if (self.surface) |surface| surface.destroy();
+```
+
+`?*Surface` is either `null` or a valid `*Surface`. The payload capture `|surface|` introduces the non-null pointer only in the matching branch.
+
+```zig
+const native = create_native() orelse return error.CreateFailed;
+```
+
+`orelse` handles a null optional similarly to how `catch` handles an error union.
+
+### Untyped foreign context: `?*anyopaque`
+
+This is an optional pointer to memory whose pointee type is not known at that boundary, comparable to a nullable `void *`. Recovering a typed pointer requires explicit alignment and pointer casts; the cast does not transfer ownership.
+
+[Optional pointers appear in Chapter 03 →](../chapters/03-runtime-surface/) · [Foreign context pointers appear in Chapter 09 →](../chapters/09-first-window-gpu/)
+
+## Arrays, slices, and ownership
+
+### Fixed arrays: `[N]T`
+
+```zig
+phase_bytes: [4096]u8 = undefined,
+```
+
+The length is part of the type and the storage is inline in its owner. `undefined` means the bytes have no readable value yet; writing them or tracking an initialized prefix must happen before reading them.
+
+### Slices: `[]T` and `[]const T`
+
+```zig
+buffer: []u8
+bytes: []const u8
+argv: []const []const u8
+```
+
+A slice is a pointer plus a length. `[]u8` permits mutation through the view; `[]const u8` does not. A slice is not inherently NUL-terminated and does not inherently own its backing memory.
+
+`[]const []const u8` is a read-only outer slice of read-only byte slices—not automatically C's `char **`.
+
+### Slicing is a no-copy view
+
+```zig
+chunk[0..count]
+self.phase_bytes[0..self.phase_len]
+```
+
+The lower bound is inclusive and the upper bound is exclusive. These expressions borrow existing storage; they do not allocate or copy bytes.
+
+### Inferred and repeated arrays
+
+```zig
+const blank_row = [_]Cell{.{}} ** columns;
+```
+
+`[_]Cell` asks the compiler to infer the array length from the initializer. `** columns` repeats the value at compile time. Chapter 08 uses this to embed all terminal cells directly rather than allocate row pointers.
+
+[Borrowed and owned slices appear in Chapter 04 →](../chapters/04-child-process-pipes/) · [Fixed buffers appear in Chapter 06 →](../chapters/06-termio/) · [Nested arrays appear in Chapter 08 →](../chapters/08-terminal-state/)
+
+## Allocation and explicit lifetime
+
+```zig
+const app = try alloc.create(App);
+alloc.destroy(app);
+
+alloc.free(result.stdout);
+result.* = undefined;
+```
+
+`Allocator.create(T)` allocates aligned storage for one `T`; `destroy` releases that single-item allocation. `free` releases an allocator-owned slice. These pairs are API contracts, not automatic garbage collection.
+
+A `deinit` function usually releases resources stored inside an existing value. A `destroy` function commonly performs `deinit` and then releases the value's own allocation. These are project conventions expressed as ordinary functions, not language-provided destructors.
+
+Assigning `undefined` after teardown deliberately leaves no valid value to read. It does not free storage by itself.
+
+[Follow the complete App lifetime in Chapter 01 →](../chapters/01-app-lifecycle/)
+
+## Control flow and payload capture
+
+### `switch` is exhaustive and can produce a value
+
+```zig
+const entrypoint = switch (build_config.exe_entrypoint) {
+    .ghostty => @import("main_ghostty.zig"),
+};
+```
+
+The selected branch becomes the expression's value. A switch over a closed enum or tagged union must account for every possible tag unless an explicit catch-all is valid.
+
+### Tagged unions: `union(enum)`
+
+```zig
+pub const Action = union(enum) {
+    print: u8,
+    execute: u8,
+    sgr: u16,
+};
+```
+
+This packages a discriminant and its matching payload so they cannot disagree. It is the checked counterpart of a C enum plus union convention.
+
+### Optional results
+
+```zig
+pub fn next(self: *Parser, byte: u8) ?Action
+```
+
+A parser step returns either `null` or one complete `Action`. Absence is not encoded as a magic byte.
+
+### Loops and captures
+
+```zig
+for (bytes, 0..) |byte, index| {
+    // ...
+}
+
+while (offset < bytes.len) : (offset += count) {
+    // ...
+}
+```
+
+`for` iterates values and can zip an index range. `|byte, index|` captures iteration values. A `while` may include a continuation expression after `:` that runs after each body iteration.
+
+[Compile-time routing appears in Chapter 02 →](../chapters/02-entry-routing/) · [Tagged parser actions appear in Chapter 07 →](../chapters/07-parser/)
+
+## Compile-time selection
+
+```zig
+const entrypoint = switch (build_config.exe_entrypoint) {
+    .ghostty => @import("main_ghostty.zig"),
+};
+
+pub const main = entrypoint.main;
+```
+
+The build configuration is compile-time known. The switch selects a module namespace, and the final declaration aliases its function. This is not command-line dispatch and adds no forwarding call frame.
+
+Zig uses the same language for `build.zig`. Calls such as `b.addExecutable` construct a build graph; they do not compile an executable at the instant that line is evaluated.
+
+[Study the router in Chapter 02 →](../chapters/02-entry-routing/) · [Study the first build graph in Chapter 00 →](../chapters/00-process-exists/)
+
+## C ABI boundaries
+
+### Translate headers
+
+```zig
+pub const c = @cImport({
+    @cInclude("pty.h");
+});
+```
+
+`@cImport` translates declarations at compile time. The build must still arrange the required libc linkage; importing a declaration does not call or link it by itself.
+
+### C layout and opaque native objects
+
+```zig
+pub const winsize = extern struct { /* fields */ };
+const GMainLoop = opaque {};
+```
+
+`extern struct` requests C ABI field layout. `opaque` creates a distinct type whose representation cannot be inspected, suitable for pointers to native objects with private fields.
+
+### Foreign functions and callbacks
+
+```zig
+extern fn g_main_loop_new(?*anyopaque, c_int) ?*GMainLoop;
+
+function: *const fn (?*anyopaque) callconv(.c) c_int
+```
+
+An `extern fn` declaration has no Zig body. `c_int` and related types follow the target C ABI. A callback's calling convention is part of its function-pointer type.
+
+### Explicit casts
+
+```zig
+const loop: *GMainLoop = @ptrCast(@alignCast(data.?));
+```
+
+`data.?` asserts that the optional is non-null and obtains its payload. `@alignCast` asserts sufficient alignment; `@ptrCast` changes the pointer's pointee type. Neither operation allocates, copies, or changes resource ownership. A failed safety assertion is a bug, not an error-union result.
+
+[Cross the POSIX ABI in Chapter 05 →](../chapters/05-pty/) · [Read GTK callbacks in Chapter 09 →](../chapters/09-first-window-gpu/)
+
+## Common C-to-Zig traps
+
+| Tempting shortcut | More accurate reading |
+|---|---|
+| “Every Zig variable needs a written type.” | Initialized local declarations usually infer their type; API boundaries remain explicit. |
+| “`const *T` makes `T` const.” | `const binding = pointer` fixes the binding. Pointee mutability belongs to the pointer type. |
+| “`!T` is just `T` plus `errno`.” | The error is a checked union case. C APIs may still use sentinels at the foreign boundary. |
+| “Zig has no null.” | Optional types explicitly represent absence; ordinary `*T` is non-null. |
+| “`defer` survives every crash.” | It runs on language-level scope exit, not arbitrary process termination. |
+| “`pub` exports a C symbol.” | It controls Zig namespace visibility; C ABI export is separate. |
+| “A slice is a safer C string.” | A slice is pointer plus length and normally has no terminator or ownership implication. |
+| “Dot calls imply classes.” | They resolve to namespaced functions whose receiver is the first argument. |
+| “A cast transfers ownership.” | Casts change static interpretation or assert alignment; lifetime remains an API contract. |
+
+## Keep the reference causal
+
+Use this page when syntax interrupts your reading, then return to the chapter that introduced it. The chapter owns the **why**, concrete bytes, lifetime, command, and observable result; this page only makes the language forms quick to retrieve.
