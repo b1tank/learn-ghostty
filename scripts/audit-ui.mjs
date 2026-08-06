@@ -74,9 +74,11 @@ try {
     cSelected: document.querySelector('.syntax-bridge__languages [role="tab"]')?.getAttribute("aria-selected") === "true",
     hasMemory: Boolean(document.querySelector(".syntax-bridge__memory")),
     hasTextEquivalent: document.body.textContent.includes("Text version"),
+    reference: document.querySelector(".syntax-bridge__reference")?.getAttribute("href") ?? "",
   }));
   check(mobile.fits && mobile.bridgeFits, "mobile SyntaxBridge overflows the page");
   check(mobile.cSelected && mobile.hasMemory && mobile.hasTextEquivalent, "mobile SyntaxBridge is missing its C-first, memory, or text contract");
+  check(/\/zig-for-c\/#arrays-slices-and-ownership$/.test(mobile.reference), "SyntaxBridge lost its scoped cumulative-reference link");
 
   const pointBefore = await page.$eval('.syntax-bridge__points [aria-selected="true"]', (element) => element.textContent.trim());
   await page.focus('.syntax-bridge__points [aria-selected="true"]');
@@ -125,6 +127,18 @@ try {
       "process-exists", "app-lifecycle", "entry-routing", "runtime-surface", "child-process-pipes", "pty", "termio", "parser", "terminal-state", "first-window-gpu", "first-rectangle",
     ][index]}.md`).then((response) => response.text())));
     check(markdown.every((text) => text.includes("**Text version:**") && !/<[A-Z][A-Za-z]+/.test(text)), "AI Markdown lost a syntax text equivalent or contains component markup");
+
+    await visit(page, "/zig-for-c", "#quick-lookup");
+    const reference = await page.evaluate(() => ({
+      heading: document.querySelector("h1")?.textContent?.trim(),
+      versioned: document.querySelector("main")?.textContent?.includes("Zig 0.16.0"),
+      quickRows: document.querySelectorAll(".sl-markdown-content table:first-of-type tbody tr").length,
+      trapRows: document.querySelectorAll(".sl-markdown-content table:last-of-type tbody tr").length,
+      chapterCount: new Set([...document.querySelectorAll('a[href*="/chapters/"]')].map((link) => new URL(link.href).pathname.match(/\/chapters\/([^/]+)/)?.[1]).filter(Boolean)).size,
+      targetExists: Boolean(document.getElementById("arrays-slices-and-ownership")),
+    }));
+    check(reference.heading === "Zig for C programmers" && reference.versioned, "Zig/C reference lost its heading or Zig version scope");
+    check(reference.quickRows === 24 && reference.trapRows === 9 && reference.chapterCount === 11 && reference.targetExists, "Zig/C reference lost lookup rows, trap coverage, chapter links, or bridge targets");
   }
 
   await page.close();
