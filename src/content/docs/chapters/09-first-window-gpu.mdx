@@ -109,7 +109,7 @@ The same `apprt.App` and `apprt.Surface` names resolve to different concrete typ
 
 ## Step 3: initialize GTK and the event loop
 
-<SyntaxBridge client:load title="Describe native GTK types and one C callback" code={[
+<SyntaxBridge client:load reference="c-abi-boundaries" title="Describe native GTK types and one C callback" code={[
   'const GMainLoop = opaque {};',
   'extern fn g_main_loop_new(?*anyopaque, c_int) ?*GMainLoop;',
   'extern fn g_timeout_add(',

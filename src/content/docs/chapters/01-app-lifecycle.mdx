@@ -195,7 +195,7 @@ The complete checkpoint file is short enough to inspect:
 
 Focus first on `create`:
 
-<SyntaxBridge client:load title="Allocate and return one stable App" code={[
+<SyntaxBridge client:load reference="allocation-and-explicit-lifetime" title="Allocate and return one stable App" code={[
   'const App = @This();',
   'pub fn create(alloc: Allocator) !*App {',
   '    const app = try alloc.create(App);',

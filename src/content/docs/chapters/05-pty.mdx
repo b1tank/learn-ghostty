@@ -87,7 +87,7 @@ The historical sequence separates opening a device pair from correctly launching
 
 ## Step 1: link the platform API honestly
 
-<SyntaxBridge client:load title="Cross the POSIX C ABI without hiding it" code={[
+<SyntaxBridge client:load reference="c-abi-boundaries" title="Cross the POSIX C ABI without hiding it" code={[
   'pub const c = @cImport({ @cInclude("pty.h"); });',
   'pub const winsize = extern struct {',
   '    ws_row: u16 = 24,',

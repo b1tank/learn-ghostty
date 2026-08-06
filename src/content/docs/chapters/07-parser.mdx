@@ -96,7 +96,7 @@ Our added SGR support is justified by the actual `ESC [ 32 m` and `ESC [ 0 m` by
 
 ## Step 1: define caller-visible actions
 
-<SyntaxBridge client:load title="Represent parser state and emitted actions" code={[
+<SyntaxBridge client:load reference="control-flow-and-payload-capture" title="Represent parser state and emitted actions" code={[
   'pub const State = enum { ground, escape, csi };',
   'pub const Action = union(enum) {',
   '    print: u8,',

@@ -93,7 +93,7 @@ The historical pressure was not “main is too long” alone. Multiple artifacts
 
 `switch` sees a compile-time-known enum value. Only the selected import becomes the executable's `main` implementation.
 
-<SyntaxBridge client:load title="Choose an entry module at compile time" code={[
+<SyntaxBridge client:load reference="compile-time-selection" title="Choose an entry module at compile time" code={[
   'const entrypoint = switch (build_config.exe_entrypoint) {',
   '    .ghostty => @import("main_ghostty.zig"),',
   '};',

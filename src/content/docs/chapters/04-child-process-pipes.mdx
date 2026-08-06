@@ -87,7 +87,7 @@ Our use of `std.process.run` is not an attempted replacement for production Comm
 
 ## Step 1: pass process capabilities explicitly
 
-<SyntaxBridge client:load title="Borrow argv, then own child output" code={[
+<SyntaxBridge client:load reference="arrays-slices-and-ownership" title="Borrow argv, then own child output" code={[
   'argv: []const []const u8,',
   'pub const Result = struct {',
   '    inner: std.process.RunResult,',

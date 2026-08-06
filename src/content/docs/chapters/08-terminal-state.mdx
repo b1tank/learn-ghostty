@@ -100,7 +100,7 @@ The reconstruction does not copy modern page abstractions backward. Three fixed 
 
 ## Step 1: define cells and active style
 
-<SyntaxBridge client:load title="Store cells inline and mutate the cursor" code={[
+<SyntaxBridge client:load reference="literals-structs-and-enums" title="Store cells inline and mutate the cursor" code={[
   'pub const Style = enum { default, green };',
   'pub const Cell = struct { char: u8 = \' \', style: Style = .default };',
   'const blank_row = [_]Cell{.{}} ** columns;',

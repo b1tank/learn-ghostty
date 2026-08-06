@@ -96,7 +96,7 @@ The runtime requests at least OpenGL 4.3, matching current Ghostty's minimum dir
 
 ## Draw operation
 
-<SyntaxBridge client:load sourceLabel="C shim" title="Draw inside the current GL callback" code={[
+<SyntaxBridge client:load reference="c-abi-boundaries" sourceLabel="C shim" title="Draw inside the current GL callback" code={[
   'static gboolean gl_render(GtkGLArea *area, GdkGLContext *context, gpointer data) {',
   '  gtk_gl_area_make_current(area);',
   '  int width = gtk_widget_get_width(GTK_WIDGET(area));',

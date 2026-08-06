@@ -95,7 +95,7 @@ The sequence matters: runtime extraction came before the mature Surface accumula
 
 Two similarly named types have different jobs:
 
-<SyntaxBridge client:load title="Keep a stable optional Surface pointer" code={[
+<SyntaxBridge client:load reference="pointers-addresses-and-optionals" title="Keep a stable optional Surface pointer" code={[
   'surface: ?*Surface = null,',
   'self.surface = try Surface.create(self.core_app, 1);',
   'if (self.surface) |surface| surface.destroy();',
