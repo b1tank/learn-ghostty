@@ -75,6 +75,13 @@ try {
         ".flow-footer > button", ".commit-nav > button", ".commit-actions > a", ".commit-actions > button",
         ".evolution-strip li a", ".roadmap-lesson > b",
       ].flatMap((selector) => [...document.querySelectorAll(selector)]).filter((element) => element.getClientRects().length).every((element) => Boolean(element.querySelector("svg, .ai-copy-icon"))),
+      syntaxBridges: [...document.querySelectorAll(".syntax-bridge")].map((element) => ({
+        fits: element.scrollWidth <= element.clientWidth,
+        cSelected: element.querySelector('.syntax-bridge__languages [role="tab"]')?.getAttribute("aria-selected") === "true",
+        points: element.querySelectorAll('.syntax-bridge__points [role="tab"]').length,
+        focusedLines: element.querySelectorAll('.syntax-bridge__code button[aria-pressed="true"]').length,
+        hasTextEquivalent: (element.closest("astro-island")?.nextElementSibling ?? element.nextElementSibling)?.textContent?.includes("Text version") ?? false,
+      })),
     }));
     check(state.scroll <= state.viewport, `${theme} ${width}px ${route}: horizontal overflow ${state.scroll - state.viewport}px`);
     check(state.main, `${route}: main missing`);
@@ -83,6 +90,30 @@ try {
     check(state.actionRowsAligned, `${theme} ${width}px ${route}: consecutive controls are vertically misaligned`);
     check(state.repeatedCardsAligned, `${theme} ${width}px ${route}: repeated cards do not share row geometry`);
     check(state.repeatedActionsHaveIcons, `${theme} ${width}px ${route}: a repeated action is missing its functional icon`);
+    if (/^\/chapters\/(?:0\d|10)-/.test(route)) {
+      check(state.syntaxBridges.length === 1, `${theme} ${width}px ${route}: expected one syntax bridge`);
+      check(state.syntaxBridges.every((bridge) => bridge.fits && bridge.cSelected && bridge.points >= 3 && bridge.focusedLines >= 1 && bridge.hasTextEquivalent), `${theme} ${width}px ${route}: syntax bridge is incomplete or overflows`);
+    }
+    await page.close();
+  }
+
+  const syntaxRoutes = routes.filter((route) => /^\/chapters\/(?:0\d|10)-/.test(route));
+  for (const route of syntaxRoutes) {
+    const page = await newPage(browser, 1280, "dark");
+    await page.goto(base + route, { waitUntil: "networkidle0" });
+    const before = await page.$eval('.syntax-bridge__points [role="tab"][aria-selected="true"]', (element) => element.textContent.trim());
+    await page.focus('.syntax-bridge__points [role="tab"][aria-selected="true"]');
+    await page.keyboard.press("ArrowRight");
+    const after = await page.$eval('.syntax-bridge__points [role="tab"][aria-selected="true"]', (element) => element.textContent.trim());
+    check(before !== after, `${route}: ArrowRight did not change the line-focused explanation`);
+    const languageCount = await page.$$eval('.syntax-bridge__languages [role="tab"]', (elements) => elements.length);
+    if (languageCount > 1) {
+      await page.focus('.syntax-bridge__languages [role="tab"][aria-selected="true"]');
+      await page.keyboard.press("ArrowRight");
+      check(await page.$eval('.syntax-bridge__languages [role="tab"][aria-selected="true"]', (element) => element.textContent.trim()) !== "C", `${route}: language tabs are not keyboard operable`);
+    } else {
+      check(Boolean(await page.$(".syntax-bridge__omission")), `${route}: omitted language tabs need a reason`);
+    }
     await page.close();
   }
 
@@ -402,6 +433,9 @@ try {
   check(nativeMarkdown.includes("[gtk] window presented 900x600") && nativeMarkdown.includes("src/apprt/gtk.zig") && !/<[A-Z][A-Za-z]+/.test(nativeMarkdown), "Chapter 09 AI Markdown is invalid");
   const rectangleMarkdown = await (await fetch(base + "/ai/lessons/10-first-rectangle.md")).text();
   check(rectangleMarkdown.includes("[gl] rectangle x=225") && rectangleMarkdown.includes("src/apprt/gtk_shim.c") && !/<[A-Z][A-Za-z]+/.test(rectangleMarkdown), "Chapter 10 AI Markdown is invalid");
+  for (const [index, lessonMarkdown] of [markdown, lifecycleMarkdown, routingMarkdown, runtimeMarkdown, pipesMarkdown, ptyMarkdown, termioMarkdown, parserMarkdown, terminalMarkdown, nativeMarkdown, rectangleMarkdown].entries()) {
+    check(lessonMarkdown.includes("**Text version:**") && lessonMarkdown.includes("C"), `Chapter ${String(index).padStart(2, "0")} AI Markdown is missing the syntax bridge text equivalent`);
+  }
 
   for (const [legacy, expected] of [["/lessons/00-open-ghostty", "/field-guides/run-ls-cat"], ["/lessons/01-codex-tui", "/field-guides/codex-tui"]]) {
     const response = await fetch(base + legacy, { redirect: "follow" });
