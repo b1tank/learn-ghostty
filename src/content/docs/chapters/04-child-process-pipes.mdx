@@ -51,29 +51,29 @@ import SyntaxBridge from '../../../components/SyntaxBridge.vue';
 
 <LocalLessonSetup chapter="04" />
 
-## What you will see
+## Let's run a child process
 
-For the first time, the reconstruction launches another real process:
+So far our program has only managed its own objects. Now let's launch `/bin/sh` and ask the child a very simple question: “Do your stdin, stdout, and stderr look like a terminal?”
 
 <OutputPreview file="src/data/reconstruction/chapter-04/output.txt" title="A child runs, but none of its streams is a terminal" tag="chapter-04-child-pipes" caption="The shell itself evaluates -t for file descriptors 0, 1, and 2. All three results are measured behavior from the tagged checkpoint." />
 
-This is a successful process launch and a deliberately unsuccessful terminal session.
+The child launches successfully, but every answer is `no`. That failure is useful—it shows us exactly what ordinary pipes cannot provide.
 
-## The question we must answer first
+## Why not just use three pipes?
 
-Why not connect a shell with three ordinary pipes and call that a terminal?
+That is the obvious C-programmer idea: one pipe for input and two for output. Let's try it before adding a more complicated PTY.
 
 <PipeExperimentDiagram />
 
 A pipe is excellent byte transport. A terminal device additionally participates in kernel-managed terminal behavior: terminal modes, window size, sessions, controlling-terminal ownership, and foreground process groups.
 
-Until we measure the difference, adding a PTY would be unexplained machinery.
+A pipe moves bytes perfectly well. But a terminal also has modes, a window size, a controlling session, and a foreground process group. We should see the missing behavior before reaching for PTY APIs.
 
 <FrontierMap current="Child process + PTY" />
 
 The frontier marker names the problem area. This checkpoint stops on the pipe side; Chapter 05 crosses into the PTY side.
 
-## What Ghostty encountered historically
+## Real Ghostty needed more control too
 
 Ghostty opened a basic PTY on April 15, 2022. The next day it introduced a custom `Command` because Zig's standard child abstraction did not expose the post-fork/pre-exec control required to attach a shell correctly.
 
@@ -85,7 +85,7 @@ Ghostty opened a basic PTY on April 15, 2022. The next day it introduced a custo
 
 Our use of `std.process.run` is not an attempted replacement for production Command. It is the smallest experiment that reaches the limitation production Command exists to solve.
 
-## Step 1: pass process capabilities explicitly
+## Start at startup: pass the tools process code needs
 
 <SyntaxBridge client:load reference="arrays-slices-and-ownership" title="Borrow argv, then own child output" code={[
   'argv: []const []const u8,',
@@ -110,7 +110,7 @@ Our use of `std.process.run` is not an attempted replacement for production Comm
 
 > **Text version:** `[]const []const u8` is a borrowed slice of borrowed immutable byte slices. `RunResult` returns allocator-owned stdout and stderr buffers. `deinit` frees those buffers with the allocator and poisons the result with `undefined`; it does not free the caller-owned Result value.
 
-Zig 0.16 supplies allocator and I/O capabilities through `std.process.Init`. `main_ghostty` now accepts that value and passes `init.gpa` and `init.io` into core App.
+Process spawning needs memory and I/O services. Zig 0.16 hands them to `main_ghostty` through `std.process.Init`, and we pass them down instead of hiding them in globals.
 
 This changed because process spawning needs an initialized I/O implementation. Calling an uninitialized global I/O singleton failed with `OutOfMemory` during the experiment; passing the process-owned capability is both smaller and correct.
 
@@ -124,11 +124,11 @@ Zig process startup
 → Command.run(alloc, io)
 ```
 
-## Step 2: wrap one finite command
+## Follow the call into `Command.zig`
 
 <CodeSnapshot file="src/data/reconstruction/chapter-04/Command.zig" label="src/Command.zig" status="adapted" reason="Finite standard-library child collection through ordinary pipes; no fork/pre-exec, PTY, environment, cwd, or long-lived process state." />
 
-`std.process.run`:
+For this first experiment, `std.process.run` does the boring work for us:
 
 1. spawns the command;
 2. ignores stdin;
@@ -139,11 +139,11 @@ Zig process startup
 
 The wrapper's `Result.deinit` makes buffer ownership explicit.
 
-## Step 3: let Surface start its session experiment
+## Return to `Surface.zig`: run one controlled experiment
 
 <CodeSnapshot file="src/data/reconstruction/chapter-04/Surface.zig" label="src/Surface.zig" status="adapted" reason="Runs one deterministic shell probe; it does not yet own a persistent child or PTY." />
 
-The shell script asks the kernel-backed descriptors directly:
+We give the shell the same tiny test for all three descriptors:
 
 ```sh
 if [ -t 0 ]; then echo 'stdin_tty=yes'; else echo 'stdin_tty=no'; fi
@@ -155,7 +155,7 @@ if [ -t 2 ]; then echo 'stderr_tty=yes'; else echo 'stderr_tty=no'; fi
 
 The parent prints collected stdout and the child's exit status. Exit code zero proves launch succeeded; the three `no` results prove terminal semantics are absent.
 
-## Step 4: start from the runtime tick
+## Follow the call back to the runtime tick
 
 The teaching-only headless runtime calls `runChild` after creating the core Surface. That keeps session ownership where production will eventually put it without inventing Termio yet.
 
@@ -192,7 +192,7 @@ If the child failed to launch, this would not be a PTY lesson. Here launch succe
 | `src/App.zig` | adapted | carries process allocator and I/O capability |
 | `src/apprt/headless.zig` | temporary | invokes the probe from one synthetic tick |
 
-## Compare with current Ghostty
+## What does today's Ghostty need beyond this?
 
 <SourceLink client:load base={import.meta.env.BASE_URL} sourceCommit="6ad1fe7d8cbda36c77b337a96c9bea8a77883699" path="src/Command.zig" line={1} end={105} label="Current Command launch contract" note="Read the opening rationale and fields for streams, environment, cwd, and pre-exec hooks. Ignore platform implementation details." />
 
@@ -207,7 +207,7 @@ commit  04e405b359961783f19875babf3f3ac05c12814a
 tag     chapter-04-child-pipes
 ```
 
-## The next limitation
+## So what are pipes missing?
 
 Pipes cannot make the shell interactive. Chapter 05 must provide:
 
